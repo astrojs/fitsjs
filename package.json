@@ -4,6 +4,7 @@
   "dependencies": { 
     "serveup": "~0.0.4",
     "hem": "~0.1.7",
+    "groc": "~0.2.8",
     "jDataView": "1.0.2"
   }
 }

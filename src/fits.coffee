@@ -1,56 +1,63 @@
 require('jDataView/src/jdataview')
 
 class Fits
-  @LINEWIDTH   = 80
-  @BLOCKLENGTH = 2880
+  Fits.LINEWIDTH   = 80
+  Fits.BLOCKLENGTH = 2880
+  Fits.headerPattern = /([A-Z0-9]+)\s*=?\s*([^\/]+)\s*\/?\s*(.*)/
+  Fits.BITPIX = [8, 16, 32, -32, -64]
+  Fits.mandatoryKeywords = ['BITPIX', 'NAXIS', 'END']
+  # Fits.mandatoryKeywords = ['SIMPLE', 'BITPIX', 'NAXIS', 'END']
 
   constructor: (buffer) ->
-    @view = new jDataView buffer, undefined, undefined, false
-    @hdus = {}
+    @view       = new jDataView buffer, undefined, undefined, false
+    @headers    = []
+    @dataunits  = []
 
-  parseHeaders: ->
+    @headerNext = true
+    @parseHeader() while @headerNext
+
+  # ##Class Methods
+
+  # Read a card from the header
+  @readCard: (row, header) ->
+    match = row.match(Fits.headerPattern)
+    [key, value, comment] = match[1..]
+    header[key] = value.trim()
+
+  # Determine the number of characters following a header or data unit
+  @excessChars: (lines) ->
+    return Fits.BLOCKLENGTH - (lines * Fits.LINEWIDTH) % Fits.BLOCKLENGTH
+
+  # ##Instance Methods
+
+  # Parse the header
+  parseHeader: ->
     linesRead = 0
-    headerString = ""
-
+    header = {}
     loop
-      line = @view.getString(@LINEWIDTH)
-      headerString += line
+      line = @view.getString(Fits.LINEWIDTH)
+      Fits.readCard(line, header)
       linesRead += 1
-      [key, value] = line.split("=")
-
-      bitpix  = Fits.readCard(value, 'int') if key.match("BITPIX")
-      columns = Fits.readCard(value, 'int') if key.match("NAXIS1")
-      rows    = Fits.readCard(value, 'int') if key.match("NAXIS2")
-
       break if line[0..2] is "END"
+    @headers.push(header)
 
+    # Check for mandatory keywords
+    for keyword in Fits.mandatoryKeywords
+      throw "FITS does not contain the required keyword #{keyword}" unless header.hasOwnProperty(keyword)
+
+    naxis = parseInt(header["NAXIS"])
+    bitpix = parseInt(header["BITPIX"])
+
+    i = 1
+    while i <= naxis
+      throw "FITS does not contain the required keyword NAXIS#{i}" unless header.hasOwnProperty("NAXIS#{i}")
+      i += 1
+
+    # Determine if a header or data unit follows
+    @headerNext = if naxis is 0 then true else false
+
+    # Seek to the next relavant character in file
     excess = Fits.excessChars(linesRead)
-    @view.seek(@LINEWIDTH * linesRead + excess)
-
-  @readCard: (str) ->
-    card = {}
-
-    line = line.split('=')
-    key = line[0].trim()
-    card['key']   = key
-    card['data']  = {}
-    if line[1]?
-      value = line[1]
-      value = value.split('/')
-      card['data']['value']   = value[0].trim()
-      card['data']['comment'] = value[1].trim() if value[1]?
-    return card
-
-  # @readCard: (str, format) ->
-  #   value = str.split('/')[0].trim()
-  #   switch format
-  #     when 'int'
-  #       return parseInt(value)
-  #     when 'float'
-  #       return parseFloat(value) 
-  #     else 'string'
-  #       return value
-
-  @excessChars: (lines) -> return @BLOCKLENGTH - (lines * @LINEWIDTH) % @BLOCKLENGTH
+    @view.seek(Fits.LINEWIDTH * linesRead + excess)
 
 module.exports = Fits

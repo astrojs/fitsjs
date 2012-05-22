@@ -1,0 +1,6 @@
+{
+  "glob": [
+    "README.md",
+    "src/*.coffee"
+	]
+}
