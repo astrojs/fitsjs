@@ -1,0 +1,9 @@
+{
+  "public": "./test/public",
+  "paths": ["./src"],
+  "dependencies": [
+  ],
+  "libs": [
+    "jDataView"
+  ]
+}
