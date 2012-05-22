@@ -6,16 +6,18 @@ class Fits
   Fits.headerPattern = /([A-Z0-9]+)\s*=?\s*([^\/]+)\s*\/?\s*(.*)/
   Fits.BITPIX = [8, 16, 32, -32, -64]
   Fits.mandatoryKeywords = ['BITPIX', 'NAXIS', 'END']
-  # Fits.mandatoryKeywords = ['SIMPLE', 'BITPIX', 'NAXIS', 'END']
 
   constructor: (buffer) ->
+    @length     = buffer.byteLength
     @view       = new jDataView buffer, undefined, undefined, false
     @headers    = []
     @dataunits  = []
 
     @headerNext = true
-    @parseHeader() while @headerNext
+    @eof        = false
 
+    @readHeader() while @headerNext
+    @readData()
   # ##Class Methods
 
   # Read a card from the header
@@ -30,8 +32,8 @@ class Fits
 
   # ##Instance Methods
 
-  # Parse the header
-  parseHeader: ->
+  # Read a header unit
+  readHeader: ->
     linesRead = 0
     header = {}
     loop
@@ -59,5 +61,47 @@ class Fits
     # Seek to the next relavant character in file
     excess = Fits.excessChars(linesRead)
     @view.seek(Fits.LINEWIDTH * linesRead + excess)
+
+    @checkEOF()
+
+  # Read a data unit
+  readData: ->
+    header = @headers[@headers.length - 1]
+    bitpix = parseInt(header["BITPIX"])
+    switch bitpix
+      when 8
+        @view.getData = @view.getUint8
+      when 16
+        @view.getData = @view.getInt16
+      when 32
+        @view.getData = @view.getInt32
+      when -32
+        @view.getData = @view.getFloat32
+      when -64
+        @view.getData = @view.getFloat64
+      else
+        throw "FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, -32, -64]"
+
+    data = []
+    
+    # Determine how many points to read
+    naxis = parseInt(header["NAXIS"])
+    i = 1
+    numberOfPixels = 1
+    while i <= naxis
+      numberOfPixels *= parseInt(header["NAXIS#{i}"])
+      i += 1
+    numberOfPixels
+
+    # Read the data
+    i = 0
+    while numberOfPixels
+      data.push(@view.getData())
+      numberOfPixels -= 1
+
+    @dataunits.push(data)
+    @checkEOF()
+
+  checkEOF: -> @eof = true if @view.tell() is @length
 
 module.exports = Fits
