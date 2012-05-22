@@ -5,7 +5,8 @@ class Fits
   Fits.BLOCKLENGTH = 2880
   Fits.headerPattern = /([A-Z0-9]+)\s*=?\s*([^\/]+)\s*\/?\s*(.*)/
   Fits.BITPIX = [8, 16, 32, -32, -64]
-  Fits.mandatoryKeywords = ['BITPIX', 'NAXIS', 'END']
+  Fits.mandatoryKeywords = ['BITPIX', 'NAXIS', 'END'] 
+  Fits.requiredBinTableKeywords = ['XTENSION', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'PCOUNT', 'GCOUNT', 'TFIELDS', 'TFORM']
 
   constructor: (buffer) ->
     @length     = buffer.byteLength
@@ -18,6 +19,7 @@ class Fits
 
     @readHeader() while @headerNext
     @readData()
+
   # ##Class Methods
 
   # Read a card from the header
@@ -66,7 +68,14 @@ class Fits
 
   # Read a data unit
   readData: ->
+    # Select the last read header
     header = @headers[@headers.length - 1]
+    
+    # Read for an extension
+    extension = header["XTENSION"] if header.hasOwnProperty("XTENSION")
+    
+    @readBinTable(header) if extension is "'BINTABLE'"
+
     bitpix = parseInt(header["BITPIX"])
     switch bitpix
       when 8
@@ -83,7 +92,7 @@ class Fits
         throw "FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, -32, -64]"
 
     data = []
-    
+
     # Determine how many points to read
     naxis = parseInt(header["NAXIS"])
     i = 1
@@ -103,5 +112,18 @@ class Fits
     @checkEOF()
 
   checkEOF: -> @eof = true if @view.tell() is @length
+
+  readBinTable: (header) ->
+    # Check for required keywords
+    for keyword in Fits.requiredBinTableKeywords
+      if keyword is "TFORM"
+        tfields = parseInt(header["TFIELDS"])
+        i = 1
+        while i <= tfields
+          throw "FITS binary table does not contain the required keyword TFORM#{i}" unless header.hasOwnProperty("TFORM#{i}")
+          i += 1
+      else
+        throw "FITS binary table does not contain the required keyword #{keyword}" unless header.hasOwnProperty(keyword)
+
 
 module.exports = Fits
