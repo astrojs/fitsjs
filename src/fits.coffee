@@ -7,6 +7,14 @@ class Header
   @stringPattern = /'(.*)'\s*\/*(.*)/
   @principalMandatoryKeywords = ['BITPIX', 'NAXIS', 'END']
   @extensionKeywords = ['BITPIX', 'NAXIS', 'PCOUNT', 'GCOUNT']
+  @arrayKeywords = ['BSCALE', 'BZERO', 'BUNIT', 'BLANK', 'CTYPEn', 'CRPIXn', 'CRVALn', 'CDELTn', 'CROTAn', 'DATAMAX', 'DATAMIN']
+  @otherReservedKeywords = [
+    'DATE', 'ORIGIN', 'BLOCKED',
+    'DATE-OBS', 'TELESCOP', 'INSTRUME', 'OBSERVER', 'OBJECT', 'EQUINOX', 'EPOCH',
+    'AUTHOR', 'REFERENC',
+    'COMMENT', 'HISTORY',
+    'EXTNAME', 'EXTVER', 'EXTLEVEL'
+  ]
 
   constructor: ->
     # e.g. [index, value, comment]
@@ -124,6 +132,17 @@ class Header
   isPrimary: -> return @primary
   isExtension: -> return @extension
 
+class DataUnit
+  
+  constructor: ->
+    @dataunit = {}
+
+class HDU
+
+  constructor: (header, dataunit)->
+    @header   = header
+    @dataunit = dataunit
+
 class File
   @LINEWIDTH   = 80
   @BLOCKLENGTH = 2880
@@ -134,12 +153,16 @@ class File
     @view       = new jDataView buffer, undefined, undefined, false
     @headers    = []
     @dataunits  = []
+    @hdus       = []
 
     @headerNext = true
     @eof        = false
 
     @readHeader() while @headerNext
-    # @readData()
+    # loop
+    #   @readHeader() while @headerNext
+    #   @readDataUnit()
+    #   break if @eof
 
   # ##Class Methods
 
@@ -163,11 +186,15 @@ class File
     # Determine if a data unit follows
     @headerNext = not header.hasDataUnit()
 
-    @headers.push header
+    @headers.push(header)
+
     # Seek to the next relavant character in file
     excess = File.excessChars(linesRead)
     @view.seek(File.LINEWIDTH * linesRead + excess)
     @checkEOF()
+
+  readDataUnit: ->
+    
 
   # # Read a data unit
   # readData: ->
@@ -216,22 +243,10 @@ class File
 
   checkEOF: -> @eof = true if @view.tell() is @length
 
-  # readBinTable: (header) ->
-  #   # Check for required keywords
-  #   for keyword in File.requiredBinTableKeywords
-  #     if keyword is "TFORM"
-  #       tfields = parseInt(header["TFIELDS"])
-  #       i = 1
-  #       while i <= tfields
-  #         throw "FITS binary table does not contain the required keyword TFORM#{i}" unless header.hasOwnProperty("TFORM#{i}")
-  #         i += 1
-  #     else
-  #       throw "FITS binary table does not contain the required keyword #{keyword}" unless header.hasOwnProperty(keyword)
-
-
 FITS = @FITS    = {}
 module?.exports = FITS
 
 FITS.version    = '0.0.1'
 FITS.File       = File
 FITS.Header     = Header
+FITS.DataUnit   = DataUnit
