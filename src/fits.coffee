@@ -132,16 +132,62 @@ class Header
   isPrimary: -> return @primary
   isExtension: -> return @extension
 
-class DataUnit
+class Data
+
+  constructor: (begin, header) ->
+    @begin = begin
+
+class Image extends Data
+
+    constructor: (begin, header) ->
+      super
+
+      naxis   = parseInt(header.getValue("NAXIS"))
+      bitpix  = parseInt(header.getValue("BITPIX"))
+
+      i = 1
+      numberOfPixels = 1
+      while i <= naxis
+        numberOfPixels *= parseInt(header.getValue("NAXIS#{i}"))
+        i += 1
+      @length = numberOfPixels * Math.abs(bitpix) / 8
+
+      # Determine which function is used to read the image data
+      # if bitpix < 0
+      #   @accessor = "get" + "#{@bitpix}".replace("-", "Float")
+      # else if bitpix > 8
+      #   @accessor = "get" + "Int#{@bitpix}"
+      # else
+      #   @accessor = "get" + "Uint#{@bitpix}"
+
+      switch bitpix
+        when 8
+          @accessor = 'getUint8'
+        when 16
+          @accessor = 'getInt16'
+        when 32
+          @accessor = 'getInt32'
+        when -32
+          @accessor = 'getFloat32'
+        when -64
+          @accessor = 'getFloat64'
+        else
+          throw "FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, -32, -64]"
+
+class BinTable extends Data
   
-  constructor: ->
-    @dataunit = {}
+  constructor: (begin, header) ->
+    super
+
+    naxis1 = parseInt(header.getValue("NAXIS1"))
+    naxis2 = parseInt(header.getValue("NAXIS2"))
+    @length = naxis1 * naxis2
 
 class HDU
 
-  constructor: (header, dataunit)->
-    @header   = header
-    @dataunit = dataunit
+  constructor: (header, data)->
+    @header = header
+    @data   = data
 
 class File
   @LINEWIDTH   = 80
@@ -151,18 +197,15 @@ class File
   constructor: (buffer) ->
     @length     = buffer.byteLength
     @view       = new jDataView buffer, undefined, undefined, false
-    @headers    = []
-    @dataunits  = []
     @hdus       = []
-
-    @headerNext = true
     @eof        = false
 
-    @readHeader() while @headerNext
-    # loop
-    #   @readHeader() while @headerNext
-    #   @readDataUnit()
-    #   break if @eof
+    loop
+      header = @readHeader()
+      data = @readData(header)
+      hdu = new HDU(header, data)
+      @hdus.push(hdu)
+      break if @eof
 
   # ##Class Methods
 
@@ -183,63 +226,26 @@ class File
       break if line[0..2] is "END"
     header.verify()
 
-    # Determine if a data unit follows
-    @headerNext = not header.hasDataUnit()
-
-    @headers.push(header)
-
     # Seek to the next relavant character in file
     excess = File.excessChars(linesRead)
     @view.seek(File.LINEWIDTH * linesRead + excess)
     @checkEOF()
 
-  readDataUnit: ->
-    
+    return header
 
-  # # Read a data unit
-  # readData: ->
-  #   # Select the last read header
-  #   header = @headers[@headers.length - 1]
-  #   
-  #   # Read for an extension
-  #   extension = header["XTENSION"] if header.hasOwnProperty("XTENSION")
-  #   
-  #   # @readBinTable(header) if extension is "'BINTABLE'"
-  # 
-  #   bitpix = parseInt(header["BITPIX"])
-  #   switch bitpix
-  #     when 8
-  #       @view.getData = @view.getUint8
-  #     when 16
-  #       @view.getData = @view.getInt16
-  #     when 32
-  #       @view.getData = @view.getInt32
-  #     when -32
-  #       @view.getData = @view.getFloat32
-  #     when -64
-  #       @view.getData = @view.getFloat64
-  #     else
-  #       throw "FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, -32, -64]"
-  # 
-  #   data = []
-  # 
-  #   # Determine how many points to read
-  #   naxis = parseInt(header["NAXIS"])
-  #   i = 1
-  #   numberOfPixels = 1
-  #   while i <= naxis
-  #     numberOfPixels *= parseInt(header["NAXIS#{i}"])
-  #     i += 1
-  #   numberOfPixels
-  # 
-  #   # Read the data
-  #   i = 0
-  #   while numberOfPixels
-  #     data.push(@view.getData())
-  #     numberOfPixels -= 1
-  # 
-  #   @dataunits.push(data)
-  #   @checkEOF()
+  # Read a data unit
+  readData: (header) ->
+    return unless header.hasDataUnit()
+
+    if header.isPrimary()
+      data = new Image(@view.tell(), header)
+    else
+      data = new BinTable(@view.tell(), header)
+    
+    # Forward to the next HDU
+    @view.seek(@view.tell() + data.length)
+    @checkEOF()
+    return data
 
   checkEOF: -> @eof = true if @view.tell() is @length
 
@@ -249,4 +255,6 @@ module?.exports = FITS
 FITS.version    = '0.0.1'
 FITS.File       = File
 FITS.Header     = Header
-FITS.DataUnit   = DataUnit
+FITS.Data       = Data
+FITS.Image      = Image
+FITS.BinTable   = BinTable
