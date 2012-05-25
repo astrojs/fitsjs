@@ -7,6 +7,10 @@ class Header
   @stringPattern = /'(.*)'\s*\/*(.*)/
   @principalMandatoryKeywords = ['BITPIX', 'NAXIS', 'END']
   @extensionKeywords = ['BITPIX', 'NAXIS', 'PCOUNT', 'GCOUNT']
+  @compressedImageKeywords = ['ZIMAGE', 'ZCMPTYPE', 'ZBITPIX', 'ZNAXIS', 'ZNAXISn']
+  @compressedImageKeywordsOptional =
+    ['ZTILEn', 'ZNAMEn', 'ZVALn', 'ZMASKCMP', 'ZSIMPLE', 'ZTENSION', 'ZEXTEND', 'ZBLOCKED', 'ZPCOUNT', 'ZGCOUNT', 'ZHECKSUM', 'ZDATASUM', 'ZQUANTIZ']
+  
   @arrayKeywords = ['BSCALE', 'BZERO', 'BUNIT', 'BLANK', 'CTYPEn', 'CRPIXn', 'CRVALn', 'CDELTn', 'CROTAn', 'DATAMAX', 'DATAMIN']
   @otherReservedKeywords = [
     'DATE', 'ORIGIN', 'BLOCKED',
