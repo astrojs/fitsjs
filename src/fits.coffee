@@ -75,6 +75,9 @@ class Header
       @cardIndex += 1
     @cards["HISTORY"].push(history)
 
+  # Checks if the header contains a specified keyword
+  contains: (keyword) -> return @cards.hasOwnProperty(keyword)
+
   # Read a card from the header
   readCard: (line) ->
     match = line.match(Header.keywordPattern)
@@ -181,7 +184,8 @@ class BinTable extends Data
 
     naxis1 = parseInt(header.getValue("NAXIS1"))
     naxis2 = parseInt(header.getValue("NAXIS2"))
-    @length = naxis1 * naxis2
+    @length           = naxis1 * naxis2
+    @compressedImage  = header.contains("ZIMAGE")
 
 class HDU
 
@@ -210,8 +214,8 @@ class File
   # ##Class Methods
 
   # Determine the number of characters following a header or data unit
-  @excessChars: (lines) ->
-    return File.BLOCKLENGTH - (lines * File.LINEWIDTH) % File.BLOCKLENGTH
+  @excessChars: (length) ->
+    return File.BLOCKLENGTH - (length) % File.BLOCKLENGTH
 
   # ##Instance Methods
 
@@ -227,8 +231,8 @@ class File
     header.verify()
 
     # Seek to the next relavant character in file
-    excess = File.excessChars(linesRead)
-    @view.seek(File.LINEWIDTH * linesRead + excess)
+    excess = File.excessChars(linesRead * File.LINEWIDTH)
+    @view.seek(@view.tell() + excess)
     @checkEOF()
 
     return header
@@ -236,15 +240,21 @@ class File
   # Read a data unit
   readData: (header) ->
     return unless header.hasDataUnit()
-
     if header.isPrimary()
       data = new Image(@view.tell(), header)
+      excess = 0
     else
       data = new BinTable(@view.tell(), header)
-    
+      excess = File.excessChars(data.length)
+      # if data.compressedImage
+      #   excess = 0
+      # else
+      #   excess = File.excessChars(data.length)
+
     # Forward to the next HDU
-    @view.seek(@view.tell() + data.length)
+    @view.seek(@view.tell() + data.length + excess)
     @checkEOF()
+    console.log data, @length, @view.tell()
     return data
 
   checkEOF: -> @eof = true if @view.tell() is @length
