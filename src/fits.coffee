@@ -190,6 +190,7 @@ class BinTable extends Data
     naxis2 = parseInt(header.getValue("NAXIS2"))
     @length           = naxis1 * naxis2
     @compressedImage  = header.contains("ZIMAGE")
+    @length += parseInt(header.getValue("PCOUNT")) if @compressedImage
 
 class HDU
 
@@ -258,7 +259,6 @@ class File
     # Forward to the next HDU
     @view.seek(@view.tell() + data.length + excess)
     @checkEOF()
-    console.log data, @length, @view.tell()
     return data
 
   checkEOF: -> @eof = true if @view.tell() is @length
