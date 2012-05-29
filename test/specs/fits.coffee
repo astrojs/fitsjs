@@ -13,7 +13,7 @@ describe "Fits", ->
   #     console.log fits
   # 
   #   xhr.send()
-  
+  # 
   # it 'can read both headers from a FITS binary table', ->
   #   xhr = new XMLHttpRequest()
   #   # xhr.open('GET', "http://0.0.0.0:9294/data/spec-0406-51869-0012.fits", true)
@@ -23,7 +23,11 @@ describe "Fits", ->
   #   xhr.onload = (e) ->
   #     fits = new FITS.File(xhr.response)
   #     console.log fits
-  # 
+  #     tbl = fits.hdus[1]['data']
+  #     table = []
+  #     for i in [1..tbl.rows]
+  #       table.push(tbl.getRow())
+  #     console.log table
   #   xhr.send()
 
   it 'can read both headers from a compressed FITS image', ->
@@ -35,8 +39,9 @@ describe "Fits", ->
       fits = new FITS.File(xhr.response)
       console.log fits
       tbl = fits.hdus[1]['data']
-      console.log tbl.begin
       console.log tbl.getRow()
-      console.log tbl.getRow()
-  
+      # table = []
+      # for i in [1..tbl.rows]
+      #   table.push(tbl.getRow())
+
     xhr.send()

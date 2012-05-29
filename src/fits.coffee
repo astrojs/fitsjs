@@ -201,8 +201,8 @@ class BinTable extends Data
     J: (view) ->
       return view.getInt32()
     K: (view) ->
-      highByte = Math.abs @view.getInt32()
-      lowByte = Math.abs @view.getInt32()
+      highByte = Math.abs view.getInt32()
+      lowByte = Math.abs view.getInt32()
       mod = highByte % 10
       factor = if mod then -1 else 1
       highByte -= mod
@@ -210,7 +210,7 @@ class BinTable extends Data
       console.warn "Something funky happens here when dealing with 64 bit integers.  Be wary!!!"
       return value
     A: (view) ->
-      console.log 'Character'
+      return view.getChar()
     E: (view) ->
       return view.getFloat32()
     D: (view) ->
@@ -235,51 +235,55 @@ class BinTable extends Data
     # Grab the column data types
     @fields = parseInt(header.getValue("TFIELDS"))
     @accessors = []
-    @dataTypes = []
 
     for i in [1..@fields]
       keyword = "TFORM#{i}"
       value = header.getValue(keyword)
       match = value.match(BinTable.arrayDescriptorPattern)
       if match?
-        @dataTypes.push(match[1])
-        accessor = (dt) =>
-          # TODO: Find out how to pass dataType
-          length  = @view.getInt32()
-          offset  = @view.getInt32()
-          @current = @view.tell()
-          # Troublesome
-          # TODO: Find a way to preserve the dataType in this function for each column
-          @view.seek(@begin + @tableLength + offset)
-          data = []
-          for i in [1..length]
-            data.push BinTable.dataAccessors[dt](@view)
-          @view.seek(@current)
-          return data
+        do =>
+          dataType = match[1]
+          accessor = =>
+            # TODO: Find out how to pass dataType
+            length  = @view.getInt32()
+            offset  = @view.getInt32()
+            @current = @view.tell()
+            # Troublesome
+            # TODO: Find a way to preserve the dataType in this function for each column
+            @view.seek(@begin + @tableLength + offset)
+            data = []
+            for i in [1..length]
+              data.push BinTable.dataAccessors[dataType](@view)
+            @view.seek(@current)
+            return data
+          @accessors.push(accessor)
       else
         match = value.match(BinTable.dataTypePattern)
         [r, dataType] = match[1..]
-        @dataTypes.push(dataType)
         r = if r then parseInt(r) else 0
         if r is 0
-          accessor = (dt) =>
-            data = BinTable.dataAccessors[dt](@view)
-            return data
+          do =>
+            dataType = match[2]
+            accessor = (dt) =>
+              data = BinTable.dataAccessors[dataType](@view)
+              return data
+            @accessors.push(accessor)
         else
-          accessor = (dt) =>
-            data = []
-            for i in [1..r]
-              data.push BinTable.dataAccessors[dt](@view)
-            return data
-
-      @accessors.push(accessor)
+          do =>
+            dataType = match[2]
+            accessor = =>
+              data = []
+              for i in [1..r]
+                data.push BinTable.dataAccessors[dataType](@view)
+              return data
+            @accessors.push(accessor)
 
   getRow: ->
     @current = @begin + @rowsRead * @rowByteSize
     @view.seek(@current)
     row = []
     for i in [0..@accessors.length-1]
-      data = @accessors[i](@dataTypes[i])
+      data = @accessors[i]()
       row.push(data)
     @rowsRead += 1
     return row
