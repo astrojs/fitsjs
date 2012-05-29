@@ -235,40 +235,41 @@ class BinTable extends Data
     # Grab the column data types
     @fields = parseInt(header.getValue("TFIELDS"))
     @accessors = []
+    @dataTypes = []
 
     for i in [1..@fields]
       keyword = "TFORM#{i}"
       value = header.getValue(keyword)
       match = value.match(BinTable.arrayDescriptorPattern)
       if match?
-        dataType = match[1]
-        accessor = =>
+        @dataTypes.push(match[1])
+        accessor = (dt) =>
           # TODO: Find out how to pass dataType
-          length = @view.getInt32()
-          offset = @view.getInt32()
+          length  = @view.getInt32()
+          offset  = @view.getInt32()
           @current = @view.tell()
-          console.log length, offset
-          
           # Troublesome
+          # TODO: Find a way to preserve the dataType in this function for each column
           @view.seek(@begin + @tableLength + offset)
           data = []
           for i in [1..length]
-            data.push BinTable.dataAccessors[dataType](@view)
+            data.push BinTable.dataAccessors[dt](@view)
           @view.seek(@current)
           return data
       else
         match = value.match(BinTable.dataTypePattern)
         [r, dataType] = match[1..]
+        @dataTypes.push(dataType)
         r = if r then parseInt(r) else 0
         if r is 0
-          accessor = =>
-            data = BinTable.dataAccessors[dataType](@view)
-            return data          
+          accessor = (dt) =>
+            data = BinTable.dataAccessors[dt](@view)
+            return data
         else
-          accessor = =>
+          accessor = (dt) =>
             data = []
             for i in [1..r]
-              data.push BinTable.dataAccessors[dataType](@view)
+              data.push BinTable.dataAccessors[dt](@view)
             return data
 
       @accessors.push(accessor)
@@ -277,8 +278,9 @@ class BinTable extends Data
     @current = @begin + @rowsRead * @rowByteSize
     @view.seek(@current)
     row = []
-    for accessor in @accessors
-      row.push(accessor())
+    for i in [0..@accessors.length-1]
+      data = @accessors[i](@dataTypes[i])
+      row.push(data)
     @rowsRead += 1
     return row
 
