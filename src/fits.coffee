@@ -141,12 +141,13 @@ class Header
 
 class Data
 
-  constructor: (begin, header) ->
-    @begin = begin
+  constructor: (view, header) ->
+    @view   = view
+    @begin  = @current = view.tell()
 
 class Image extends Data
 
-    constructor: (begin, header) ->
+    constructor: (view, header) ->
       super
 
       naxis   = parseInt(header.getValue("NAXIS"))
@@ -182,15 +183,104 @@ class Image extends Data
           throw "FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, -32, -64]"
 
 class BinTable extends Data
-  
-  constructor: (begin, header) ->
+  @requiredKeywords = ["TFORM"]
+  @optionalKeywords = ["TTYPE", "TUNIT", "TSCAL"]
+  @dataTypePattern = /([0-9]*)([L|X|B|I|J|K|A|E|D|C|M])/
+  @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\(([0-9]*)\)/
+
+  @dataAccessors =
+    L: (view) ->
+      value = if view.getInt8() is 84 then true else false
+      return value
+    X: (view) ->
+      throw "Data type not yet implemented"
+    B: (view) ->
+      return view.getUint8()
+    I: (view) ->
+      return view.getInt16()
+    J: (view) ->
+      return view.getInt32()
+    K: (view) ->
+      highByte = Math.abs @view.getInt32()
+      lowByte = Math.abs @view.getInt32()
+      mod = highByte % 10
+      factor = if mod then -1 else 1
+      highByte -= mod
+      value = factor * ((highByte << 32) | lowByte)
+      console.warn "Something funky happens here when dealing with 64 bit integers.  Be wary!!!"
+      return value
+    A: (view) ->
+      console.log 'Character'
+    E: (view) ->
+      return view.getFloat32()
+    D: (view) ->
+      return view.getFloat64()
+    C: (view) ->
+      return [view.getFloat32(), view.getFloat32()]
+    M: (view) ->
+      return [view.getFloat64(), view.getFloat64()]
+      
+  constructor: (view, header) ->
     super
 
-    naxis1 = parseInt(header.getValue("NAXIS1"))
-    naxis2 = parseInt(header.getValue("NAXIS2"))
-    @length           = naxis1 * naxis2
+    @rowByteSize  = parseInt(header.getValue("NAXIS1"))
+    @rows         = parseInt(header.getValue("NAXIS2"))
+    @length       = @tableLength = @rowByteSize * @rows
     @compressedImage  = header.contains("ZIMAGE")
     @length += parseInt(header.getValue("PCOUNT")) if @compressedImage
+    @rowsRead = 0
+    
+    # Assuming the header has been verified
+    # TODO: Verify the FITS Binary Table header in the Header class
+    # Grab the column data types
+    @fields = parseInt(header.getValue("TFIELDS"))
+    @accessors = []
+
+    for i in [1..@fields]
+      keyword = "TFORM#{i}"
+      value = header.getValue(keyword)
+      match = value.match(BinTable.arrayDescriptorPattern)
+      if match?
+        dataType = match[1]
+        accessor = =>
+          # TODO: Find out how to pass dataType
+          length = @view.getInt32()
+          offset = @view.getInt32()
+          @current = @view.tell()
+          console.log length, offset
+          
+          # Troublesome
+          @view.seek(@begin + @tableLength + offset)
+          data = []
+          for i in [1..length]
+            data.push BinTable.dataAccessors[dataType](@view)
+          @view.seek(@current)
+          return data
+      else
+        match = value.match(BinTable.dataTypePattern)
+        [r, dataType] = match[1..]
+        r = if r then parseInt(r) else 0
+        if r is 0
+          accessor = =>
+            data = BinTable.dataAccessors[dataType](@view)
+            return data          
+        else
+          accessor = =>
+            data = []
+            for i in [1..r]
+              data.push BinTable.dataAccessors[dataType](@view)
+            return data
+
+      @accessors.push(accessor)
+
+  getRow: ->
+    @current = @begin + @rowsRead * @rowByteSize
+    @view.seek(@current)
+    row = []
+    for accessor in @accessors
+      row.push(accessor())
+    @rowsRead += 1
+    return row
 
 class HDU
 
@@ -246,10 +336,10 @@ class File
   readData: (header) ->
     return unless header.hasDataUnit()
     if header.isPrimary()
-      data = new Image(@view.tell(), header)
+      data = new Image(@view, header)
       excess = 0
     else
-      data = new BinTable(@view.tell(), header)
+      data = new BinTable(@view, header)
       excess = File.excessChars(data.length)
       # if data.compressedImage
       #   excess = 0
