@@ -16,7 +16,7 @@ describe "Fits", ->
     
   it 'can parse key/values', ->
     xhr = new XMLHttpRequest()
-    xhr.open('GET', "http://0.0.0.0:9294/data/m101.fits", true)
+    xhr.open('GET', "http://0.0.0.0:9294/data/L1448_13CO.fits", true)
     xhr.responseType = 'arraybuffer'
   
     xhr.onload = (e) ->
@@ -24,8 +24,7 @@ describe "Fits", ->
       console.log fits
       fits.hdus[0].data.initArray()
       
-      for i in [0..fits.hdus[0].header.getValue("NAXIS2") - 1]
-        fits.hdus[0].data.getRow()
+      fits.hdus[0].data.getFrame()
       console.log fits.hdus[0].data.data
       
     xhr.send()

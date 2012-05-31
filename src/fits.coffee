@@ -306,6 +306,8 @@ class Image extends Data
     for i in [0..rowLength - 1]
       @data[rowLength * @rowsRead + i] = @accessor()
     @rowsRead += 1
+  
+  getFrame: -> @getRow() for i in [0..@naxis[1] - 1]
 
 class Table extends Data
   
