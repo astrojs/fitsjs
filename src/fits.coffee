@@ -1,25 +1,31 @@
 require('jDataView/src/jdataview')
 
-# Class for storing and validating FITS headers
-class Header
-  @keywordPattern = /([A-Z0-9]+)\s*=?\s*(.*)/
+# Module borrowed from Spine
+class Module
+  @include: (obj) ->
+    throw('include(obj) requires obj') unless obj
+    for key, value of obj when key not in moduleKeywords
+      @::[key] = value
+    obj.included?.apply(@)
+    this
+
+  @extend: (obj) ->
+    throw('extend(obj) requires obj') unless obj
+    for key, value of obj when key not in moduleKeywords
+      @[key] = value
+    obj.extended?.apply(@)
+    this
+
+
+# Read a FITS header
+class Header extends Module
+  @keywordPattern = /([\w_]+)\s*=?\s*(.*)/
   @nonStringPattern = /([^\/]*)\s*\/*(.*)/
   @stringPattern = /'(.*)'\s*\/*(.*)/
   @principalMandatoryKeywords = ['BITPIX', 'NAXIS', 'END']
   @extensionKeywords = ['BITPIX', 'NAXIS', 'PCOUNT', 'GCOUNT']
-  @compressedImageKeywords = ['ZIMAGE', 'ZCMPTYPE', 'ZBITPIX', 'ZNAXIS', 'ZNAXISn']
-  @compressedImageKeywordsOptional =
-    ['ZTILEn', 'ZNAMEn', 'ZVALn', 'ZMASKCMP', 'ZSIMPLE', 'ZTENSION', 'ZEXTEND', 'ZBLOCKED', 'ZPCOUNT', 'ZGCOUNT', 'ZHECKSUM', 'ZDATASUM', 'ZQUANTIZ']
+  @arrayKeywordPattern = /^((?:NAXIS)|(?:PSCAL)|(?:PZERO)|(?:TBCOL)|(?:TSCAL)|(?:TZERO)|(?:ZNAXIS)|(?:ZTILE)|(?:CRPIX)|(?:CRVAL)|(?:CDELT)|(?:CROTA)|(?:PC)|(?:CD))(\d+)_*\d*/
   
-  @arrayKeywords = ['BSCALE', 'BZERO', 'BUNIT', 'BLANK', 'CTYPEn', 'CRPIXn', 'CRVALn', 'CDELTn', 'CROTAn', 'DATAMAX', 'DATAMIN']
-  @otherReservedKeywords = [
-    'DATE', 'ORIGIN', 'BLOCKED',
-    'DATE-OBS', 'TELESCOP', 'INSTRUME', 'OBSERVER', 'OBJECT', 'EQUINOX', 'EPOCH',
-    'AUTHOR', 'REFERENC',
-    'COMMENT', 'HISTORY',
-    'EXTNAME', 'EXTVER', 'EXTLEVEL'
-  ]
-
   constructor: ->
     # e.g. [index, value, comment]
     @cards      = {}
@@ -59,10 +65,7 @@ class Header
 
   # Set a key with a passed value and optional comment
   set: (key, value, comment) ->
-    if comment
-      @cards[key] = [@cardIndex, value, comment]
-    else
-      @cards[key] = [@cardIndex, value]
+    @cards[key] = if comment then [@cardIndex, value, comment] else [@cardIndex, value]
     @cardIndex += 1
 
   # Set comment from the COMMENT keyword
@@ -82,6 +85,60 @@ class Header
   # Checks if the header contains a specified keyword
   contains: (keyword) -> return @cards.hasOwnProperty(keyword)
 
+  @parseNonNegativeInt: (value) ->
+    value = parseInt(value)
+    throw "Value must be an integer" if isNaN(value)
+    throw "Value #{value} must be non-negative" if value < 0
+    return value
+  
+  @parsePositiveInt: (value) ->
+    value = parseInt(value)
+    throw "Value must be an integer" if isNaN(value)
+    throw "Value must be positive" if value < 1
+    return value
+
+  @parseDate: (value) -> value = new Date(value)
+
+  @parseLogical: (value) -> return if value is "T" then true else false
+
+  @reservedKeywordFormat =
+    SIMPLE: Header.parseLogical
+    BITPIX: parseInt
+    NAXIS: Header.parseNonNegativeInt
+    PCOUNT: parseInt
+    GCOUNT: parseInt
+    DATE: Header.parseDate
+    EXTEND: Header.parseLogical
+    'DATE-OBS': Header.parseDate
+    BSCALE: parseFloat
+    BZERO: parseFloat
+    DATAMAX: parseFloat
+    DATAMIN: parseFloat
+    EXTVER: parseInt
+    EXTLEVEL: parseInt
+    PSCAL: parseFloat
+    PZERO: parseFloat
+    TFIELDS: Header.parseNonNegativeInt
+    TBCOL: Header.parsePositiveInt
+    TSCAL: parseFloat
+    TZERO: parseFloat
+    THEAP: parseInt
+    ZIMAGE: Header.parseLogical
+    ZBITPIX: parseInt
+    ZNAXIS: Header.parseNonNegativeInt
+    ZTILE: Header.parsePositiveInt
+    ZSIMPLE: Header.parseLogical
+    ZEXTEND: Header.parseLogical
+    ZPCOUNT: parseInt
+    ZGCOUNT: parseInt
+    WCSAXES: parseInt
+    CRPIX: parseFloat
+    CRVAL: parseFloat
+    CDELT: parseFloat
+    CROTA: parseFloat
+    PC: parseFloat
+    CD: parseFloat
+  
   # Read a card from the header
   readCard: (line) ->
     match = line.match(Header.keywordPattern)
@@ -92,13 +149,26 @@ class Header
       match = value.match(Header.nonStringPattern)
     [value, comment] = match[1..]
     
+    # Trim the value and comment
+    value = value.trim()
+    comment = comment.trim()
+    
+    # Check keyword again list of required and reserved keywords and apply formatting
+    value = Header.reservedKeywordFormat[key](value) if Header.reservedKeywordFormat.hasOwnProperty(key)
+    
+    # Check for array keywords (e.g. NAXISn, PSCALn, PZEROn, etc)
+    arrayKeywordMatch = key.match(Header.arrayKeywordPattern)
+    if arrayKeywordMatch?
+      keyMatch = arrayKeywordMatch[1]
+      value = Header.reservedKeywordFormat[keyMatch](value)
+    
     switch key
       when "COMMENT"
-        @setComment(value.trim())
+        @setComment(value)
       when "HISTORY"
-        @setHistory(value.trim())
+        @setHistory(value)
       else
-        @set(key, value.trim(), comment.trim())
+        @set(key, value, comment)
 
   verify: ->
     if @cards.hasOwnProperty("SIMPLE")
@@ -108,6 +178,7 @@ class Header
     else
       type = "XTENSION"
       @extension = true
+      @extensionType = @getValue("XTENSION")
       keywords = Header.extensionKeywords
 
     cardIndex = 0
@@ -126,61 +197,121 @@ class Header
 
       if keyword is "NAXIS"
         axisIndex = 1
-        while axisIndex <= parseInt(@getValue("NAXIS"))
+        while axisIndex <= @getValue("NAXIS")
           naxisKeyword = keyword + axisIndex
           throw "Header does not contain the required keyword #{naxisKeyword}" unless @cards.hasOwnProperty(naxisKeyword)
           console.warn("#{naxisKeyword} is not in the correct order") unless @getIndex(naxisKeyword) is cardIndex
           cardIndex += 1
           axisIndex += 1
 
+  # Verifies the header according to the primary header standards
+  # @primaryRequiredKeywords = ["SIMPLE", "BITPIX", "NAXIS", "END"]
+  @primaryRequiredKeywords = [
+    {keyword: "SIMPLE", values: ["T", "F"], dataType: "boolean", position: 0},
+    {keyword: "BITPIX", values: [8, 16, 32, 64, -32, -64], dataType: "integer", position: 1},
+    {keyword: "NAXIS", dataType: "integer", position: 2},
+    {keyword: "END"}
+  ]
+  @verifyPrimary: (header) ->
+    for keyDef in Header.primaryRequiredKeywords
+      keyword   = keyDef['keyword']
+      values    = keyDef['values']
+      dataType  = keyDef['dataType']
+      position  = keyDef['position']
+
+      throw "Keyword #{keyword} is required" unless header.contains(keyword)
+      
+      if values?
+        throw "Inappropriate value for #{keyword}" unless header.getValue(keyword) in values
+        
+
   hasDataUnit: ->
-    return if parseInt(@getValue("NAXIS")) is 0 then false else true
+    return if @getValue("NAXIS") is 0 then false else true
 
   isPrimary: -> return @primary
   isExtension: -> return @extension
 
-class Data
+# Base class for FITS data units (e.g. Primary, BINTABLE, TABLE, IMAGE).  Derived classes must
+# define @length describing the byte length of the data unit
+class Data extends Module
 
   constructor: (view, header) ->
     @view   = view
     @begin  = @current = view.tell()
 
+# Image represents a standard image stored in the data unit of a FITS file
 class Image extends Data
 
-    constructor: (view, header) ->
-      super
+  constructor: (view, header) ->
+    super
 
-      naxis   = parseInt(header.getValue("NAXIS"))
-      bitpix  = parseInt(header.getValue("BITPIX"))
+    naxis   = header.getValue("NAXIS")
+    bitpix  = header.getValue("BITPIX")
+    @naxis = []
+    @rowByteSize = header.getValue("NAXIS1") * Math.abs(bitpix) / 8
+    @rowsRead = 0
 
-      i = 1
-      numberOfPixels = 1
-      while i <= naxis
-        numberOfPixels *= parseInt(header.getValue("NAXIS#{i}"))
-        i += 1
-      @length = numberOfPixels * Math.abs(bitpix) / 8
+    i = 1
+    while i <= naxis
+      @naxis.push header.getValue("NAXIS#{i}")
+      i += 1
 
-      # Determine which function is used to read the image data
-      # if bitpix < 0
-      #   @accessor = "get" + "#{@bitpix}".replace("-", "Float")
-      # else if bitpix > 8
-      #   @accessor = "get" + "Int#{@bitpix}"
-      # else
-      #   @accessor = "get" + "Uint#{@bitpix}"
+    @length   = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
+    @data     = undefined
+    
+    # Define a function to read the image data
+    switch bitpix
+      when 8
+        @arrayType  = Uint8Array
+        @accessor   = =>
+          return @view.getUint8()
+      when 16
+        @arrayType  = Int16Array
+        @accessor   = =>
+          return @view.getInt16()
+      when 32
+        @arrayType  = Int32Array
+        @accessor   = =>
+          return @view.getInt32()
+      when 64
+        @arrayType  = Int32Array
+        @accessor   = =>
+          console.warn "Something funky happens here when dealing with 64 bit integers.  Be wary!!!"
+          highByte = Math.abs @view.getInt32()
+          lowByte = Math.abs @view.getInt32()
+          mod = highByte % 10
+          factor = if mod then -1 else 1
+          highByte -= mod
+          value = factor * ((highByte << 32) | lowByte)
+          return value
+      when -32
+        @arrayType  = Float32Array
+        @accessor   = =>
+          return @view.getFloat32()
+      when -64
+        @arrayType  = Float64Array
+        @accessor   = =>
+          return @view.getFloat64()
+      else
+        throw "FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, 64, -32, -64]"
 
-      switch bitpix
-        when 8
-          @accessor = 'getUint8'
-        when 16
-          @accessor = 'getInt16'
-        when 32
-          @accessor = 'getInt32'
-        when -32
-          @accessor = 'getFloat32'
-        when -64
-          @accessor = 'getFloat64'
-        else
-          throw "FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, -32, -64]"
+  # Initializes a 1D array for storing image pixels
+  initArray: -> @data = new @arrayType(@naxis.reduce( (a, b) -> a * b))
+
+  # The method initArray must be called before requesting any rows
+  getRow: ->
+    @current = @begin + @rowsRead * @rowByteSize
+    rowLength = @naxis[0]
+    @view.seek(@current)
+    for i in [0..rowLength - 1]
+      @data[rowLength * @rowsRead + i] = @accessor()
+    @rowsRead += 1
+
+class Table extends Data
+  
+  constructor: (view, header) ->
+    super
+    @length = header.getValue("NAXIS1") * header.getValue("NAXIS2")
 
 class BinTable extends Data
   @requiredKeywords = ["TFORM"]
@@ -224,19 +355,19 @@ class BinTable extends Data
   constructor: (view, header) ->
     super
 
-    @rowByteSize  = parseInt(header.getValue("NAXIS1"))
-    @rows         = parseInt(header.getValue("NAXIS2"))
+    @rowByteSize  = header.getValue("NAXIS1")
+    @rows         = header.getValue("NAXIS2")
     @length       = @tableLength = @rowByteSize * @rows
     @compressedImage  = header.contains("ZIMAGE")
     @rowsRead = 0
 
     if @compressedImage
-      @length += parseInt(header.getValue("PCOUNT"))
+      @length += header.getValue("PCOUNT")
       @cmptype = header.getValue("ZCMPTYPE")
       @bitpix = header.getValue("ZBITPIX")
       @naxis = header.getValue("ZNAXIS")
-      @nx = if header.contains("ZTILE1") then parseInt(header.getValue("ZTILE1")) else parseInt(header.getValue("ZNAXIS1"))
-      @bzero = if header.contains("BZERO") then parseInt(header.getValue("BZERO")) else 0
+      @nx = if header.contains("ZTILE1") then parseInt(header.getValue("ZTILE1")) else header.getValue("ZNAXIS1")
+      @bzero = if header.contains("BZERO") then header.getValue("BZERO") else 0
       
       if @cmptype is "RICE_1"
         i = 1
@@ -313,7 +444,9 @@ class BinTable extends Data
       data = @accessors[i]()
       row.push(data)
     @rowsRead += 1
-    console.log @riceDecompressShort(data)
+    
+    if @compressedImage
+      console.log @riceDecompressShort(data)
     return row
     
   riceDecompressShort: (arr) ->
@@ -524,7 +657,7 @@ class HDU
 class File
   @LINEWIDTH   = 80
   @BLOCKLENGTH = 2880
-  @BITPIX = [8, 16, 32, -32, -64]
+  @BITPIX = [8, 16, 32, 64, -32, -64]
 
   constructor: (buffer) ->
     @length     = buffer.byteLength
@@ -542,8 +675,7 @@ class File
   # ##Class Methods
 
   # Determine the number of characters following a header or data unit
-  @excessChars: (length) ->
-    return File.BLOCKLENGTH - (length) % File.BLOCKLENGTH
+  @excessBytes: (length) -> return File.BLOCKLENGTH - (length) % File.BLOCKLENGTH
 
   # ##Instance Methods
 
@@ -555,11 +687,14 @@ class File
       line = @view.getString(File.LINEWIDTH)
       linesRead += 1
       header.readCard(line)
-      break if line[0..2] is "END"
+      break if line[0..3] is "END "
+    
+    # Check if header is primary
+    # Header.verifyPrimary(header) if @hdus.length is 0
     header.verify()
 
-    # Seek to the next relavant character in file
-    excess = File.excessChars(linesRead * File.LINEWIDTH)
+    # Seek to the next relavant block in file
+    excess = File.excessBytes(linesRead * File.LINEWIDTH)
     @view.seek(@view.tell() + excess)
     @checkEOF()
 
@@ -570,14 +705,12 @@ class File
     return unless header.hasDataUnit()
     if header.isPrimary()
       data = new Image(@view, header)
-      excess = 0
-    else
-      data = new BinTable(@view, header)
-      excess = File.excessChars(data.length)
-      # if data.compressedImage
-      #   excess = 0
-      # else
-      #   excess = File.excessChars(data.length)
+    else if header.isExtension()
+      if header.extensionType is "BINTABLE"
+        data = new BinTable(@view, header)
+      else if header.extensionType is "TABLE"
+        data = new Table(@view, header)
+    excess = File.excessBytes(data.length)
 
     # Forward to the next HDU
     @view.seek(@view.tell() + data.length + excess)
@@ -594,4 +727,5 @@ FITS.File       = File
 FITS.Header     = Header
 FITS.Data       = Data
 FITS.Image      = Image
+FITS.Table      = Table
 FITS.BinTable   = BinTable
