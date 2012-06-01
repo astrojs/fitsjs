@@ -14,20 +14,20 @@ describe "Fits", ->
   # 
   #   xhr.send()
     
-  it 'can parse key/values', ->
-    xhr = new XMLHttpRequest()
-    xhr.open('GET', "http://0.0.0.0:9294/data/L1448_13CO.fits", true)
-    xhr.responseType = 'arraybuffer'
-  
-    xhr.onload = (e) ->
-      fits = new FITS.File(xhr.response)
-      console.log fits
-      fits.hdus[0].data.initArray()
-      
-      fits.hdus[0].data.getFrame()
-      console.log fits.hdus[0].data.data
-      
-    xhr.send()
+  # it 'can parse key/values', ->
+  #   xhr = new XMLHttpRequest()
+  #   xhr.open('GET', "http://0.0.0.0:9294/data/L1448_13CO.fits", true)
+  #   xhr.responseType = 'arraybuffer'
+  # 
+  #   xhr.onload = (e) ->
+  #     fits = new FITS.File(xhr.response)
+  #     console.log fits
+  #     fits.hdus[0].data.initArray()
+  #     
+  #     fits.hdus[0].data.getFrame()
+  #     console.log fits.hdus[0].data.data
+  #     
+  #   xhr.send()
 
   # it 'can read both headers from a FITS binary table', ->
   #   xhr = new XMLHttpRequest()

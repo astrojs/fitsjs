@@ -3,6 +3,10 @@
 <head>
   <title>Jasmine Test Runner</title>
   <link rel="stylesheet" type="text/css" href="/test/lib/jasmine.css">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="webgl-utils.js"></script>
+  <script type="text/javascript" src="webgl-test.js"></script>
+  
   <script type="text/javascript" src="/test/lib/jasmine.js"></script>
   <script type="text/javascript" src="/test/lib/jasmine.html.js"></script>
 
@@ -11,6 +15,77 @@
   <script type="text/javascript" charset="utf-8">
     for(var key in specs.modules) specs(key);
   </script>
+
+  <!-- vertex shader -->
+  <script id="2d-vertex-shader" type="x-shader/x-vertex">
+  attribute vec2 a_position;
+  attribute vec2 a_texCoord;
+
+  uniform vec2 u_resolution;
+
+  varying vec2 v_texCoord;
+
+  void main() {
+    // convert the rectangle from pixels to 0.0 to 1.0
+    vec2 zeroToOne = a_position / u_resolution;
+
+    // convert from 0->1 to 0->2
+    vec2 zeroToTwo = zeroToOne * 2.0;
+
+    // convert from 0->2 to -1->+1 (clipspace)
+    vec2 clipSpace = zeroToTwo - 1.0;
+
+    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+    // pass the texCoord to the fragment shader
+    // The GPU will interpolate this value between points.
+    v_texCoord = a_texCoord;
+  }
+  </script>
+
+  <!-- fragment shader -->
+  <script id="2d-fragment-shader" type="x-shader/x-fragment">
+  precision mediump float;
+
+  // our texture
+  uniform sampler2D u_image;
+  uniform vec2 u_textureSize;
+  uniform float u_kernel[9];
+
+  // the texCoords passed in from the vertex shader.
+  varying vec2 v_texCoord;
+
+  void main() {
+    vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
+    vec4 colorSum =
+      texture2D(u_image, v_texCoord + onePixel * vec2(-1, -1)) * u_kernel[0] +
+      texture2D(u_image, v_texCoord + onePixel * vec2( 0, -1)) * u_kernel[1] +
+      texture2D(u_image, v_texCoord + onePixel * vec2( 1, -1)) * u_kernel[2] +
+      texture2D(u_image, v_texCoord + onePixel * vec2(-1,  0)) * u_kernel[3] +
+      texture2D(u_image, v_texCoord + onePixel * vec2( 0,  0)) * u_kernel[4] +
+      texture2D(u_image, v_texCoord + onePixel * vec2( 1,  0)) * u_kernel[5] +
+      texture2D(u_image, v_texCoord + onePixel * vec2(-1,  1)) * u_kernel[6] +
+      texture2D(u_image, v_texCoord + onePixel * vec2( 0,  1)) * u_kernel[7] +
+      texture2D(u_image, v_texCoord + onePixel * vec2( 1,  1)) * u_kernel[8] ;
+    float kernelWeight =
+      u_kernel[0] +
+      u_kernel[1] +
+      u_kernel[2] +
+      u_kernel[3] +
+      u_kernel[4] +
+      u_kernel[5] +
+      u_kernel[6] +
+      u_kernel[7] +
+      u_kernel[8] ;
+
+    if (kernelWeight <= 0.0) {
+      kernelWeight = 1.0;
+    }
+
+    gl_FragColor = vec4((colorSum / kernelWeight).rgb, 1);
+  }
+  </script>
+
 </head>
 <body>
   <script type="text/javascript">
@@ -19,5 +94,14 @@
       jasmine.getEnv().execute();
     };
   </script>
+  
+  <h2>We be testing!</h2>
+  <canvas id="fitsbaby"></canvas>
+  <div id="uiContainer">
+    <div id="ui">
+      <input id="min-slider" type="range" min="0" max="255" value="0" />
+      <input id="max-slider" type="range" min="0" max="255" value="0" />
+    </div>
+  </div>
 </body>
 </html>
