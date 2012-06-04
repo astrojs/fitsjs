@@ -1,3 +1,5 @@
+FITS = @FITS or require('fits')
+
 # # Decompress
 
 # Module will contain various decompression algorithms used in compressing FITS images.  Currently only

@@ -1,4 +1,7 @@
 require('jDataView/src/jdataview')
+Decompress = require('fits.decompress')
+
+moduleKeywords = ['included', 'extended']
 
 # Module borrowed from Spine
 class Module
@@ -20,8 +23,8 @@ class Header
   @keywordPattern = /([\w_]+)\s*=?\s*(.*)/
   @nonStringPattern = /([^\/]*)\s*\/*(.*)/
   @stringPattern = /'(.*)'\s*\/*(.*)/
-  @principalMandatoryKeywords = ['BITPIX', 'NAXIS', 'END']
-  @extensionKeywords = ['BITPIX', 'NAXIS', 'PCOUNT', 'GCOUNT']
+  @primaryMandatoryKeywords = ['BITPIX', 'NAXIS', 'END']
+  @tableMandatoryKeywords = ['BITPIX', 'NAXIS', 'PCOUNT', 'GCOUNT', 'TFIELDS']
   @arrayKeywordPattern = /^((?:NAXIS)|(?:PSCAL)|(?:PZERO)|(?:TBCOL)|(?:TSCAL)|(?:TZERO)|(?:ZNAXIS)|(?:ZTILE)|(?:CRPIX)|(?:CRVAL)|(?:CDELT)|(?:CROTA)|(?:PC)|(?:CD))(\d+)_*\d*/
 
   constructor: ->
@@ -166,38 +169,95 @@ class Header
         @.__defineGetter__(key, -> return @cards[key][1])
 
   verify: ->
+    cardIndex = 0
     if @contains("SIMPLE")
-      type = "SIMPLE"
+      # Verify primary header
       @primary = true
-      keywords = Header.principalMandatoryKeywords
-    else
-      type = "XTENSION"
+      
+      # Check that SIMPLE is the first keyword
+      unless @getIndex("SIMPLE") is cardIndex
+        console.warn("SIMPLE should be the first keyword in the header")
+        cardIndex -= 1
+      cardIndex += 1
+      
+      # Check the other keywords
+      for keyword in Header.primaryMandatoryKeywords
+        throw "Header does not contain the required keyword #{keyword}" unless @contains(keyword)
+        if keyword is "END"
+          console.warn("#{keyword} is not in the correct order") unless @getIndex(keyword) is @cardIndex - 1
+        else
+          console.warn("#{keyword} is not in the correct order") unless @getIndex(keyword) is cardIndex
+        cardIndex += 1
+
+        # Check that all NAXISn keywords are present
+        if keyword is "NAXIS"
+          axisIndex = 1
+          while axisIndex <= @["NAXIS"]
+            naxisKeyword = keyword + axisIndex
+            throw "Header does not contain the required keyword #{naxisKeyword}" unless @contains(naxisKeyword)
+            console.warn("#{naxisKeyword} is not in the correct order") unless @getIndex(naxisKeyword) is cardIndex
+            cardIndex += 1
+            axisIndex += 1
+        
+    else if @contains("XTENSION")
       @extension = true
       @extensionType = @["XTENSION"]
-      keywords = Header.extensionKeywords
-
-    cardIndex = 0
-    unless @getIndex(type) is cardIndex
-      console.warn("#{type} should be the first keyword in the header")
-      cardIndex -= 1
-    cardIndex += 1
-
-    for keyword in keywords
-      throw "Header does not contain the required keyword #{keyword}" unless @contains(keyword)
-      if keyword is "END"
-        console.warn("#{keyword} is not in the correct order") unless @getIndex(keyword) is @cardIndex - 1
-      else
-        console.warn("#{keyword} is not in the correct order") unless @getIndex(keyword) is cardIndex
+      
+      # Check that XTENSION is the first keyword
+      unless @getIndex("XTENSION") is cardIndex
+        console.warn("XTENSION should be the first keyword in the header")
+        cardIndex -= 1
       cardIndex += 1
+      
+      # Checking BITPIX
+      throw "Header does not contain the required keyword BITPIX" unless @contains("BITPIX")
+      console.warm("BITPIX is not in the correct order") unless @getIndex("BITPIX") is cardIndex
+      throw "BITPIX is not a valid value" unless @["BITPIX"] is 8
+      cardIndex += 1
+      
+      if @extensionType is "TABLE"
+        # Verify ASCII table
 
-      if keyword is "NAXIS"
+        # Checking NAXIS
+        throw "Header does not contain the required keyword NAXIS" unless @contains("NAXIS")
+        console.warm("NAXIS is not in the correct order") unless @getIndex("NAXIS") is cardIndex
+        throw "NAXIS is not a valid value" unless @["NAXIS"] is 2
+        cardIndex += 1
+        
         axisIndex = 1
         while axisIndex <= @["NAXIS"]
-          naxisKeyword = keyword + axisIndex
+          naxisKeyword = "NAXIS" + axisIndex
           throw "Header does not contain the required keyword #{naxisKeyword}" unless @contains(naxisKeyword)
           console.warn("#{naxisKeyword} is not in the correct order") unless @getIndex(naxisKeyword) is cardIndex
           cardIndex += 1
           axisIndex += 1
+
+        throw "Header does not contain the required keyword PCOUNT" unless @contains("PCOUNT")
+        console.warm("PCOUNT is not in the correct order") unless @getIndex("PCOUNT") is cardIndex
+        throw "PCOUNT is not a valid value" unless @["PCOUNT"] is 0
+        cardIndex += 1
+        
+        throw "Header does not contain the required keyword GCOUNT" unless @contains("GCOUNT")
+        console.warm("GCOUNT is not in the correct order") unless @getIndex("GCOUNT") is cardIndex
+        throw "GCOUNT is not a valid value" unless @["GCOUNT"] is 1
+        cardIndex += 1
+        
+        throw "Header does not contain the required keyword TFIELDS" unless @contains("TFIELDS")
+        console.warm("TFIELDS is not in the correct order") unless @getIndex("TFIELDS") is cardIndex
+        throw "TFIELDS is not a valid value" unless @["GCOUNT"] in [0..999]
+        cardIndex += 1
+        
+      else if @extensionType is "BINTABLE"
+        # Verify BINTABLE
+        
+        
+        if @contains("ZIMAGE")
+          # Verify Compressed Image
+          console.log 'zimage'
+
+
+
+
 
   # Verifies the header according to the primary header standards
   @primaryRequiredKeywords = [
@@ -217,7 +277,6 @@ class Header
 
       if values?
         throw "Inappropriate value for #{keyword}" unless header[keyword] in values
-
 
   hasDataUnit: -> return if @["NAXIS"] is 0 then false else true
   isPrimary: -> return @primary
@@ -312,7 +371,8 @@ class BinTable extends Data
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
   @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
   @compressedImageKeywords = ["ZIMAGE", "ZCMPTYPE", "ZBITPIX", "ZNAXIS"]
-
+  @extend Decompress
+  
   @dataAccessors =
     L: (view) ->
       value = if view.getInt8() is 84 then true else false
@@ -439,7 +499,7 @@ class BinTable extends Data
     @rowsRead += 1
     
     if @compressedImage
-      
+      # array, arrayLen, blocksize, bytepix, pixels, nx
       console.log @riceDecompressShort(data)
     return row
     
