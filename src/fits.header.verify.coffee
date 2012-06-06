@@ -137,4 +137,51 @@ VerifyCards =
       index = arguments[2]
       @verifyBetween(key, index, 0, @["TFIELDS"])
     
+    ZIMAGE: (args...) ->
+      key = "ZIMAGE"
+      value = arguments[0]
+      return if value is "T" then true else false
+    
+    ZCMPTYPE: (args...) ->
+      key = "ZCMPTYPE"
+      value = arguments[0]
+      throw "#{key} value #{value} is not permitted" unless value in ["GZIP_1", "RICE_1", "PLIO_1", "HCOMPRESS_1"]
+      throw "Compress type #{value} is not yet implement" unless value in ["RICE_1"]
+      return value
+    
+    ZBITPIX: (args...) ->
+      key = "ZBITPIX"
+      value = @verifyInteger(key, arguments[0])
+      throw "#{key} value #{value} is not permitted" unless value in [8, 16, 32, 64, -32, -64]
+      return parseInt(value)
+      
+    ZNAXIS: (args...) ->
+      key = "ZNAXIS"
+      value = arguments[0]
+      array = arguments[1]
+      value = @verifyInteger(key, value)
+      
+      @verifyBetween(key, value, 0, 999) unless array
+      
+      return value
+    
+    ZTILE: (args...) ->
+      key = "ZTILE"
+      value = @verifyInteger(key, arguments[0])
+      return value
+    
+    ZSIMPLE: (args...) ->
+      return if arguments[0] is "T" then true else false
+    
+    ZPCOUNT: (args...) ->
+      key = "ZPCOUNT"
+      value = arguments[0]
+      return @verifyInteger(key, value)
+    
+    ZGCOUNT: (args...) ->
+      key = "ZGCOUNT"
+      value = arguments[0]
+      return @verifyInteger(key, value)
+    
+    
 module.exports = VerifyCards

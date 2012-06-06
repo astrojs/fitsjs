@@ -43,26 +43,34 @@ function main() {
         maxOrig = value;
     }
     
-    render(data, width, height, minOrig, maxOrig);
+    render(data, width, height, minOrig, maxOrig, 0);
     
     $("#min-slider").change(function() {
       min = $("#min-slider").val();
       max = $("#max-slider").val();
+      stretch = $("#stretch").val();
       
       min = toOriginal(min, minOrig, maxOrig);
-      render(data, width, height, min, maxOrig);
+      render(data, width, height, min, maxOrig, stretch);
       
     });
 
     $("#max-slider").change(function() {
       min = $("#min-slider").val();
       max = $("#max-slider").val();
-
+      stretch = $("#stretch").val();
+      
       max = toOriginal(max, minOrig, maxOrig);
-      render(data, width, height, minOrig, max);
+      render(data, width, height, minOrig, max, stretch);
     });
     
-    
+    $("#stretch").change(function() {
+      min = $("#min-slider").val();
+      max = $("#max-slider").val();
+      stretch = $("#stretch").val();
+      
+      render(data, width, height, minOrig, max, stretch);
+    });
     
   }
   xhr.send();
@@ -72,11 +80,32 @@ function toOriginal(value, min, max) {
   return value * (max - min) / 255 + min;
 }
 
-function arcsinh(value) {
+function linear (value) {
+  return value;
+}
+
+function log10 (value) {
+  return Math.log(value) / Math.log(10);
+}
+
+function logarithm (value) {
+  midpoint = 0.05
+  return log10(value / midpoint + 1.) / log10(1. / midpoint + 1.);
+}
+
+function sqrt (value) {
+  return Math.sqrt(value);
+}
+
+function arcsinh (value) {
   return Math.log(value + Math.sqrt(1 + value * value));
 }
 
-function render(data, width, height, min, max) {
+function power (value) {
+  return Math.pow(value, 2);
+}
+
+function render(data, width, height, min, max, mapping) {
   // Get A WebGL context
   var canvas = document.getElementById("fitsbaby");
   canvas.width = width;
@@ -93,15 +122,16 @@ function render(data, width, height, min, max) {
   // Map to 8 bit integer space
   var image = context.createImageData(canvas.width, canvas.height);
   var index;
-  var midpoint = -0.033
   
-  // min = arcsinh(min / midpoint) / arcsinh(1. / midpoint);
-  // max = arcsinh(max / midpoint) / arcsinh(1. / midpoint);
+  var stretch = [linear, logarithm, sqrt, arcsinh, power];
+  mapping = parseInt(mapping);
+  min = stretch[mapping](min);
+  max = stretch[mapping](max);
   
   for (var i = 0; i < image.data.length; i += 4) {
     index = i / 4;
     value = data[index];
-    // value = arcsinh(value / midpoint) / arcsinh(1. / midpoint);
+    value = stretch[mapping](value);
 
     image.data[i] = 255 * (value - min) / (max - min);
     image.data[i+1] = 255 * (value - min) / (max - min);

@@ -97,11 +97,10 @@ class Header extends Module
     if value[0] is "'"
       match = value.match(Header.stringPattern)
       match[1] = match[1].trim()
-      match[2] = match[2].trim()
     else
       match = value.match(Header.nonStringPattern)
-      match[1] = parseFloat(match[1])
-
+      match[1] = if match[1][0] in ["T", "F"] then match[1].trim() else parseFloat(match[1])
+    match[2] = match[2].trim()
     [value, comment] = match[1..]
     
     # Verification
@@ -207,10 +206,44 @@ class Image extends Data
   getFrame: -> @getRow() for i in [0..@naxis[1] - 1]
 
 class Table extends Data
+  @formPattern = /([AIFED])(\d+)\.(\d+)/
+  
+  @dataAccessors =
+    A: (value) -> return value
+    I: (value) -> return parseInt(value)
+    F: (value) -> return parseFloat(value)
+    E: (value) -> return parseFloat(value)
+    D: (value) -> return parseFloat(value)
   
   constructor: (view, header) ->
     super
-    @length = header["NAXIS1"] * header["NAXIS2"]
+    @rowByteSize  = header["NAXIS1"]
+    @rows         = header["NAXIS2"]
+    @cols         = header["TFIELDS"]
+    @length       = @tableLength = @rowByteSize * @rows
+    @rowsRead = 0
+        
+    @accessors = []
+    for i in [1..header["TFIELDS"]]
+      form = header["TFORM#{i}"]
+      match = form.match(Table.formPattern)
+      do =>
+        [dataType, length, decimals] = match[1..]
+        accessor = =>
+          console.log 'blah'
+          value = @view.getString(length)
+          return @dataAccessors[dataType](value)
+        @accessors.push(accessor)
+
+  getRow: ->
+    @current = @begin + @rowsRead * @rowByteSize
+    @view.seek(@current)
+    row = []
+    for i in [0..@accessors.length-1]
+      data = @accessors[i]()
+      row.push(data)
+    @rowsRead += 1
+    return row
 
 class BinTable extends Data
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
