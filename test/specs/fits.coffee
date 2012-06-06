@@ -57,16 +57,16 @@ describe "Fits", ->
   # 
   #   xhr.send()
 
-  it 'can read both headers from a compressed FITS image', ->
-    xhr = new XMLHttpRequest()
-    xhr.open('GET', "http://0.0.0.0:9294/data/smallblock.fits.fz", true)
-    xhr.responseType = 'arraybuffer'
-    
-    xhr.onload = (e) ->
-      fits = new FITS.File(xhr.response)
-      console.log fits
-      tbl = fits.hdus[1]['data']
-      for i in [1..tbl.rows]
-        tbl.getRow()
-      
-    xhr.send()
+  # it 'can read both headers from a compressed FITS image', ->
+  #   xhr = new XMLHttpRequest()
+  #   xhr.open('GET', "http://0.0.0.0:9294/data/smallblock.fits.fz", true)
+  #   xhr.responseType = 'arraybuffer'
+  #   
+  #   xhr.onload = (e) ->
+  #     fits = new FITS.File(xhr.response)
+  #     console.log fits
+  #     tbl = fits.hdus[1]['data']
+  #     for i in [1..tbl.rows]
+  #       tbl.getRow()
+  #     
+  #   xhr.send()

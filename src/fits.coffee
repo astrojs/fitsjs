@@ -1,5 +1,6 @@
 require('jDataView/src/jdataview')
-Decompress = require('fits.decompress')
+Decompress  = require('fits.decompress')
+VerifyCards = require('fits.header.verify')
 
 moduleKeywords = ['included', 'extended']
 
@@ -19,21 +20,28 @@ class Module
     obj.extended?.apply(@)
     this
 
-class Header
+  @proxy: (func) ->
+    => func.apply(this, arguments)
+
+  proxy: (func) ->
+    => func.apply(this, arguments)
+
+class Header extends Module
   @keywordPattern = /([\w_]+)\s*=?\s*(.*)/
   @nonStringPattern = /([^\/]*)\s*\/*(.*)/
   @stringPattern = /'(.*)'\s*\/*(.*)/
-  @primaryMandatoryKeywords = ['BITPIX', 'NAXIS', 'END']
-  @tableMandatoryKeywords = ['BITPIX', 'NAXIS', 'PCOUNT', 'GCOUNT', 'TFIELDS']
-  @arrayKeywordPattern = /^((?:NAXIS)|(?:PSCAL)|(?:PZERO)|(?:TBCOL)|(?:TSCAL)|(?:TZERO)|(?:ZNAXIS)|(?:ZTILE)|(?:CRPIX)|(?:CRVAL)|(?:CDELT)|(?:CROTA)|(?:PC)|(?:CD))(\d+)_*\d*/
+  @include VerifyCards
 
   constructor: ->
+    
+    # Add verification methods to instance
+    @verifyCard = {}
+    @verifyCard[name] = @proxy(method) for name, method of @Functions
+    
     # e.g. [index, value, comment]
     @cards      = {}
     @cardIndex  = 0
-    @primary    = false
-    @extension  = false
-
+    
   # Get the index value and comment for a key
   get: (key) ->
     if @cards.hasOwnProperty(key) then return @cards[key] else console.warn("Header does not contain the key #{key}")
@@ -44,7 +52,7 @@ class Header
 
   # Get the comment for a specified key
   getComment: (key) ->
-    if @cards.hasOwnProperty(key)
+    if @contains(key)
       if @cards[key][2]?
         return @cards[key][2]
       else
@@ -82,60 +90,6 @@ class Header
   # Checks if the header contains a specified keyword
   contains: (keyword) -> return @cards.hasOwnProperty(keyword)
 
-  @parseNonNegativeInt: (value) ->
-    value = parseInt(value)
-    throw "Value must be an integer" if isNaN(value)
-    throw "Value #{value} must be non-negative" if value < 0
-    return value
-
-  @parsePositiveInt: (value) ->
-    value = parseInt(value)
-    throw "Value must be an integer" if isNaN(value)
-    throw "Value must be positive" if value < 1
-    return value
-
-  @parseDate: (value) -> value = new Date(value)
-
-  @parseLogical: (value) -> return if value is "T" then true else false
-
-  @reservedKeywordFormat =
-    SIMPLE: Header.parseLogical
-    BITPIX: parseInt
-    NAXIS: Header.parseNonNegativeInt
-    PCOUNT: parseInt
-    GCOUNT: parseInt
-    DATE: Header.parseDate
-    EXTEND: Header.parseLogical
-    'DATE-OBS': Header.parseDate
-    BSCALE: parseFloat
-    BZERO: parseFloat
-    DATAMAX: parseFloat
-    DATAMIN: parseFloat
-    EXTVER: parseInt
-    EXTLEVEL: parseInt
-    PSCAL: parseFloat
-    PZERO: parseFloat
-    TFIELDS: Header.parseNonNegativeInt
-    TBCOL: Header.parsePositiveInt
-    TSCAL: parseFloat
-    TZERO: parseFloat
-    THEAP: parseInt
-    ZIMAGE: Header.parseLogical
-    ZBITPIX: parseInt
-    ZNAXIS: Header.parseNonNegativeInt
-    ZTILE: Header.parsePositiveInt
-    ZSIMPLE: Header.parseLogical
-    ZEXTEND: Header.parseLogical
-    ZPCOUNT: parseInt
-    ZGCOUNT: parseInt
-    WCSAXES: parseInt
-    CRPIX: parseFloat
-    CRVAL: parseFloat
-    CDELT: parseFloat
-    CROTA: parseFloat
-    PC: parseFloat
-    CD: parseFloat
-
   # Read a card from the header
   readCard: (line) ->
     match = line.match(Header.keywordPattern)
@@ -149,15 +103,18 @@ class Header
       match[1] = parseFloat(match[1])
 
     [value, comment] = match[1..]
-
-    # Check keyword again list of required and reserved keywords and apply formatting
-    value = Header.reservedKeywordFormat[key](value) if Header.reservedKeywordFormat.hasOwnProperty(key)
-
-    # Check for array keywords (e.g. NAXISn, PSCALn, PZEROn, etc)
-    arrayKeywordMatch = key.match(Header.arrayKeywordPattern)
-    if arrayKeywordMatch?
-      keyMatch = arrayKeywordMatch[1]
-      value = Header.reservedKeywordFormat[keyMatch](value)
+    
+    # Verification
+    keyToVerify = key
+    [array, index] = [false, undefined]
+    arrayPattern = /([A-Za-z]+)(\d+)/
+    match = key.match(arrayPattern)
+    if match?
+      keyToVerify = match[1]
+      [array, index] = [true, match[2]]
+    
+    if @verifyCard.hasOwnProperty(keyToVerify)
+      value = @verifyCard[keyToVerify](value, array, index)
 
     switch key
       when "COMMENT"
@@ -168,119 +125,7 @@ class Header
         @set(key, value, comment)
         @.__defineGetter__(key, -> return @cards[key][1])
 
-  verify: ->
-    cardIndex = 0
-    if @contains("SIMPLE")
-      # Verify primary header
-      @primary = true
-      
-      # Check that SIMPLE is the first keyword
-      unless @getIndex("SIMPLE") is cardIndex
-        console.warn("SIMPLE should be the first keyword in the header")
-        cardIndex -= 1
-      cardIndex += 1
-      
-      # Check the other keywords
-      for keyword in Header.primaryMandatoryKeywords
-        throw "Header does not contain the required keyword #{keyword}" unless @contains(keyword)
-        if keyword is "END"
-          console.warn("#{keyword} is not in the correct order") unless @getIndex(keyword) is @cardIndex - 1
-        else
-          console.warn("#{keyword} is not in the correct order") unless @getIndex(keyword) is cardIndex
-        cardIndex += 1
-
-        # Check that all NAXISn keywords are present
-        if keyword is "NAXIS"
-          axisIndex = 1
-          while axisIndex <= @["NAXIS"]
-            naxisKeyword = keyword + axisIndex
-            throw "Header does not contain the required keyword #{naxisKeyword}" unless @contains(naxisKeyword)
-            console.warn("#{naxisKeyword} is not in the correct order") unless @getIndex(naxisKeyword) is cardIndex
-            cardIndex += 1
-            axisIndex += 1
-        
-    else if @contains("XTENSION")
-      @extension = true
-      @extensionType = @["XTENSION"]
-      
-      # Check that XTENSION is the first keyword
-      unless @getIndex("XTENSION") is cardIndex
-        console.warn("XTENSION should be the first keyword in the header")
-        cardIndex -= 1
-      cardIndex += 1
-      
-      # Checking BITPIX
-      throw "Header does not contain the required keyword BITPIX" unless @contains("BITPIX")
-      console.warm("BITPIX is not in the correct order") unless @getIndex("BITPIX") is cardIndex
-      throw "BITPIX is not a valid value" unless @["BITPIX"] is 8
-      cardIndex += 1
-      
-      if @extensionType is "TABLE"
-        # Verify ASCII table
-
-        # Checking NAXIS
-        throw "Header does not contain the required keyword NAXIS" unless @contains("NAXIS")
-        console.warm("NAXIS is not in the correct order") unless @getIndex("NAXIS") is cardIndex
-        throw "NAXIS is not a valid value" unless @["NAXIS"] is 2
-        cardIndex += 1
-        
-        axisIndex = 1
-        while axisIndex <= @["NAXIS"]
-          naxisKeyword = "NAXIS" + axisIndex
-          throw "Header does not contain the required keyword #{naxisKeyword}" unless @contains(naxisKeyword)
-          console.warn("#{naxisKeyword} is not in the correct order") unless @getIndex(naxisKeyword) is cardIndex
-          cardIndex += 1
-          axisIndex += 1
-
-        throw "Header does not contain the required keyword PCOUNT" unless @contains("PCOUNT")
-        console.warm("PCOUNT is not in the correct order") unless @getIndex("PCOUNT") is cardIndex
-        throw "PCOUNT is not a valid value" unless @["PCOUNT"] is 0
-        cardIndex += 1
-        
-        throw "Header does not contain the required keyword GCOUNT" unless @contains("GCOUNT")
-        console.warm("GCOUNT is not in the correct order") unless @getIndex("GCOUNT") is cardIndex
-        throw "GCOUNT is not a valid value" unless @["GCOUNT"] is 1
-        cardIndex += 1
-        
-        throw "Header does not contain the required keyword TFIELDS" unless @contains("TFIELDS")
-        console.warm("TFIELDS is not in the correct order") unless @getIndex("TFIELDS") is cardIndex
-        throw "TFIELDS is not a valid value" unless @["GCOUNT"] in [0..999]
-        cardIndex += 1
-        
-      else if @extensionType is "BINTABLE"
-        # Verify BINTABLE
-        
-        
-        if @contains("ZIMAGE")
-          # Verify Compressed Image
-          console.log 'zimage'
-
-
-
-
-
-  # Verifies the header according to the primary header standards
-  @primaryRequiredKeywords = [
-    {keyword: "SIMPLE", values: ["T", "F"], dataType: "boolean", position: 0},
-    {keyword: "BITPIX", values: [8, 16, 32, 64, -32, -64], dataType: "integer", position: 1},
-    {keyword: "NAXIS", dataType: "integer", position: 2},
-    {keyword: "END"}
-  ]
-  @verifyPrimary: (header) ->
-    for keyDef in Header.primaryRequiredKeywords
-      keyword   = keyDef['keyword']
-      values    = keyDef['values']
-      dataType  = keyDef['dataType']
-      position  = keyDef['position']
-
-      throw "Keyword #{keyword} is required" unless header.contains(keyword)
-
-      if values?
-        throw "Inappropriate value for #{keyword}" unless header[keyword] in values
-
   hasDataUnit: -> return if @["NAXIS"] is 0 then false else true
-  isPrimary: -> return @primary
-  isExtension: -> return @extension
 
 
 # Base class for FITS data units (e.g. Primary, BINTABLE, TABLE, IMAGE).  Derived classes must
@@ -645,10 +490,6 @@ class File
       linesRead += 1
       header.readCard(line)
       break if line[0..3] is "END "
-    
-    # Check if header is primary
-    # Header.verifyPrimary(header) if @hdus.length is 0
-    header.verify()
 
     # Seek to the next relavant block in file
     excess = File.excessBytes(linesRead * File.LINEWIDTH)
@@ -659,6 +500,7 @@ class File
 
   # Read a data unit
   readData: (header) ->
+    
     return unless header.hasDataUnit()
     if header.isPrimary()
       data = new Image(@view, header)
