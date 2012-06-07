@@ -1,3 +1,5 @@
+FITS = require("fits")
+
 $(document).ready(function() {
   main();
 });

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Demo &mdash; FITS Image</title>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700|Open+Sans:400,700' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="/application.css" type="text/css" charset="utf-8">
+  <script type="text/javascript" src="../application.js"></script>
+  <script type="text/javascript" src="./demos/webgl-utils.js"></script>
+  <script type="text/javascript" src="./demos/webgl-test.js"></script>
+
+  <!-- vertex shader -->
+  <script id="2d-vertex-shader" type="x-shader/x-vertex">
+  attribute vec2 a_position;
+  attribute vec2 a_texCoord;
+
+  uniform vec2 u_resolution;
+
+  varying vec2 v_texCoord;
+
+  void main() {
+     // convert the rectangle from pixels to 0.0 to 1.0
+     vec2 zeroToOne = a_position / u_resolution;
+
+     // convert from 0->1 to 0->2
+     vec2 zeroToTwo = zeroToOne * 2.0;
+
+     // convert from 0->2 to -1->+1 (clipspace)
+     vec2 clipSpace = zeroToTwo - 1.0;
+
+     gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+     // pass the texCoord to the fragment shader
+     // The GPU will interpolate this value between points.
+     v_texCoord = a_texCoord;
+  }
+  </script>
+
+  <!-- fragment shader -->
+  <script id="2d-fragment-shader" type="x-shader/x-fragment">
+  precision mediump float;
+
+  // our texture
+  uniform sampler2D u_image;
+
+  // the texCoords passed in from the vertex shader.
+  varying vec2 v_texCoord;
+
+  void main() {
+     gl_FragColor = texture2D(u_image, v_texCoord);
+  }
+  </script>
+
+</head>
+<body>
+  <header>
+    <img id="logo" src="logo.png" />
+  </header>
+  <canvas id="fitsbaby"></canvas>
+  <div id="uiContainer">
+    <div id="ui">
+      <input id="min-slider" type="range" min="0" max="255" value="0" />
+      <input id="max-slider" type="range" min="0" max="255" value="0" />
+      <select id="stretch">
+        <option value="0">Linear</option>
+        <option value="1">Logarithm</option>
+        <option value="2">Square Root</option>
+        <option value="3">Arcsinh</option>
+        <option value="4">Power</option>
+      </select>
+    </div>
+  </div>
+</body>
+</html>
