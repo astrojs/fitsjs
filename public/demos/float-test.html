@@ -32,7 +32,6 @@
       
       float min = u_extremes[0];
       float max = u_extremes[1];
-      
       float pixel = (pixel_v[0] - min) / (max - min);
       
       gl_FragColor = vec4(pixel, pixel, pixel, 1.0);
@@ -62,13 +61,14 @@
   precision mediump float;
   uniform vec2 u_resolution;
   uniform sampler2D u_tex;
+  uniform vec2 u_extremes;
   
   void main() {
       vec2 texCoord = gl_FragCoord.xy / u_resolution;
       vec4 pixel_v = texture2D(u_tex, texCoord);
       
-      float min = sqrt(2396.0);
-      float max = sqrt(26203.0);
+      float min = sqrt(u_extremes[0]);
+      float max = sqrt(u_extremes[1]);
       
       float pixel = (sqrt(pixel_v[0]) - min) / (max - min);
       
@@ -80,6 +80,7 @@
   precision mediump float;
   uniform vec2 u_resolution;
   uniform sampler2D u_tex;
+  uniform vec2 u_extremes;
   
   float arcsinh(float value) {
     return log(value + sqrt(1.0 + value * value));
@@ -89,8 +90,8 @@
       vec2 texCoord = gl_FragCoord.xy / u_resolution;
       vec4 pixel_v = texture2D(u_tex, texCoord);
       
-      float min = arcsinh(2396.0);
-      float max = arcsinh(26203.0);
+      float min = arcsinh(u_extremes[0]);
+      float max = arcsinh(u_extremes[1]);
       float value = arcsinh(pixel_v[0]);
       
       float pixel = (value - min) / (max - min);
@@ -103,16 +104,68 @@
   precision mediump float;
   uniform vec2 u_resolution;
   uniform sampler2D u_tex;
+  uniform vec2 u_extremes;
   
   void main() {
       vec2 texCoord = gl_FragCoord.xy / u_resolution;
       vec4 pixel_v = texture2D(u_tex, texCoord);
       
-      float min = pow(2396.0, 2.0);
-      float max = pow(26203.0, 2.0);
-      
+      float min = pow(u_extremes[0], 2.0);
+      float max = pow(u_extremes[1], 2.0);
       
       float pixel = (pow(pixel_v[0], 2.0) - min) / (max - min);
+      
+      gl_FragColor = vec4(pixel, pixel, pixel, 1.0);
+  }
+  </script>
+  
+  
+  <script id="2d-fragment-shader" type="x-shader/x-fragment">
+  precision mediump float;
+  uniform vec2 u_resolution;
+  uniform sampler2D u_tex;
+  uniform vec2 u_extremes;
+  
+  subroutine vec3 shadeModelType( vec4 position, vec3 normal);
+  
+  // subroutine float stretchType(float value);
+  // subroutine uniform stretchType stretch;
+
+  // subroutine (stretchType)
+  // float linear(float value) {
+  //   return value;
+  // }
+  // 
+  // subroutine (stretchType)
+  // float logarithm(float value) {
+  //   return log(value);
+  // }
+  // 
+  // subroutine (stretchType)
+  // float squareroot(float value) {
+  //   return sqrt(value);
+  // }
+  // 
+  // subroutine (stretchType)
+  // float arcsinh(float value) {
+  //   return log(value + sqrt(1.0 + value * value));
+  // }
+  // 
+  // subroutine (stretchType)
+  // float power(float value) {
+  //   return pow(value, 2);
+  // }
+  
+  void main() {
+      vec2 texCoord = gl_FragCoord.xy / u_resolution;
+      vec4 pixel_v = texture2D(u_tex, texCoord);
+
+      // float min = stretch(u_extremes[0]);
+      // float max = stretch(u_extremes[1]);
+      // float pixel = (stretch(pixel_v[0]) - min) / (max - min);
+      float min = u_extremes[0];
+      float max = u_extremes[1];
+      float pixel = (pixel_v[0] - min) / (max - min);
       
       gl_FragColor = vec4(pixel, pixel, pixel, 1.0);
   }
@@ -130,9 +183,14 @@
       <option value="2d-fragment-shader-sqrt">Square Root</option>
       <option value="2d-fragment-shader-arcsinh">Arcsinh</option>
       <option value="2d-fragment-shader-power">Power</option>
+      <!-- <option value="0">Linear</option>
+      <option value="1">Logarithm</option>
+      <option value="2">Square Root</option>
+      <option value="3">Arcsinh</option>
+      <option value="4">Power</option> -->
     </select>
     <div id="slider-range"></div>
   </div>
-  <canvas id="canvas" width="891" height="893"></canvas>
+  <canvas id="canvas"></canvas>
 </body>
 </html>

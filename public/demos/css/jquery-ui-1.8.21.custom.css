@@ -299,7 +299,6 @@
 
 .ui-slider-horizontal {
   height: .5em;
-  width: 891px;
 }
 .ui-slider-horizontal .ui-slider-handle { top: -.3em; margin-left: -.6em; }
 .ui-slider-horizontal .ui-slider-range { top: 0; height: 100%; }
