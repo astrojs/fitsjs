@@ -7,7 +7,6 @@ $(document).ready(function() {
 
 function main() {
   var xhr = new XMLHttpRequest();
-  // xhr.open('GET', "http://0.0.0.0:9294/data/L1448_13CO.fits", true);
   xhr.open('GET', "http://0.0.0.0:9294/data/m101.fits", true);
   xhr.responseType = 'arraybuffer';
   
@@ -15,10 +14,11 @@ function main() {
     var image;
     var fits = new FITS.File(xhr.response);
     
-    fits.hdus[0].data.initArray();
-    fits.hdus[0].data.getFrame();
-    var data = fits.hdus[0].data.data;
-    // console.log(data);
+    // fits.hdus[0].data.initArray();
+    // fits.hdus[0].data.getFrame();
+    // var data = fits.hdus[0].data.data;
+    
+    var data = fits.hdus[0].data.getFrameWebGL()
     var width = fits.hdus[0].data.naxis[0];
     var height = fits.hdus[0].data.naxis[1];
     
@@ -141,13 +141,13 @@ function render(data, width, height, min, max, mapping) {
     image.data[i+3] = 255;
   }
 
-  // setup GLSL program
+  // Setup GLSL program
   vertexShader = createShaderFromScriptElement(gl, "2d-vertex-shader");
   fragmentShader = createShaderFromScriptElement(gl, "2d-fragment-shader");
   program = createProgram(gl, [vertexShader, fragmentShader]);
   gl.useProgram(program);
 
-  // look up where the vertex data needs to go.
+  // Look up where the vertex data needs to go
   var positionLocation = gl.getAttribLocation(program, "a_position");
   var texCoordLocation = gl.getAttribLocation(program, "a_texCoord");
 
@@ -164,33 +164,57 @@ function render(data, width, height, min, max, mapping) {
   gl.enableVertexAttribArray(texCoordLocation);
   gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 
+  //
+  //  TESTING: passing pixels to WebGL buffer
+  //
+
+
   var texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  
+  // void texImage2D(
+  //     GLenum target,
+  //     GLint level,
+  //     GLenum internalformat,
+  //     GLsizei width,
+  //     GLsizei height,
+  //     GLint border,
+  //     GLenum format,
+  //     GLenum type,
+  //     ArrayBufferView? pixels
+  //   )
+  
+  // void texImage2D(GLenum target, GLint level, GLenum internalformat,
+  //                 GLenum format, GLenum type, ImageData? pixels);
+  
+  // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  
+  var width = 64;
+  var height = 64;
+  var pixels = new Float32Array(width * height);
+  for (var y = 0; y < height; ++y) {
+      for (var x = 0; x < width; ++x) {
+          var offset = y * width + x;
+          pixels[offset] = (x / width + y / height) * 0.5;
+      }
+  }
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width, height, 0, gl.LUMINANCE, gl.FLOAT, pixels);
+  
+  // gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width, height, 0, gl.LUMINANCE, gl.FLOAT, data);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-  // lookup uniforms
+  // Lookup uniforms
   var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
   var textureSizeLocation = gl.getUniformLocation(program, "u_textureSize");
-  var kernelLocation = gl.getUniformLocation(program, "u_kernel[0]");
 
-  // set the resolution
+  // Set the resolution
   gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
 
-  // set the size of the image
+  // Set the size of the image
   gl.uniform2f(textureSizeLocation, image.width, image.height);
-
-  // Define several convolution kernels
-  var kernels = {
-    normal: [
-      0, 0, 0,
-      0, 1, 0,
-      0, 0, 0
-    ]
-  };
 
   // Create a buffer for the position of the rectangle corners.
   var positionBuffer = gl.createBuffer();
@@ -199,17 +223,8 @@ function render(data, width, height, min, max, mapping) {
   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
   // Set a rectangle the same size as the image.
-  setRectangle( gl, 0, 0, image.width, image.height);
-
-  drawWithKernel('normal');
-
-  function drawWithKernel(name) {
-    // set the kernel
-    gl.uniform1fv(kernelLocation, kernels[name]);
-
-    // Draw the rectangle.
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-  }
+  setRectangle(gl, 0, 0, image.width, image.height);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
 function setRectangle(gl, x, y, width, height) {

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Demo &mdash; FITS Image</title>
+  <script type="text/javascript" src="javascript/jquery-1.7.2.min.js"></script>
+  <script type="text/javascript" src="javascript/jquery-ui-1.8.21.custom.min.js"></script>
+  
+  <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700|Open+Sans:400,700' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="/application.css" type="text/css" charset="utf-8">
+  <link rel="stylesheet" href="css/jquery-ui-1.8.21.custom.css" type="text/css" charset="utf-8">
+  
+  <script type="text/javascript" src="../application.js"></script>
+  <script type="text/javascript" src="./webgl-utils.js"></script>
+  <script type="text/javascript" src="./webgl-float-test.js"></script>
+
+  <script id="2d-vertex-shader" type="x-shader/x-vertex">
+  attribute vec2 a_position;
+  void main() {
+      gl_Position = vec4(a_position, 0, 1);
+  }
+  </script>
+  <script id="2d-fragment-shader-linear" type="x-shader/x-fragment">
+  precision mediump float;
+  
+  uniform vec2 u_resolution;
+  uniform sampler2D u_tex;
+  uniform vec2 u_extremes;
+  
+  void main() {
+      vec2 texCoord = gl_FragCoord.xy / u_resolution;
+      vec4 pixel_v = texture2D(u_tex, texCoord);
+      
+      float min = u_extremes[0];
+      float max = u_extremes[1];
+      
+      float pixel = (pixel_v[0] - min) / (max - min);
+      
+      gl_FragColor = vec4(pixel, pixel, pixel, 1.0);
+  }
+  </script>
+  
+  <script id="2d-fragment-shader-logarithm" type="x-shader/x-fragment">
+  precision mediump float;
+  uniform vec2 u_resolution;
+  uniform sampler2D u_tex;
+  uniform vec2 u_extremes;
+  
+  void main() {
+      vec2 texCoord = gl_FragCoord.xy / u_resolution;
+      vec4 pixel_v = texture2D(u_tex, texCoord);
+      
+      float min = log(u_extremes[0]);
+      float max = log(u_extremes[1]);
+      
+      float pixel = (log(pixel_v[0]) - min) / (max - min);
+      
+      gl_FragColor = vec4(pixel, pixel, pixel, 1.0);
+  }
+  </script>
+  
+  <script id="2d-fragment-shader-sqrt" type="x-shader/x-fragment">
+  precision mediump float;
+  uniform vec2 u_resolution;
+  uniform sampler2D u_tex;
+  
+  void main() {
+      vec2 texCoord = gl_FragCoord.xy / u_resolution;
+      vec4 pixel_v = texture2D(u_tex, texCoord);
+      
+      float min = sqrt(2396.0);
+      float max = sqrt(26203.0);
+      
+      float pixel = (sqrt(pixel_v[0]) - min) / (max - min);
+      
+      gl_FragColor = vec4(pixel, pixel, pixel, 1.0);
+  }
+  </script>
+
+  <script id="2d-fragment-shader-arcsinh" type="x-shader/x-fragment">
+  precision mediump float;
+  uniform vec2 u_resolution;
+  uniform sampler2D u_tex;
+  
+  float arcsinh(float value) {
+    return log(value + sqrt(1.0 + value * value));
+  }
+  
+  void main() {
+      vec2 texCoord = gl_FragCoord.xy / u_resolution;
+      vec4 pixel_v = texture2D(u_tex, texCoord);
+      
+      float min = arcsinh(2396.0);
+      float max = arcsinh(26203.0);
+      float value = arcsinh(pixel_v[0]);
+      
+      float pixel = (value - min) / (max - min);
+      
+      gl_FragColor = vec4(pixel, pixel, pixel, 1.0);
+  }
+  </script>
+  
+  <script id="2d-fragment-shader-power" type="x-shader/x-fragment">
+  precision mediump float;
+  uniform vec2 u_resolution;
+  uniform sampler2D u_tex;
+  
+  void main() {
+      vec2 texCoord = gl_FragCoord.xy / u_resolution;
+      vec4 pixel_v = texture2D(u_tex, texCoord);
+      
+      float min = pow(2396.0, 2.0);
+      float max = pow(26203.0, 2.0);
+      
+      
+      float pixel = (pow(pixel_v[0], 2.0) - min) / (max - min);
+      
+      gl_FragColor = vec4(pixel, pixel, pixel, 1.0);
+  }
+  </script>
+  
+</head>
+<body>
+  <header>
+    <img id="logo" src="../logo.png" />
+  </header>
+  <div id="ui">
+    <select id="stretch">
+      <option value="2d-fragment-shader-linear">Linear</option>
+      <option value="2d-fragment-shader-logarithm">Logarithm</option>
+      <option value="2d-fragment-shader-sqrt">Square Root</option>
+      <option value="2d-fragment-shader-arcsinh">Arcsinh</option>
+      <option value="2d-fragment-shader-power">Power</option>
+    </select>
+    <div id="slider-range"></div>
+  </div>
+  <canvas id="canvas" width="891" height="893"></canvas>
+</body>
+</html>

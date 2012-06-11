@@ -6,8 +6,8 @@
   <link href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700|Open+Sans:400,700' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="/application.css" type="text/css" charset="utf-8">
   <script type="text/javascript" src="../application.js"></script>
-  <script type="text/javascript" src="./demos/webgl-utils.js"></script>
-  <script type="text/javascript" src="./demos/webgl-test.js"></script>
+  <script type="text/javascript" src="./webgl-utils.js"></script>
+  <script type="text/javascript" src="./webgl-float-test.js"></script>
 
   <!-- vertex shader -->
   <script id="2d-vertex-shader" type="x-shader/x-vertex">
@@ -30,8 +30,8 @@
 
      gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
 
-     // pass the texCoord to the fragment shader
-     // The GPU will interpolate this value between points.
+     // Pass texCoord to the fragment shader
+     // the GPU will interpolate this value between points.
      v_texCoord = a_texCoord;
   }
   </script>
@@ -42,12 +42,19 @@
 
   // our texture
   uniform sampler2D u_image;
+  uniform vec2 u_textureSize;
 
   // the texCoords passed in from the vertex shader.
   varying vec2 v_texCoord;
 
   void main() {
-     gl_FragColor = texture2D(u_image, v_texCoord);
+    vec3 pixelVec = texture2D(u_image, v_texCoord).rgb;
+    float min = 2396.0;
+    float max = 26203.0;
+    float pixel = 255.0 * (pixelVec[0] - min) / (max - min);
+    gl_FragColor = vec4(pixel, pixel, pixel, 255.0);
+    
+    // gl_FragColor = texture2D(u_image, v_texCoord);
   }
   </script>
 

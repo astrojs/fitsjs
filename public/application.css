@@ -1,5 +1,19 @@
 body {
-  width: 1000px;
-  background: #0071e5;
+  width: 100%;
+  margin: 0 auto;
+  background: #f3f3f3;
   font-family: 'Open Sans', sans-serif;
+}
+body header {
+  background: #0071e5;
+  color: #f3f3f3;
+  height: 80px;
+  border-top: solid 3px #000;
+  line-height: 80px;
+  padding-left: 20px;
+}
+body header #logo {
+  padding: 10px 0 10px;
+  width: 325px;
+  height: 60px;
 }

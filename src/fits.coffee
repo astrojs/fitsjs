@@ -146,6 +146,8 @@ class Image extends Data
     @naxis = []
     @rowByteSize = header["NAXIS1"] * Math.abs(bitpix) / 8
     @rowsRead = 0
+    @min = if header["DATAMIN"]? then header["DATAMIN"] else undefined
+    @max = if header["DATAMAX"]? then header["DATAMAX"] else undefined
 
     i = 1
     while i <= naxis
@@ -204,6 +206,43 @@ class Image extends Data
     @rowsRead += 1
   
   getFrame: -> @getRow() for i in [0..@naxis[1] - 1]
+  
+  getFrameWebGL: ->
+    @data = new Float32Array(@naxis.reduce( (a, b) -> a * b))
+    @rowsRead = 0
+    rowLength = @naxis[0]
+    
+    for j in [0..@naxis[1] - 1]
+      @current = @begin + @rowsRead * @rowByteSize
+      @view.seek(@current)
+      for i in [0..rowLength - 1]
+        @data[rowLength * @rowsRead + i] = @accessor()
+      @rowsRead += 1
+
+    return @data
+  
+  getExtremes: ->
+    return [@min, @max] if @min? and @max?
+    
+    index = undefined
+    min = undefined
+    max = undefined
+    for i in [0..@data.length - 1]
+      value = @data[i]
+      continue if isNaN(value)
+      min = @data[i]
+      max = @data[i]
+      index = i
+      break
+    
+    for i in [index..@data.length - 1]
+      value = @data[i]
+      continue if isNaN(value)
+      min = value if value < min
+      max = value if value > max
+    
+    [@min, @max] = [min, max]
+    return [@min, @max]
 
 class Table extends Data
   @formPattern = /([AIFED])(\d+)\.(\d+)/
