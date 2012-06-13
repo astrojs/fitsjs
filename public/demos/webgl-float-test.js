@@ -6,6 +6,38 @@ $(document).ready(function() {
   var data, width, height, min, max, gl;
   var program, fragmentShader;
   
+  /*
+  var xhr = new XMLHttpRequest();
+  var file = "http://0.0.0.0:9294/data/Deep_32.fits"
+  xhr.open('GET', file, true);
+  xhr.responseType = 'arraybuffer'
+
+  xhr.onload = function (e) {
+    var fits = new FITS.File(xhr.response);
+    var image = fits.hdus[0].data
+    var data = image.getFrameWebGL();
+    var extremes = image.getExtremes();
+    width = fits.hdus[0].header["NAXIS1"];
+    height = fits.hdus[0].header["NAXIS2"];
+    
+    setupUI(extremes[0], extremes[1]);
+    setupWebGL();
+
+
+
+    // images.addImage(fits);
+    // if (images.getCount() == 5) {
+    //   images.getExtremes();
+    //   width = images.getWidth();
+    //   height = images.getHeight();
+    //   setupUI(images.minimum, images.maximum);
+    //   setupWebGL();
+    // }
+  }
+  xhr.send();
+  */
+  
+  
   images = new FITS.Images();
   
   filters = ['u', 'g', 'r', 'i', 'z'];
@@ -50,10 +82,62 @@ $(document).ready(function() {
     }
   }
   
+  function activeFilters() {
+    active = [];
+    $(".filter-toggle").each(function(index, value) {
+      var filter = $(value).data('filter');
+      var id = $(value).attr('id');
+      var selector = "label[for='" + id + "']";
+      var pressed = $(selector).attr('aria-pressed');
+      if (pressed === "true") {
+        active.push(filter);
+      }
+    })
+    return active;
+  }
+  
   function setupUI(min, max) {
 
     $("#canvas").attr("width", width);
     $("#canvas").attr("height", height);
+    
+    for (var key in images.images) {
+      var id = key.replace(/[^a-zA-Z0-9]/g, "");
+      var html = "<input type='checkbox' id='" + id + "' class='filter-toggle' data-filter='" + key + "' /><label for='" + id + "'>" + key + "</label>";
+      $("#filter-toggle").append(html);
+    }
+    $("#filter-toggle").buttonset();
+    
+    $(".filter-toggle").click(function(e) {
+      var active = activeFilters();
+      if (active.length == 0) {
+        $(this).attr('checked', true);
+        var id = $(this).attr('id');
+        var selector = "label[for='" + id + "']";
+        $(selector).attr('aria-pressed', 'true').addClass('ui-state-active');
+        return;
+      }
+      
+      var self = this;
+      $(".filter-toggle").each(function(index, value) {
+        if ($(self).attr('id') != $(value).attr('id')) {
+          $(this).attr('checked', false);
+          var id = $(this).attr('id');
+          var selector = "label[for='" + id + "']";
+          $(selector).attr('aria-pressed', 'false').removeClass('ui-state-active');
+        }
+      });
+      
+      active = activeFilters();
+      dataArray = [];
+      for (var i = 0; i < active.length; i += 1)
+        dataArray.push(images.getData(active[i]));
+      console.log(dataArray);
+      
+      var stretch = $("#stretch").val();
+      var extremes = $("#slider-range").slider("values");
+      render(width, height, stretch, extremes[0], extremes[1], dataArray[0]);
+    });
     
     $("#slider-range").slider({
       range: true,
@@ -71,22 +155,9 @@ $(document).ready(function() {
     
     $(".ui-slider-horizontal").css("width", width);
     
-    for (var key in images.images) {
-      var html = "<option value='" + key + "'>" + key + "</option>";
-      $("#filter").append(html);
-    }
-    
     $("#stretch").change(function () {
       var stretch = $("#stretch").val();
       var extremes = $("#slider-range").slider("values");
-      render(width, height, stretch, extremes[0], extremes[1], data);
-    });
-    
-    $("#filter").change(function () {
-      var stretch = $("#stretch").val();
-      var extremes = $("#slider-range").slider("values");
-      var filter = $("#filter").val();
-      data = images.getData(filter);
       render(width, height, stretch, extremes[0], extremes[1], data);
     });
     
@@ -98,6 +169,45 @@ $(document).ready(function() {
       
       renderComposite(width, height, extremes[0], extremes[1], data_g, data_r, data_i);
     });
+  }
+
+  function renderColor(width, height, min, max, dataArray) {
+    vertexShader = createShaderFromScriptElement(gl, "2d-vertex-shader");
+    fragmentShader = createShaderFromScriptElement(gl, "2d-fragment-shader-color");
+    program = createProgram(gl, [vertexShader, fragmentShader]);
+    gl.useProgram(program);
+    
+    var positionLocation = gl.getAttribLocation(program, "a_position");
+    var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
+    gl.uniform2f(resolutionLocation, width, height);
+    
+    var extremesLocation = gl.getUniformLocation(program, "u_extremes");
+    gl.uniform2f(extremesLocation, min, max);
+    
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+         -1, -1, 1, -1, -1, 1,
+         -1,  1, 1, -1,  1, 1]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(positionLocation);
+    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+    
+    var textures = [];
+    for (var i = 0; i < dataArray; i += 1) {
+      gl.activeTexture(gl.TEXTURE0 + i);
+      var texture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width, height, 0, gl.LUMINANCE, gl.FLOAT, dataArray[i]);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      
+      var uData = gl.getUniformLocation(program, 'u_texture' + i);
+      gl.uniform1i(uData_g, 0);
+      textures.push(texture);
+    }
+    
   }
 
   function renderComposite(width, height, min, max, data_g, data_r, data_i) {
