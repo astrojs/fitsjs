@@ -1,7 +1,6 @@
-# Module borrowed from Spine to extend class and instance functionality
-
 moduleKeywords = ['included', 'extended']
 
+# Module borrowed from Spine to extend class and instance functionality
 class Module
   @include: (obj) ->
     throw('include(obj) requires obj') unless obj

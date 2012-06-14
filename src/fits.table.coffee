@@ -3,6 +3,8 @@ require('jDataView/src/jdataview')
 FITS = @FITS or require('fits')
 Data  = require('fits.data')
 
+# Class to read ASCII tables from FITS files.
+# TODO: Make this work ...
 class FITS.Table extends Data
   @formPattern = /([AIFED])(\d+)\.(\d+)/
   

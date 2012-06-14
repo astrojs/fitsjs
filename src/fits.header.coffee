@@ -1,15 +1,18 @@
 require('jDataView/src/jdataview')
 
-FITS = @FITS or require('fits')
+FITS        = @FITS or require('fits')
 Module      = require('module')
 VerifyCards = require('fits.header.verify')
 
+
+# Header parses and stores the FITS header.  Verification is done for reserved
+# keywords (e.g. SIMPLE, BITPIX, etc)
 class FITS.Header extends Module
   @keywordPattern = /([\w_]+)\s*=?\s*(.*)/
   @nonStringPattern = /([^\/]*)\s*\/*(.*)/
   @stringPattern = /'(.*)'\s*\/*(.*)/
   @include VerifyCards
-
+  
   constructor: ->
     
     # Add verification methods to instance
@@ -101,7 +104,8 @@ class FITS.Header extends Module
       else
         @set(key, value, comment)
         @.__defineGetter__(key, -> return @cards[key][1])
-
+  
+  # Tells if a data unit follows based on NAXIS
   hasDataUnit: -> return if @["NAXIS"] is 0 then false else true
   
 module?.exports = FITS.Header

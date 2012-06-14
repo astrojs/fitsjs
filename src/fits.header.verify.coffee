@@ -182,6 +182,5 @@ VerifyCards =
       key = "ZGCOUNT"
       value = arguments[0]
       return @verifyInteger(key, value)
-    
-    
+
 module.exports = VerifyCards

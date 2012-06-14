@@ -1,6 +1,6 @@
 require('jDataView/src/jdataview')
 
-FITS = @FITS or require('fits')
+FITS  = @FITS or require('fits')
 Data  = require('fits.data')
 
 # Image represents a standard image stored in the data unit of a FITS file
@@ -64,7 +64,8 @@ class FITS.Image extends Data
   # Initializes a 1D array for storing image pixels
   initArray: -> @data = new @arrayType(@naxis.reduce( (a, b) -> a * b))
 
-  # The method initArray must be called before requesting any rows
+  # Read a row of pixels from the array buffer.  The method initArray
+  # must be called before requesting any rows.
   getRow: ->
     @current = @begin + @rowsRead * @rowByteSize
     rowLength = @naxis[0]
@@ -73,8 +74,11 @@ class FITS.Image extends Data
       @data[rowLength * @rowsRead + i] = @accessor()
     @rowsRead += 1
   
+  # Read the entire frame of the image.  If the image is a data cube, it reads
+  # a slice of the data.
   getFrame: -> @getRow() for i in [0..@naxis[1] - 1]
   
+  # Read the entire image and return the pixels in a typed array for WebGL
   getFrameWebGL: ->
     @data = new Float32Array(@naxis.reduce( (a, b) -> a * b))
     @rowsRead = 0
@@ -89,6 +93,7 @@ class FITS.Image extends Data
 
     return @data
   
+  # Compute the minimum and maximum pixels
   getExtremes: ->
     return [@min, @max] if @min? and @max?
     

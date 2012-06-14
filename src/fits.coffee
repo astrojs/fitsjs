@@ -7,16 +7,18 @@ Image       = require('fits.image')
 BinTable    = require('fits.bintable')
 Table       = require('fits.table')
 
+# Header data unit to store a header and its associated data unit
 class HDU
 
   constructor: (header, data)->
     @header = header
     @data   = data
 
+# File is the class that parses all the HDUs, initializes Header instances
+# and appropriate Data instances.
 class File
   @LINEWIDTH   = 80
   @BLOCKLENGTH = 2880
-  @BITPIX = [8, 16, 32, 64, -32, -64]
 
   constructor: (buffer) ->
     @length     = buffer.byteLength
@@ -38,7 +40,7 @@ class File
 
   # ##Instance Methods
 
-  # Read a header unit
+  # Read a header unit and initialize a Header object
   readHeader: ->
     linesRead = 0
     header = new Header()
@@ -55,10 +57,13 @@ class File
 
     return header
 
-  # Read a data unit
+  # Read a data unit and initialize an appropriate instance depending
+  # on the type of data unit (e.g. image, binary table, ascii table).
+  # Note: Bytes are not interpretted by this function.  That is left 
+  #       to the user to call when the data is needed.
   readData: (header) ->
-    
     return unless header.hasDataUnit()
+    
     if header.isPrimary()
       data = new Image(@view, header)
     else if header.isExtension()
@@ -75,6 +80,9 @@ class File
 
   checkEOF: -> @eof = true if @view.tell() is @length
 
+  # Count the number of HDUs
+  count: -> return @hdus.length 
+  
 FITS = @FITS    = {}
 module?.exports = FITS
 
