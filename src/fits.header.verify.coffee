@@ -106,7 +106,7 @@ VerifyCards =
       throw "#{key} is not to be used for BITPIX = #{@['BITPIX']}" unless @["BIXPIX"] > 0
       return @verifyInteger(value)
     
-    DATAMAX: (args...) ->
+    DATAMIN: (args...) ->
       return parseFloat(arguments[0])
     
     DATAMAX: (args...) ->
