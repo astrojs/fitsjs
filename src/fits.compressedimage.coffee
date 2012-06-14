@@ -111,7 +111,7 @@ class FITS.CompImage extends Data
               for i in [1..length]
                 data[i-1] = FITS.CompImage.dataAccessors[dataType](@view)
               @view.seek(@current)
-              
+            
               # Call the decompression algorithm
               pixels = new FITS.CompImage.typeArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
               FITS.CompImage.rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
@@ -164,7 +164,33 @@ class FITS.CompImage extends Data
     row = []
     row.push @accessors[i]() for i in [0..@accessors.length-1]
     @rowsRead += 1
-    console.log row
+    data  = row[0]
+    scale = row[1][0]
+    zero  = row[2][0]
+    
+    pixels = new Float32Array(data.length)
+    for i in [0..data.length - 1]
+      pixels[i] = (data[i] * scale) + zero
+    return pixels
+  
+  getFrame: ->
+    @rowsRead = 0
+    pixels = new Float32Array(@ztile[0] * @rows)
+    
+    loop
+      @current = @begin + @rowsRead * @rowByteSize
+      @view.seek(@current)
+      row = []
+      row.push @accessors[i]() for i in [0..@accessors.length-1]
+      @rowsRead += 1
+      data  = row[0]
+      scale = row[1][0]
+      zero  = row[2][0]
+      for i in [0..data.length - 1]
+        pixels[i + @rowsRead * @ztile[0]] = (data[i] * scale) + zero
+      break if @rowsRead is @rows
+    return pixels
+      
   
   @subtractiveDither1: -> throw "Not yet implemented"
   @linearScaling: -> throw "Not yet implemented"
