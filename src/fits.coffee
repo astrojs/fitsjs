@@ -5,6 +5,7 @@ Header      = require('fits.header')
 Data        = require('fits.data')
 Image       = require('fits.image')
 BinTable    = require('fits.bintable')
+CompImage   = require('fits.compressedimage')
 Table       = require('fits.table')
 
 # Header data unit to store a header and its associated data unit
@@ -64,11 +65,18 @@ class File
   readData: (header) ->
     return unless header.hasDataUnit()
     
-    if header.isPrimary()
+    if header.isPrimary() and header.hasDataUnit()
       data = new Image(@view, header)
+      # if FITS.Image?
+      #   data = new Image(@view, header)
+      # else
+      #   throw "The Image class must be loaded by the user"
     else if header.isExtension()
       if header.extensionType is "BINTABLE"
-        data = new BinTable(@view, header)
+        if header.contains("ZIMAGE")
+          data = new CompImage(@view, header)
+        else
+          data = new BinTable(@view, header)
       else if header.extensionType is "TABLE"
         data = new Table(@view, header)
     excess = File.excessBytes(data.length)
@@ -88,3 +96,4 @@ module?.exports = FITS
 
 FITS.version    = '0.0.1'
 FITS.File       = File
+FITS.HDU        = HDU

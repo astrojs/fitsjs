@@ -18,18 +18,12 @@ FITS.Decompress =
   # * blocksize: Number of pixels encoded in a block
   # * bytepix: Number of 8-bit bytes of the original integer pixel
   # * pixels: Output array containing the decompressed values
-  # * nx: Length of pixels
+  # * nx: Length of pixels (ztile1)
   rice: (array, arrayLen, blocksize, bytepix, pixels, nx) ->
-    
-    fsbits = 4
-    fsmax = 14
-    
-    # fsbits = 3
-    # fsmax = 6
     
     bbits = 1 << fsbits
     
-    [fsbits, fsmax, lastpix] = @riceSetup[bytepix]()
+    [fsbits, fsmax, lastpix, pointer] = @riceSetup[bytepix](array)
     
     nonzeroCount = new Array(256)
     nzero = 8
@@ -45,7 +39,8 @@ FITS.Decompress =
     nonzeroCount[0] = 0
     
     # Bit buffer
-    b = array.shift()
+    b = array[pointer]
+    pointer += 1
 
     # Number of bits remaining in b
     nbits = 8
@@ -55,7 +50,8 @@ FITS.Decompress =
 
       nbits -= fsbits
       while nbits < 0
-        b = (b << 8) | (array.shift())
+        b = (b << 8) | (array[pointer])
+        pointer += 1
         nbits += 8
       fs = (b >> nbits) - 1
       b &= (1 << nbits) - 1
@@ -72,11 +68,13 @@ FITS.Decompress =
           diff = b << k
           k -= 8
           while k >= 0
-            b = array.shift()
+            b = array[pointer]
+            pointer += 1
             diff |= b << k
             k -= 8
           if nbits > 0
-            b = array.shift()
+            b = array[pointer]
+            pointer += 1
             diff |= b >> (-k)
             b &= (1 << nbits) - 1
           else
@@ -92,13 +90,15 @@ FITS.Decompress =
         while i < imax
           while b is 0
             nbits += 8
-            b = array.shift()
+            b = array[pointer]
+            pointer += 1
           nzero = nbits - nonzeroCount[b]
           nbits -= nzero + 1
           b ^= 1 << nbits
           nbits -= fs
           while nbits < 0
-            b = (b << 8) | (array.shift())
+            b = (b << 8) | (array[pointer])
+            pointer += 1
             nbits += 8
           diff = (nzero << fs) | (b >> nbits)
           b &= (1 << nbits) - 1
@@ -118,28 +118,56 @@ FITS.Decompress =
 
   riceSetup:
     
-    # Setting up for bytepix = 1
-    1: ->
+    # Set up for bytepix = 1
+    1: (array) ->
+      pointer = 0
       fsbits = 3
       fsmax = 6
-      lastpix = array.shift()
+      lastpix = array[pointer]
+      pointer += 1
       
-      return [fsbits, fsmax, lastpix]
-
-    # Setting up for bytepix = 2
-    2: ->
+      return [fsbits, fsmax, lastpix, pointer]
+      
+    # Set up for bytepix = 2
+    2: (array) ->
+      pointer = 0
       fsbits = 4
       fsmax = 14
       
       # Decode in blocks of BLOCKSIZE pixels
       lastpix = 0
-      bytevalue = array.shift()
+      bytevalue = array[pointer]
+      pointer += 1
       lastpix = lastpix | (bytevalue << 8)
-      bytevalue = array.shift()
+      bytevalue = array[pointer]
+      pointer += 1
       lastpix = lastpix | bytevalue
       
-      return [fsbits, fsmax, lastpix]
-  
+      return [fsbits, fsmax, lastpix, pointer]
+    
+    # Set up for bytepix = 4
+    4: (array) ->
+      pointer = 0
+      fsbits = 5
+      fsmax = 25
+
+      # Decode in blocks of BLOCKSIZE pixels
+      lastpix = 0
+      bytevalue = array[pointer]
+      pointer += 1
+      lastpix = lastpix | (bytevalue << 24)
+      bytevalue = array[pointer]
+      pointer += 1
+      lastpix = lastpix | (bytevalue << 16)
+      bytevalue = array[pointer]
+      pointer += 1
+      lastpix = lastpix | (bytevalue << 8)
+      bytevalue = array[pointer]
+      pointer += 1
+      lastpix = lastpix | bytevalue
+
+      return [fsbits, fsmax, lastpix, pointer]
+        
   gzip: (array, length) ->
     throw "Not yet implemented"
   

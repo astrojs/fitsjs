@@ -7,8 +7,6 @@ Decompress  = require('fits.decompress')
 class FITS.BinTable extends Data
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
   @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
-  @compressedImageKeywords = ["ZIMAGE", "ZCMPTYPE", "ZBITPIX", "ZNAXIS"]
-  @extend Decompress
   
   @dataAccessors =
     L: (view) ->
@@ -51,43 +49,14 @@ class FITS.BinTable extends Data
     @compressedImage  = header.contains("ZIMAGE")
     @rowsRead = 0
 
-    if @compressedImage
-      @length += header["PCOUNT"]
-      @cmptype = header["ZCMPTYPE"]
-      @bitpix = header["ZBITPIX"]
-      @naxis = header["ZNAXIS"]
-      @nx = if header.contains("ZTILE1") then parseInt(header["ZTILE1"]) else header["ZNAXIS1"]
-      @bzero = if header.contains("BZERO") then header["BZERO"] else 0
-      
-      if @cmptype is "RICE_1"
-        i = 1
-        loop
-          break unless header.contains("ZNAME#{i}")
-          name = header["ZNAME#{i}"]
-          value = header["ZVAL#{i}"]
-          if name is "BLOCKSIZE"
-            @blocksize = value
-          else if name is "BYTEPIX"
-            @bytepix = value
-          i += 1
-        
-        # Set default values if not in header
-        @blocksize = 32 unless @blocksize
-        @bytepix = 4 unless @bytepix
-        
-      else
-        throw "Compression algorithm not yet implemented."
-
-    # Assuming the header has been verified
-    # TODO: Verify the FITS Binary Table header in the Header class
-    # Grab the column data types
-    @fields = parseInt(header["TFIELDS"])
+    # Select the column data types
+    @fields = header["TFIELDS"]
     @accessors = []
 
     for i in [1..@fields]
       keyword = "TFORM#{i}"
       value = header[keyword]
-      match = value.match(BinTable.arrayDescriptorPattern)
+      match = value.match(FITS.BinTable.arrayDescriptorPattern)
       if match?
         do =>
           dataType = match[1]
@@ -101,19 +70,19 @@ class FITS.BinTable extends Data
             @view.seek(@begin + @tableLength + offset)
             data = []
             for i in [1..length]
-              data.push BinTable.dataAccessors[dataType](@view)
+              data.push FITS.BinTable.dataAccessors[dataType](@view)
             @view.seek(@current)
             return data
           @accessors.push(accessor)
       else
-        match = value.match(BinTable.dataTypePattern)
+        match = value.match(FITS.BinTable.dataTypePattern)
         [r, dataType] = match[1..]
         r = if r then parseInt(r) else 0
         if r is 0
           do =>
             dataType = match[2]
             accessor = (dt) =>
-              data = BinTable.dataAccessors[dataType](@view)
+              data = FITS.BinTable.dataAccessors[dataType](@view)
               return data
             @accessors.push(accessor)
         else
@@ -122,7 +91,7 @@ class FITS.BinTable extends Data
             accessor = =>
               data = []
               for i in [1..r]
-                data.push BinTable.dataAccessors[dataType](@view)
+                data.push FITS.BinTable.dataAccessors[dataType](@view)
               return data
             @accessors.push(accessor)
 
