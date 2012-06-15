@@ -14,6 +14,13 @@ class HDU
   constructor: (header, data)->
     @header = header
     @data   = data
+  
+  hasData: -> return if @data? then true else false
+  
+  # ### API
+  
+  # Returns the value from the header of the user specifed key
+  getCard: (key) -> return @header[key]
 
 # File is the class that parses all the HDUs, initializes Header instances
 # and appropriate Data instances.
@@ -91,6 +98,29 @@ class File
   # Count the number of HDUs
   count: -> return @hdus.length 
   
+  # ### API
+  
+  # Returns the first HDU containing a data unit.  An optional argument may be passed to retreive 
+  # a specific HDU
+  getHDU: (index = undefined) ->
+    if index? and @hdus[index]?
+      return @hdus[index]
+    for hdu in @hdus
+      return hdu if hdu.hasData()
+  
+  # Returns the header associated with the first HDU containing a data unit.  An optional argument
+  # may be passed to point to a specific HDU.
+  getHeader: (index = undefined) -> return @getHDU().header
+  
+  # Returns the data object associated with the first HDU containing a data unit.  This method does not read from the array buffer
+  # An optional argument may be passed to point to a specific HDU.
+  getDataUnit: (index = undefined) -> return @getHDU().data
+
+  # Returns the data associated with the first HDU containing a data unit.  An optional argument
+  # may be passed to point to a specific HDU.
+  getData: (index = undefined) -> return @getHDU().data.getData()
+
+
 FITS = @FITS    = {}
 module?.exports = FITS
 

@@ -90,6 +90,7 @@ describe "Fits", ->
     xhr.onload = (e) ->
       fits = new FITS.File(xhr.response)
       console.log(fits)
-      fits.hdus[1].data.getFrame()
+      hdu = fits.getHDU()
+      hdu.data.getFrame()
 
     xhr.send()
