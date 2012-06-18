@@ -1,5 +1,5 @@
 FITS = require("fits")
-require("fits.images")
+require("fits.imageset")
 
 $(document).ready(function() {
   var images;
@@ -23,8 +23,6 @@ $(document).ready(function() {
     setupUI(extremes[0], extremes[1]);
     setupWebGL();
 
-
-
     // images.addImage(fits);
     // if (images.getCount() == 5) {
     //   images.getExtremes();
@@ -38,7 +36,7 @@ $(document).ready(function() {
   */
   
   
-  images = new FITS.Images();
+  images = new FITS.ImageSet();
   
   filters = ['u', 'g', 'r', 'i', 'z'];
   for (var i = 0; i < filters.length; i += 1) {
@@ -50,7 +48,7 @@ $(document).ready(function() {
     var xhr = new XMLHttpRequest();
     var file = "http://0.0.0.0:9294/data/CFHTLS/" + filename
     xhr.open('GET', file, true);
-    xhr.responseType = 'arraybuffer'
+    xhr.responseType = 'arraybuffer';
 
     xhr.onload = function (e) {
       var fits = new FITS.File(xhr.response);

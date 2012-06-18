@@ -1,8 +1,10 @@
 require = window.require
 
 describe "Fits", ->
-  FITS = require("fits")
-
+  FITS            = require("fits")
+  FITS.Visualize  = require("fits.visualize")
+  FITS.ImageSet   = require("fits.imageset")
+  
   # it 'can parse key/values', ->
   #   xhr = new XMLHttpRequest()
   #   xhr.open('GET', "http://0.0.0.0:9294/data/2MASS_NGC_6872_H.fits", true)
@@ -82,15 +84,43 @@ describe "Fits", ->
   #     tbl = fits.hdus[1]['data']
   #     console.log tbl.getRow()
   
-  it 'can parse a compressed FITS images', ->
-    xhr = new XMLHttpRequest()
-    xhr.open('GET', "http://0.0.0.0:9294/data/compressed/CFHTLS_03_g_sci.fits.fz")
-    xhr.responseType = 'arraybuffer'
+  # it 'can parse a compressed FITS images', ->
+  #   xhr = new XMLHttpRequest()
+  #   xhr.open('GET', "http://0.0.0.0:9294/data/compressed/CFHTLS_03_g_sci.fits.fz")
+  #   xhr.responseType = 'arraybuffer'
+  #   
+  #   xhr.onload = (e) ->
+  #     fits = new FITS.File(xhr.response)
+  #     console.log(fits)
+  #     hdu = fits.getHDU()
+  #     hdu.data.getFrame()
+  # 
+  #   xhr.send()
     
-    xhr.onload = (e) ->
-      fits = new FITS.File(xhr.response)
-      console.log(fits)
-      hdu = fits.getHDU()
-      hdu.data.getFrame()
+  it 'can initialize a visualize object', ->
 
-    xhr.send()
+    canvas = document.createElement('canvas')
+    imageset = new FITS.ImageSet()
+    
+    requestImage = (filename) ->
+      xhr = new XMLHttpRequest()
+      file = "http://0.0.0.0:9294/data/CFHTLS/" + filename
+      xhr.open('GET', file, true)
+      xhr.responseType = 'arraybuffer'
+      
+      xhr.onload = (e) ->
+        fits = new FITS.File(xhr.response)
+        imageset.addImage(fits)
+        
+        if imageset.getCount() is 5
+          viz = new FITS.Visualize(imageset, canvas)
+          console.log viz
+          
+      xhr.send()
+
+    
+    filters = ['u', 'g', 'r', 'i', 'z'];
+    for filter in filters
+      filename = "CFHTLS_03_#{filter}_sci.fits"
+      requestImage(filename)
+    

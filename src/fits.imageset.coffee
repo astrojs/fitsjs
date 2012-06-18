@@ -1,7 +1,7 @@
 FITS  = @FITS or require('fits')
 
 # Container class for multiple FITS images
-class FITS.Images
+class FITS.ImageSet
 
   constructor: ->
     @images = {}
@@ -23,11 +23,12 @@ class FITS.Images
     @maximum = Math.max.apply Math, maximums
   
   addImage: (image) ->
-    filter = image.hdus[0].header["FILTER"]
+    filter = image.hdus[0].header["FILTER"] || @count
     @keys.push filter
     @images[filter] = image
+    index = @count
+    @.__defineGetter__(index, -> return @images[@keys[index]])
     @count += 1
-    @.__defineGetter__(filter, -> return @images[filter])
   
   getWidth: ->
     key = @keys[0]
@@ -44,4 +45,4 @@ class FITS.Images
   getData: (filter) -> return @[filter].hdus[0].data.data
     
 
-module.exports = FITS.Images
+module.exports = FITS.ImageSet

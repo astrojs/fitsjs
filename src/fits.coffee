@@ -67,7 +67,7 @@ class File
 
   # Read a data unit and initialize an appropriate instance depending
   # on the type of data unit (e.g. image, binary table, ascii table).
-  # Note: Bytes are not interpretted by this function.  That is left 
+  # Note: Bytes are not interpreted by this function.  That is left 
   #       to the user to call when the data is needed.
   readData: (header) ->
     return unless header.hasDataUnit()
