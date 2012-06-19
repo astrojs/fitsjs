@@ -1,8 +1,6 @@
 require('jDataView/src/jdataview')
-Module      = require('module')
 Decompress  = require('fits.decompress')
 Header      = require('fits.header')
-Data        = require('fits.data')
 Image       = require('fits.image')
 BinTable    = require('fits.bintable')
 CompImage   = require('fits.compressedimage')
@@ -11,9 +9,7 @@ Table       = require('fits.table')
 # Header data unit to store a header and its associated data unit
 class HDU
 
-  constructor: (header, data)->
-    @header = header
-    @data   = data
+  constructor: (@header, @data) ->
   
   hasData: -> return if @data? then true else false
   
@@ -74,10 +70,6 @@ class File
     
     if header.isPrimary()
       data = new Image(@view, header)
-      # if FITS.Image?
-      #   data = new Image(@view, header)
-      # else
-      #   throw "The Image class must be loaded by the user"
     else if header.isExtension()
       if header.extensionType is "BINTABLE"
         if header.contains("ZIMAGE")
@@ -103,8 +95,7 @@ class File
   # Returns the first HDU containing a data unit.  An optional argument may be passed to retreive 
   # a specific HDU
   getHDU: (index = undefined) ->
-    if index? and @hdus[index]?
-      return @hdus[index]
+    return @hdus[index] if index? and @hdus[index]?
     for hdu in @hdus
       return hdu if hdu.hasData()
   
@@ -118,7 +109,7 @@ class File
 
   # Returns the data associated with the first HDU containing a data unit.  An optional argument
   # may be passed to point to a specific HDU.
-  getData: (index = undefined) -> return @getHDU(index).data.getData()
+  getData: (index = undefined) -> return @getHDU(index).data.getFrame()
 
 
 FITS = @FITS    = {}

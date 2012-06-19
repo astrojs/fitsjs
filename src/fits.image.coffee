@@ -11,34 +11,28 @@ class FITS.Image extends Data
 
     naxis   = header["NAXIS"]
     bitpix  = header["BITPIX"]
+    
     @naxis = []
+    @naxis.push header["NAXIS#{i}"] for i in [1..naxis]
     @rowByteSize = header["NAXIS1"] * Math.abs(bitpix) / 8
     @rowsRead = 0
     @min = if header["DATAMIN"]? then header["DATAMIN"] else undefined
     @max = if header["DATAMAX"]? then header["DATAMAX"] else undefined
 
-    i = 1
-    while i <= naxis
-      @naxis.push header["NAXIS#{i}"]
-      i += 1
-
-    @length   = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
-    @data     = undefined
+    @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
+    @data   = undefined
     
     # Define a function to read the image data
     switch bitpix
       when 8
         @arrayType  = Uint8Array
-        @accessor   = =>
-          return @view.getUint8()
+        @accessor   = => return @view.getUint8()
       when 16
         @arrayType  = Int16Array
-        @accessor   = =>
-          return @view.getInt16()
+        @accessor   = => return @view.getInt16()
       when 32
         @arrayType  = Int32Array
-        @accessor   = =>
-          return @view.getInt32()
+        @accessor   = => return @view.getInt32()
       when 64
         @arrayType  = Int32Array
         @accessor   = =>
@@ -52,12 +46,10 @@ class FITS.Image extends Data
           return value
       when -32
         @arrayType  = Float32Array
-        @accessor   = =>
-          return @view.getFloat32()
+        @accessor   = => return @view.getFloat32()
       when -64
         @arrayType  = Float64Array
-        @accessor   = =>
-          return @view.getFloat64()
+        @accessor   = => return @view.getFloat64()
       else
         throw "FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, 64, -32, -64]"
 
@@ -75,10 +67,17 @@ class FITS.Image extends Data
     @rowsRead += 1
   
   # Read the entire frame of the image.  If the image is a data cube, it reads
-  # a slice of the data.
-  getFrame: -> @getRow() for i in [0..@naxis[1] - 1]
+  # a slice of the data.  It's not required to call initArray prior, though there
+  # is no harm in doing so.
+  getFrame: ->
+    @initArray() unless @data?
+    @getRow() for i in [0..@naxis[1] - 1]
+    return @data
   
-  # Read the entire image and return the pixels in a typed array for WebGL
+  # Read the entire image and return the pixels in a typed array for WebGL.
+  # A Float32Array is used for now because I have not been able to render other
+  # typed arrays aside from Uint8.  This method will be deprecated when I figure
+  # that out.
   getFrameWebGL: ->
     @data = new Float32Array(@naxis.reduce( (a, b) -> a * b))
     @rowsRead = 0
@@ -103,8 +102,8 @@ class FITS.Image extends Data
     for i in [0..@data.length - 1]
       value = @data[i]
       continue if isNaN(value)
-      min = @data[i]
-      max = @data[i]
+      min = value
+      max = value
       index = i
       break
     
@@ -116,5 +115,9 @@ class FITS.Image extends Data
     
     [@min, @max] = [min, max]
     return [@min, @max]
-    
+  
+  # Get the value of a pixel.
+  # Note: Indexing of pixels starts at 0.
+  getPixel: (x, y) -> return @data[y * @naxis[0] + x]
+  
 module?.exports = FITS.Image
