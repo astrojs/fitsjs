@@ -1,10 +1,10 @@
 require('jDataView/src/jdataview')
 
 FITS        = @FITS or require('fits')
-Data        = require('fits.data')
+Tabular     = require('fits.tabular')
 Decompress  = require('fits.decompress')
 
-class FITS.BinTable extends Data
+class FITS.BinTable extends Tabular
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
   @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
   
@@ -43,17 +43,7 @@ class FITS.BinTable extends Data
   constructor: (view, header) ->
     super
 
-    @rowByteSize  = header["NAXIS1"]
-    @rows         = header["NAXIS2"]
-    @length       = @tableLength = @rowByteSize * @rows
-    @compressedImage  = header.contains("ZIMAGE")
-    @rowsRead = 0
-
-    # Select the column data types
-    @fields = header["TFIELDS"]
-    @accessors = []
-
-    for i in [1..@fields]
+    for i in [1..@cols]
       keyword = "TFORM#{i}"
       value = header[keyword]
       match = value.match(FITS.BinTable.arrayDescriptorPattern)
@@ -94,121 +84,5 @@ class FITS.BinTable extends Data
                 data.push FITS.BinTable.dataAccessors[dataType](@view)
               return data
             @accessors.push(accessor)
-
-  getRow: ->
-    @current = @begin + @rowsRead * @rowByteSize
-    @view.seek(@current)
-    row = []
-    for i in [0..@accessors.length-1]
-      data = @accessors[i]()
-      row.push(data)
-    @rowsRead += 1
-    
-    if @compressedImage
-      # array, arrayLen, blocksize, bytepix, pixels, nx
-      console.log @riceDecompressShort(data)
-    return row
-    
-  riceDecompressShort: (arr) ->
-    
-    # TODO: Typed array should be set by BITPIX of the uncompressed data
-    pixels = new Uint16Array(@nx)
-    fsbits = 4
-    fsmax = 14
-    bbits = 1 << fsbits
-    
-    nonzeroCount = new Array(256)
-    nzero = 8
-    k = 128
-    i = 255
-    while i >= 0
-      while i >= k
-        nonzeroCount[i] = nzero
-        i -= 1
-      k = k / 2
-      nzero -= 1
-    # FIXME: Not sure why this element is incorrectly -1024
-    nonzeroCount[0] = 0
-    
-    # NOTES:  nx      = ZTILE1
-    #         nblock  = BLOCKSIZE
-    
-    # Decode in blocks of BLOCKSIZE pixels
-    lastpix = 0
-    bytevalue = arr.shift()
-    lastpix = lastpix | (bytevalue << 8)
-    bytevalue = arr.shift()
-    lastpix = lastpix | bytevalue
-    
-    # Bit buffer
-    b = arr.shift()
-    
-    # Number of bits remaining in b
-    nbits = 8
-    
-    i = 0
-    while i < @nx
-      
-      nbits -= fsbits
-      while nbits < 0
-        b = (b << 8) | (arr.shift())
-        nbits += 8
-      fs = (b >> nbits) - 1
-      b &= (1 << nbits) - 1
-      imax = i + @blocksize
-      imax = @nx if imax > @nx
-      
-      if fs < 0
-        while i < imax
-          arr[i] = lastpix
-          i++
-      else if fs is fsmax
-        while i < imax
-          k = bbits - nbits
-          diff = b << k
-          k -= 8
-          while k >= 0
-            b = arr.shift()
-            diff |= b << k
-            k -= 8
-          if nbits > 0
-            b = arr.shift()
-            diff |= b >> (-k)
-            b &= (1 << nbits) - 1
-          else
-            b = 0
-          if (diff & 1) is 0
-            diff = diff >> 1
-          else
-            diff = ~(diff >> 1)
-          arr[i] = diff + lastpix
-          lastpix = arr[i]
-          i++
-      else
-        while i < imax
-          while b is 0
-            nbits += 8
-            b = arr.shift()
-          nzero = nbits - nonzeroCount[b]
-          nbits -= nzero + 1
-          b ^= 1 << nbits
-          nbits -= fs
-          while nbits < 0
-            b = (b << 8) | (arr.shift())
-            nbits += 8
-          diff = (nzero << fs) | (b >> nbits)
-          b &= (1 << nbits) - 1
-          if (diff & 1) is 0
-            diff = diff >> 1
-          else
-            diff = ~(diff >> 1)
-          pixels[i] = diff + lastpix
-          lastpix = pixels[i]
-          i++
-
-    # TODO: This should go elsewhere
-    for i in [0..pixels.length-1]
-      pixels[i] = pixels[i] + @bzero
-    return pixels
 
 module?.exports = FITS.BinTable

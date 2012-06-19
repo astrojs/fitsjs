@@ -12,8 +12,4 @@ class FITS.Data extends Module
     @begin  = @current = view.tell()
     @length = undefined
 
-  # These methods must be implemented by any subclasses.
-  getRow: -> throw "Instance method must be implemented by subclasses"
-  getFrame: -> throw "Instance method must be implemented by subclasses"
-
 module?.exports = FITS.Data
