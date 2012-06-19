@@ -8,7 +8,7 @@ VerifyCards = require('fits.header.verify')
 # Header parses and stores the FITS header.  Verification is done for reserved
 # keywords (e.g. SIMPLE, BITPIX, etc)
 class FITS.Header extends Module
-  @keywordPattern = /([\w_]+)\s*=?\s*(.*)/
+  @keywordPattern = /([\w_-]+)\s*=?\s*(.*)/
   @nonStringPattern = /([^\/]*)\s*\/*(.*)/
   @stringPattern = /'(.*)'\s*\/*(.*)/
   @include VerifyCards

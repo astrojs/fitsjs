@@ -83,10 +83,10 @@ VerifyCards =
       
       return value
     
-    DATE: (args...) ->
-      key = "DATE"
-      value = new Date(value)
-      return value
+    # DATE: (args...) ->
+    #   key = "DATE"
+    #   value = new Date(arguments[0])
+    #   return value
     
     EXTEND: (args...) ->
       key = "EXTEND"
@@ -136,6 +136,7 @@ VerifyCards =
       value = arguments[0]
       index = arguments[2]
       @verifyBetween(key, index, 0, @["TFIELDS"])
+      return value
     
     ZIMAGE: (args...) ->
       key = "ZIMAGE"

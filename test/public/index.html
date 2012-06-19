@@ -16,9 +16,19 @@
 <body>
   <script type="text/javascript">
     jasmine.getEnv().addReporter(new jasmine.TrivialReporter());
-    window.onload = function(){
-      jasmine.getEnv().execute();
+    var fits;
+    window.onload = function () {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', "http://0.0.0.0:9294/data/m101.fits", true)
+      xhr.responseType = 'arraybuffer'
+      xhr.onload = function (e) {
+        fits = new FITS.File(xhr.response);
+        
+        jasmine.getEnv().execute();
+      };
+      xhr.send();
     };
+    
   </script>
 </body>
 </html>

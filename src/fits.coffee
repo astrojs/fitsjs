@@ -44,7 +44,7 @@ class File
   # ##Class Methods
 
   # Determine the number of characters following a header or data unit
-  @excessBytes: (length) -> return File.BLOCKLENGTH - (length) % File.BLOCKLENGTH
+  @excessBytes: (length) -> return (File.BLOCKLENGTH - (length % File.BLOCKLENGTH)) % File.BLOCKLENGTH
 
   # ##Instance Methods
 
@@ -72,7 +72,7 @@ class File
   readData: (header) ->
     return unless header.hasDataUnit()
     
-    if header.isPrimary() and header.hasDataUnit()
+    if header.isPrimary()
       data = new Image(@view, header)
       # if FITS.Image?
       #   data = new Image(@view, header)
@@ -87,7 +87,7 @@ class File
       else if header.extensionType is "TABLE"
         data = new Table(@view, header)
     excess = File.excessBytes(data.length)
-
+    
     # Forward to the next HDU
     @view.seek(@view.tell() + data.length + excess)
     @checkEOF()
@@ -96,7 +96,7 @@ class File
   checkEOF: -> @eof = true if @view.tell() is @length
 
   # Count the number of HDUs
-  count: -> return @hdus.length 
+  count: -> return @hdus.length
   
   # ### API
   
@@ -110,15 +110,15 @@ class File
   
   # Returns the header associated with the first HDU containing a data unit.  An optional argument
   # may be passed to point to a specific HDU.
-  getHeader: (index = undefined) -> return @getHDU().header
+  getHeader: (index = undefined) -> return @getHDU(index).header
   
   # Returns the data object associated with the first HDU containing a data unit.  This method does not read from the array buffer
   # An optional argument may be passed to point to a specific HDU.
-  getDataUnit: (index = undefined) -> return @getHDU().data
+  getDataUnit: (index = undefined) -> return @getHDU(index).data
 
   # Returns the data associated with the first HDU containing a data unit.  An optional argument
   # may be passed to point to a specific HDU.
-  getData: (index = undefined) -> return @getHDU().data.getData()
+  getData: (index = undefined) -> return @getHDU(index).data.getData()
 
 
 FITS = @FITS    = {}
