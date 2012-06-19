@@ -20,9 +20,9 @@ class FITS.Table extends Data
     @rowByteSize  = header["NAXIS1"]
     @rows         = header["NAXIS2"]
     @cols         = header["TFIELDS"]
-    @length       = @tableLength = @rowByteSize * @rows
-    @rowsRead = 0
-        
+    @length       = @rowByteSize * @rows
+    @rowsRead     = 0
+    
     @accessors = []
     for i in [1..header["TFIELDS"]]
       form = header["TFORM#{i}"]
@@ -30,18 +30,16 @@ class FITS.Table extends Data
       do =>
         [dataType, length, decimals] = match[1..]
         accessor = =>
-          console.log 'blah'
-          value = @view.getString(length)
-          return @dataAccessors[dataType](value)
+          value = ""
+          value += @view.getChar() for i in [1..length]
+          return FITS.Table.dataAccessors[dataType](value)
         @accessors.push(accessor)
 
   getRow: ->
     @current = @begin + @rowsRead * @rowByteSize
     @view.seek(@current)
     row = []
-    for i in [0..@accessors.length-1]
-      data = @accessors[i]()
-      row.push(data)
+    row.push accessor() for accessor in @accessors
     @rowsRead += 1
     return row
 
