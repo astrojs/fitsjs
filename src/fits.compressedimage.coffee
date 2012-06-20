@@ -152,22 +152,6 @@ class FITS.CompImage extends Tabular
     @algorithmParameters["BYTEPIX"] = 4 unless @algorithmParameters.hasOwnProperty("BYTEPIX")
   
   @setValue: (header, key, defaultValue) -> return if header.contains(key) then header[key] else defaultValue
-  
-  # getRow: ->
-  #   @current = @begin + @rowsRead * @rowByteSize
-  #   @view.seek(@current)
-  #   row = []
-  #   row.push accessor() for accessor in @accessors
-  #   @rowsRead += 1
-  #   
-  #   data  = row[0]
-  #   scale = row[1][0]
-  #   zero  = row[2][0]
-  #   
-  #   pixels = new Float32Array(data.length)
-  #   for i in [0..data.length - 1]
-  #     pixels[i] = (data[i] * scale) + zero
-  #   return pixels
     
   # TODO: Define this function at runtime depending on parameters in the header.
   #       Very inefficient right now ...
