@@ -9,10 +9,12 @@ class FITS.CompImage extends Tabular
   @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
   @extend Decompress
   
-  @typeArray =
+  @typedArray =
     B: Uint8Array
     I: Int16Array
     J: Int32Array
+    E: Float32Array
+    D: Float64Array
     1: Uint8Array
     2: Uint8Array
     4: Int16Array
@@ -21,12 +23,6 @@ class FITS.CompImage extends Tabular
   constructor: (view, header) ->
     super
     
-    @rowByteSize  = header["NAXIS1"]
-    @rows         = header["NAXIS2"]
-    @cols         = header["TFIELDS"]
-    @length       = @tableLength = @rowByteSize * @rows
-    @rowsRead     = 0
-  
     @length   += header["PCOUNT"]
     @zcmptype = header["ZCMPTYPE"]
     @zbitpix  = header["ZBITPIX"]
@@ -56,106 +52,165 @@ class FITS.CompImage extends Tabular
     @bzero  = FITS.CompImage.setValue(header, "BZERO", 0)
     @bscale = FITS.CompImage.setValue(header, "BSCALE", 1)
     
-    @accessors = []
+    @columnNames = {}
     for i in [1..@cols]
-      keyword = "TFORM#{i}"
-      value = header[keyword]
+      value = header["TFORM#{i}"]
       match = value.match(FITS.CompImage.arrayDescriptorPattern)
-      console.log match
-      ttype = header["TTYPE#{i}"]
+      ttype = header["TTYPE#{i}"].toUpperCase()
+      @columnNames[ttype] = i - 1
       
       if match?
-        # Define an array accessor method
-        if ttype.toUpperCase() is "COMPRESSED_DATA"
-          do =>
-            dataType = match[1]
-            accessor = =>
-              # Length and offset are stored in the binary table as an array descriptor
-              length  = @view.getInt32()
-              offset  = @view.getInt32()
-              @current = @view.tell()
-              @view.seek(@begin + @tableLength + offset)
-              data = new FITS.CompImage.typeArray[dataType](length)
-              for i in [1..length]
-                data[i-1] = FITS.CompImage.dataAccessors[dataType](@view)
-              @view.seek(@current)
-            
-              # Call the decompression algorithm
-              pixels = new FITS.CompImage.typeArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
-              FITS.CompImage.rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
-              return pixels
-            @accessors.push(accessor)
-        else
-          do =>
-            dataType = match[1]
-            accessor = =>
-              # Length and offset are stored in the binary table as an array descriptor
-              length  = @view.getInt32()
-              offset  = @view.getInt32()
-              @current = @view.tell()
-              @view.seek(@begin + @tableLength + offset)
-              data = []
-              for i in [1..length]
-                data.push FITS.CompImage.dataAccessors[dataType](@view)
-              @view.seek(@current)
-              return data
-            @accessors.push(accessor)
+        
+        # Define array accessor methods
+        dataType = match[1]
+        switch ttype
+          when "COMPRESSED_DATA"
+            do (dataType) =>
+              accessor = =>
+                [length, offset]  = [@view.getInt32(), @view.getInt32()]
+                return null if length is 0
+
+                data = new FITS.CompImage.typedArray[dataType](length)
+                @current = @view.tell()
+                @view.seek(@begin + @tableLength + offset)
+                for i in [0..length - 1]
+                  data[i] = FITS.CompImage.dataAccessors[dataType](@view)
+                @view.seek(@current)
+
+                pixels = new FITS.CompImage.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
+                FITS.CompImage.Rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
+
+                return pixels
+              @accessors.push accessor
+          when "UNCOMPRESSED_DATA"
+            do (dataType) =>
+              accessor = =>
+                [length, offset]  = [@view.getInt32(), @view.getInt32()]
+                return null if length is 0
+
+                data = new FITS.CompImage.typedArray[dataType](length)
+                @current = @view.tell()
+                @view.seek(@begin + @tableLength + offset)
+                for i in [0..length - 1]
+                  data[i] = FITS.CompImage.dataAccessors[dataType](@view)
+                @view.seek(@current)
+
+                return data
+              @accessors.push accessor
+          when "GZIP_COMPRESSED_DATA"
+            do (dataType) =>
+              accessor = =>
+                [length, offset]  = [@view.getInt32(), @view.getInt32()]
+                return null if length is 0
+
+                data = new FITS.CompImage.typedArray[dataType](length)
+                @current = @view.tell()
+                @view.seek(@begin + @tableLength + offset)
+                for i in [0..length - 1]
+                  data[i] = FITS.CompImage.dataAccessors[dataType](@view)
+                @view.seek(@current)
+
+                # TODO: Decompress using gzip
+                return data
+              @accessors.push accessor
+          else
+            # Might not need this as default.  TODO: Check how NULL_PIXEL_MASK is stored
+            do (dataType) =>
+              accessor = =>
+                [length, offset]  = [@view.getInt32(), @view.getInt32()]
+                return null if length is 0
+
+                data = new FITS.CompImage.typedArray[dataType](length)
+                @current = @view.tell()
+                @view.seek(@begin + @tableLength + offset)
+                for i in [0..length - 1]
+                  data[i] = FITS.CompImage.dataAccessors[dataType](@view)
+                @view.seek(@current)
+
+                return data
+              @accessors.push accessor
       else
         match = value.match(FITS.CompImage.dataTypePattern)
-        [r, dataType] = match[1..]
-        r = if r then parseInt(r) else 0
-        if r is 0
-          do =>
-            dataType = match[2]
+        [length, dataType] = match[1..]
+        length = if length? then parseInt(length) else 0
+        if length in [0, 1]
+          do (dataType) =>
             accessor = =>
               return FITS.CompImage.dataAccessors[dataType](@view)
-            @accessors.push(accessor)
+            @accessors.push accessor
         else
-          do =>
-            dataType = match[2]
+          do (length, dataType) =>
             accessor = =>
-              data = []
-              for i in [1..r]
-                data.push FITS.CompImage.dataAccessors[dataType](@view)
+              data = new FITS.CompImage.typedArray[dataType](length)
+              for i in [0..length - 1]
+                data[i] = FITS.CompImage.dataAccessors[dataType](@view)
               return data
             @accessors.push(accessor)
   
   setDefaultParameters_RICE_1: ->
     @algorithmParameters["BLOCKSIZE"] = 32 unless @algorithmParameters.hasOwnProperty("BLOCKSIZE")
     @algorithmParameters["BYTEPIX"] = 4 unless @algorithmParameters.hasOwnProperty("BYTEPIX")
-
+  
   @setValue: (header, key, defaultValue) -> return if header.contains(key) then header[key] else defaultValue
   
+  # getRow: ->
+  #   @current = @begin + @rowsRead * @rowByteSize
+  #   @view.seek(@current)
+  #   row = []
+  #   row.push accessor() for accessor in @accessors
+  #   @rowsRead += 1
+  #   
+  #   data  = row[0]
+  #   scale = row[1][0]
+  #   zero  = row[2][0]
+  #   
+  #   pixels = new Float32Array(data.length)
+  #   for i in [0..data.length - 1]
+  #     pixels[i] = (data[i] * scale) + zero
+  #   return pixels
+    
+  # TODO: Define this function at runtime depending on parameters in the header.
+  #       Very inefficient right now ...
   getRow: ->
     @current = @begin + @rowsRead * @rowByteSize
     @view.seek(@current)
     row = []
-    row.push @accessors[i]() for i in [0..@accessors.length-1]
+    row.push accessor() for accessor in @accessors
     @rowsRead += 1
-    data  = row[0]
-    scale = row[1][0]
-    zero  = row[2][0]
     
-    pixels = new Float32Array(data.length)
-    for i in [0..data.length - 1]
-      pixels[i] = (data[i] * scale) + zero
-    return pixels
+    # Get the data
+    data = row[@columnNames["COMPRESSED_DATA"]] || row[@columnNames["UNCOMPRESSED_DATA"]] || row[@columnNames["GZIP_COMPRESSED_DATA"]]
+    
+    # Apply NaNs if applicable
+    # TODO: Will not work properly if data is an integer array
+    blank = row[@columnNames["ZBLANK"]] || @zblank
+    if blank?
+      for value, index in data
+        if value is blank
+          data[index] = NaN
+    
+    # Apply scaling if applicable
+    scale = row[@columnNames["ZSCALE"]] || @bscale
+    zero  = row[@columnNames["ZZERO"]] || @bzero
+    
+    if scale?
+      for value, index in data
+        data[index] = zero + scale * value
+    
+    # TODO: Apply inverse of quantization algorithm (e.g. subtractive dithering)
+    return data
+
   
   getFrame: ->
     @rowsRead = 0
     pixels = new Float32Array(@ztile[0] * @rows)
     
     loop
-      @current = @begin + @rowsRead * @rowByteSize
-      @view.seek(@current)
-      row = []
-      row.push @accessors[i]() for i in [0..@accessors.length-1]
-      @rowsRead += 1
-      data  = row[0]
-      scale = row[1][0]
-      zero  = row[2][0]
-      for i in [0..data.length - 1]
-        pixels[i + @rowsRead * @ztile[0]] = (data[i] * scale) + zero
+      row = @getRow()
+      for value, index in row
+        location = @rowsRead * @ztile[0] + index
+        console.log location
+        pixels[@rowsRead * @ztile[0] + index] = value
       break if @rowsRead is @rows
     return pixels
       

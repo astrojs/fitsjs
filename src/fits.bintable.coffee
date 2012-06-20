@@ -2,7 +2,6 @@ require('jDataView/src/jdataview')
 
 FITS        = @FITS or require('fits')
 Tabular     = require('fits.tabular')
-Decompress  = require('fits.decompress')
 
 class FITS.BinTable extends Tabular
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/

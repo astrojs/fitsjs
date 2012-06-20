@@ -1,7 +1,8 @@
 {
   "paths": ["./src"],
   "dependencies": [
-    "jDataView"
+    "jDataView",
+    "deflate-js"
   ],
   "libs": []
 }

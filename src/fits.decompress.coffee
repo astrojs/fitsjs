@@ -12,18 +12,18 @@ FITS = @FITS or require('fits')
 
 FITS.Decompress =
   
-  # ### rice
+  # ### Rice
   # * array: Array of compressed bytes to be decompressed
   # * arrayLen: Length of array
   # * blocksize: Number of pixels encoded in a block
   # * bytepix: Number of 8-bit bytes of the original integer pixel
   # * pixels: Output array containing the decompressed values
   # * nx: Length of pixels (ztile1)
-  rice: (array, arrayLen, blocksize, bytepix, pixels, nx) ->
+  Rice: (array, arrayLen, blocksize, bytepix, pixels, nx) ->
     
     bbits = 1 << fsbits
     
-    [fsbits, fsmax, lastpix, pointer] = @riceSetup[bytepix](array)
+    [fsbits, fsmax, lastpix, pointer] = @RiceSetup[bytepix](array)
     
     nonzeroCount = new Array(256)
     nzero = 8
@@ -110,19 +110,16 @@ FITS.Decompress =
           lastpix = pixels[i]
           i++
 
-    # # TODO: This should go elsewhere (inefficient!!!)
-    # for i in [0..pixels.length-1]
-    #   pixels[i] = pixels[i] + @bzero
-
     return pixels
 
-  riceSetup:
+  RiceSetup:
     
     # Set up for bytepix = 1
     1: (array) ->
       pointer = 0
       fsbits = 3
       fsmax = 6
+      
       lastpix = array[pointer]
       pointer += 1
       
@@ -134,7 +131,6 @@ FITS.Decompress =
       fsbits = 4
       fsmax = 14
       
-      # Decode in blocks of BLOCKSIZE pixels
       lastpix = 0
       bytevalue = array[pointer]
       pointer += 1
@@ -151,7 +147,6 @@ FITS.Decompress =
       fsbits = 5
       fsmax = 25
 
-      # Decode in blocks of BLOCKSIZE pixels
       lastpix = 0
       bytevalue = array[pointer]
       pointer += 1
@@ -168,7 +163,7 @@ FITS.Decompress =
 
       return [fsbits, fsmax, lastpix, pointer]
         
-  gzip: (array, length) -> throw "Not yet implemented"
+  gzip: (array) -> throw "Not yet implemented"
   plio: (array, length) -> throw "Not yet implemented"
   hcompress: (array, length) -> throw "Not yet implemented"
 

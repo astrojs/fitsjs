@@ -85,8 +85,10 @@ describe "FITS", ->
     
     xhr.onload = (e) ->
       fits = new FITS.File(xhr.response)
-      console.log('comp image', fits)
       hdu = fits.getHDU()
+      
+      console.log hdu.data.getFrame()
+      
   
     xhr.send()
     
