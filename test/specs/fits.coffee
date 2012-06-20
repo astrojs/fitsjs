@@ -77,29 +77,18 @@ describe "FITS", ->
   #     
   #   xhr.send()
   
-  # it 'can read both headers from a compressed FITS image', ->
-  #   xhr = new XMLHttpRequest()
-  #   xhr.open('GET', "http://0.0.0.0:9294/data/m101.fits", true)
-  #   xhr.responseType = 'arraybuffer'
-  #   
-  #   xhr.onload = (e) ->
-  #     fits = new FITS.File(xhr.response)
-  #     console.log fits
-  #     tbl = fits.hdus[1]['data']
-  #     console.log tbl.getRow()
+  it 'can parse a compressed FITS images', ->
+    xhr = new XMLHttpRequest()
+    # xhr.open('GET', "http://0.0.0.0:9294/data/compressed/CFHTLS_03_g_sci.fits.fz")
+    xhr.open('GET', "http://0.0.0.0:9294/data/compressed/Arp245_EMMI_R.fits.fz")
+    xhr.responseType = 'arraybuffer'
+    
+    xhr.onload = (e) ->
+      fits = new FITS.File(xhr.response)
+      console.log('comp image', fits)
+      hdu = fits.getHDU()
   
-  # it 'can parse a compressed FITS images', ->
-  #   xhr = new XMLHttpRequest()
-  #   xhr.open('GET', "http://0.0.0.0:9294/data/compressed/CFHTLS_03_g_sci.fits.fz")
-  #   xhr.responseType = 'arraybuffer'
-  #   
-  #   xhr.onload = (e) ->
-  #     fits = new FITS.File(xhr.response)
-  #     console.log(fits)
-  #     hdu = fits.getHDU()
-  #     hdu.data.getFrame()
-  # 
-  #   xhr.send()
+    xhr.send()
     
   # it 'can initialize a visualize object', ->
   # 

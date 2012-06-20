@@ -1,13 +1,12 @@
 require('jDataView/src/jdataview')
 
 FITS        = @FITS or require('fits')
-Data        = require('fits.data')
+Tabular     = require('fits.tabular')
 Decompress  = require('fits.decompress')
 
-class FITS.CompImage extends Data
+class FITS.CompImage extends Tabular
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
   @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
-  @compressedImageKeywords = ["ZIMAGE", "ZCMPTYPE", "ZBITPIX", "ZNAXIS"]
   @extend Decompress
   
   @typeArray =
@@ -18,50 +17,21 @@ class FITS.CompImage extends Data
     2: Uint8Array
     4: Int16Array
     8: Int32Array
-
-  @dataAccessors =
-    L: (view) ->
-      value = if view.getInt8() is 84 then true else false
-      return value
-    X: (view) ->
-      throw "Data type not yet implemented"
-    B: (view) ->
-      return view.getUint8()
-    I: (view) ->
-      return view.getInt16()
-    J: (view) ->
-      return view.getInt32()
-    K: (view) ->
-      highByte = Math.abs view.getInt32()
-      lowByte = Math.abs view.getInt32()
-      mod = highByte % 10
-      factor = if mod then -1 else 1
-      highByte -= mod
-      value = factor * ((highByte << 32) | lowByte)
-      console.warn "Something funky happens here when dealing with 64 bit integers.  Be wary!!!"
-      return value
-    A: (view) ->
-      return view.getChar()
-    E: (view) ->
-      return view.getFloat32()
-    D: (view) ->
-      return view.getFloat64()
-    C: (view) ->
-      return [view.getFloat32(), view.getFloat32()]
-    M: (view) ->
-      return [view.getFloat64(), view.getFloat64()]
-    
+  
   constructor: (view, header) ->
     super
+    
     @rowByteSize  = header["NAXIS1"]
     @rows         = header["NAXIS2"]
+    @cols         = header["TFIELDS"]
     @length       = @tableLength = @rowByteSize * @rows
-    @rowsRead = 0
+    @rowsRead     = 0
   
-    @length += header["PCOUNT"]
+    @length   += header["PCOUNT"]
     @zcmptype = header["ZCMPTYPE"]
-    @zbitpix = header["ZBITPIX"]
-    @znaxis = header["ZNAXIS"]
+    @zbitpix  = header["ZBITPIX"]
+    @znaxis   = header["ZNAXIS"]
+    @zblank   = FITS.CompImage.setValue(header, "ZBLANK", undefined)
     
     @ztile = []
     for i in [1..@znaxis]
@@ -86,19 +56,17 @@ class FITS.CompImage extends Data
     @bzero  = FITS.CompImage.setValue(header, "BZERO", 0)
     @bscale = FITS.CompImage.setValue(header, "BSCALE", 1)
     
-    # Select the column data types
-    @fields = header["TFIELDS"]
     @accessors = []
-    
-    for i in [1..@fields]
+    for i in [1..@cols]
       keyword = "TFORM#{i}"
       value = header[keyword]
       match = value.match(FITS.CompImage.arrayDescriptorPattern)
+      console.log match
       ttype = header["TTYPE#{i}"]
       
       if match?
         # Define an array accessor method
-        if ttype is "COMPRESSED_DATA"
+        if ttype.toUpperCase() is "COMPRESSED_DATA"
           do =>
             dataType = match[1]
             accessor = =>

@@ -74,6 +74,8 @@ class FITS.Header extends Module
   # Read a card from the header
   readCard: (line) ->
     match = line.match(Header.keywordPattern)
+    return unless match?
+    
     [key, value] = match[1..]
     if value[0] is "'"
       match = value.match(Header.stringPattern)

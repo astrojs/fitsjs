@@ -168,13 +168,8 @@ FITS.Decompress =
 
       return [fsbits, fsmax, lastpix, pointer]
         
-  gzip: (array, length) ->
-    throw "Not yet implemented"
-  
-  plio: (array, length) ->
-    throw "Not yet implemented"
-  
-  hcompress: (array, length) ->
-    throw "Not yet implemented"
+  gzip: (array, length) -> throw "Not yet implemented"
+  plio: (array, length) -> throw "Not yet implemented"
+  hcompress: (array, length) -> throw "Not yet implemented"
 
 module?.exports = FITS.Decompress
