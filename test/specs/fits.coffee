@@ -79,15 +79,16 @@ describe "FITS", ->
   
   it 'can parse a compressed FITS images', ->
     xhr = new XMLHttpRequest()
-    # xhr.open('GET', "http://0.0.0.0:9294/data/compressed/CFHTLS_03_g_sci.fits.fz")
-    xhr.open('GET', "http://0.0.0.0:9294/data/compressed/Arp245_EMMI_R.fits.fz")
+    xhr.open('GET', "http://0.0.0.0:9294/data/compressed/CFHTLS_03_g_sci.fits.fz")
+    # xhr.open('GET', "http://0.0.0.0:9294/data/compressed/Arp245_EMMI_R.fits.fz")
     xhr.responseType = 'arraybuffer'
     
     xhr.onload = (e) ->
       fits = new FITS.File(xhr.response)
       hdu = fits.getHDU()
       
-      console.log hdu.data.getFrame()
+      # hdu.data.rowsRead = 1500
+      console.log hdu.data.getRow()
       
   
     xhr.send()
