@@ -5,7 +5,9 @@ Module      = require('module')
 VerifyCards = require('fits.header.verify')
 
 # Header parses and stores the FITS header.  Verification is done for reserved
-# keywords (e.g. SIMPLE, BITPIX, etc)
+# keywords (e.g. SIMPLE, BITPIX, etc).
+
+# TODO: Storage of COMMENT and HISTORY fields needs improvement
 class FITS.Header extends Module
   @keywordPattern   = /([\w_-]+)\s*=?\s*(.*)/
   @nonStringPattern = /([^\/]*)\s*\/*(.*)/
@@ -74,7 +76,9 @@ class FITS.Header extends Module
     return unless match?
     
     [key, value] = match[1..]
-    if value[0] is "'"
+    if key in ["COMMENT", "HISTORY"]
+      match[1] = value.trim()
+    else if value[0] is "'"
       match = value.match(Header.stringPattern)
       match[1] = match[1].trim()
     else
