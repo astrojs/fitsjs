@@ -22,7 +22,7 @@ class FITS.Image extends Data
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
     @data   = undefined
     
-    # Define a function to read the image data
+    # Define the function to interpret the image data
     switch bitpix
       when 8
         @arrayType  = Uint8Array
@@ -37,12 +37,12 @@ class FITS.Image extends Data
         @arrayType  = Int32Array
         @accessor   = =>
           console.warn "Something funky happens here when dealing with 64 bit integers.  Be wary!!!"
-          highByte = Math.abs @view.getInt32()
-          lowByte = Math.abs @view.getInt32()
-          mod = highByte % 10
-          factor = if mod then -1 else 1
-          highByte -= mod
-          value = factor * ((highByte << 32) | lowByte)
+          highByte  = Math.abs @view.getInt32()
+          lowByte   = Math.abs @view.getInt32()
+          mod       = highByte % 10
+          factor    = if mod then -1 else 1
+          highByte  -= mod
+          value     = factor * ((highByte << 32) | lowByte)
           return value
       when -32
         @arrayType  = Float32Array
@@ -96,15 +96,9 @@ class FITS.Image extends Data
   getExtremes: ->
     return [@min, @max] if @min? and @max?
     
-    index = undefined
-    min = undefined
-    max = undefined
-    for i in [0..@data.length - 1]
-      value = @data[i]
+    for value, index in @data
       continue if isNaN(value)
-      min = value
-      max = value
-      index = i
+      [min, max] = [value, value]
       break
     
     for i in [index..@data.length - 1]

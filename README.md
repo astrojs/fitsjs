@@ -1,7 +1,7 @@
 fitsjs
 ======
 
-A JavaScript library for reading the astronomical file format – FITS.  This library depends on [jDataView](https://github.com/vjeux/jDataView).  Other dependencies installed by Node are for testing the library and running a local server.
+A JavaScript library for reading the astronomical file format – FITS.  This library depends on [jDataView](https://github.com/vjeux/jDataView), and must be included by the developer.  Other dependencies installed by Node are only for the testing environment and generating documentation.
 
     # Install the dependencies.
     npm install .
@@ -10,13 +10,13 @@ A JavaScript library for reading the astronomical file format – FITS.  This li
     # Generate documentation
     groc
     
-This library may be used to read various forms of the FITS file type.  This implementation is under active development.  Currently it supports the following features:
+This library may be used to read various forms of the FITS format.  This implementation is under active development.  In its current state it supports the following:
 
 * Multiple Header Data Units
 * Reading FITS images
 * Reading Binary Tables
 * Reading ASCII Tables
-* Decompressing FITS Images with the Rice algorithm
+* Decompressing FITS Images using the Rice decompression algorithm
 
 API
 ---
@@ -24,9 +24,9 @@ API
 ### FITS.File
 
     fits.getHDU()
-Returns the first HDU containing a data unit.  An optional argument may be passed to retreive 
-a specific HDU
-    
+Returns the first HDU containing a data unit.  An optional argument may be passed to retrieve 
+a specific HDU.
+
     fits.getHeader()
 Returns the header associated with the first HDU containing a data unit.  An optional argument
 may be passed to point to a specific HDU.
@@ -42,7 +42,48 @@ may be passed to point to a specific HDU.
 ### FITS.HDU
 
     hdu.getCard(key)
-Returns the value from the header of the user specifed key.
+Returns the value from the header of the user specified key.
+
+### FITS.Header
+
+    hdr.get(key)
+Returns the index, value, and comment of the key.
+
+    hdr[key]
+Returns the value of the key.
+
+    hdr.getIndex(key)
+Returns the index of the key.
+
+    hdr.getComment(key)
+Returns the comment associated with the key.
+
+    hdr.getComments(key)
+Returns the value of all COMMENT fields.
+
+    hdr.getHistory(key)
+Returns the value of all HISTORY fields.
+
+    hdr.set(key, value, comment)
+Sets the value and comment for a key.  Note: This function is used internally, and not yet suited for use outside of the library.
+
+    hdr.setComment(comment)
+Sets a comment associated with the COMMENT key.  Note: This function is used internally, and not yet suited for use outside of the library.
+
+    hdr.setHistory(history)
+Sets a history associated with the HISTORY key.  Note: This function is used internally, and not yet suited for use outside of the library.
+
+    hdr.contains(key)
+Checks if a key is contained in the header instance.
+
+    hdr.readCard(line)
+Parses a string representing a single key, adding it to the instance.
+
+    hdr.hasDataUnit()
+Checks if the header has an associated data unit.
+
+
+
 
 *More to come ...*
 
@@ -59,7 +100,8 @@ Examples
     // Define the onload function
     xhr.onload = function(e) {
         
-        // Initialize the FITS.File object using the array buffer returned from the XHR
+        // Initialize the FITS.File object using
+        // the array buffer returned from the XHR
         var fits = new FITS.File(xhr.response);
         
         // Grab the first HDU with a data unit
