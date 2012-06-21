@@ -16,17 +16,49 @@
 <body>
   <script type="text/javascript">
     jasmine.getEnv().addReporter(new jasmine.TrivialReporter());
-    var fits;
+    var fits, compimg, bintable;
+    var runTests = false;
+    
+    var numRequests = 3;
+    var requestCount = 0;
+    
     window.onload = function () {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', "http://0.0.0.0:9294/data/m101.fits", true)
-      xhr.responseType = 'arraybuffer'
-      xhr.onload = function (e) {
-        fits = new FITS.File(xhr.response);
+      var xhr1 = new XMLHttpRequest();
+      xhr1.open('GET', "http://0.0.0.0:9294/data/m101.fits", true)
+      xhr1.responseType = 'arraybuffer'
+      xhr1.onload = function (e) {
+        fits = new FITS.File(xhr1.response);
+        requestCount += 1;
         
-        jasmine.getEnv().execute();
+        if (numRequests === requestCount)
+          jasmine.getEnv().execute();
       };
-      xhr.send();
+      xhr1.send();
+      
+      var xhr2 = new XMLHttpRequest();
+      xhr2.open('GET', "http://0.0.0.0:9294/data/compressed/CFHTLS_03_g_sci.fits.fz", true)
+      xhr2.responseType = 'arraybuffer'
+      xhr2.onload = function (e) {
+        compimg = new FITS.File(xhr2.response);
+        requestCount += 1;
+        
+        if (numRequests === requestCount)
+          jasmine.getEnv().execute();
+      };
+      xhr2.send();
+      
+      var xhr3 = new XMLHttpRequest();
+      xhr3.open('GET', "http://0.0.0.0:9294/data/spec-0406-51869-0012.fits", true)
+      xhr3.responseType = 'arraybuffer'
+      xhr3.onload = function (e) {
+        bintable = new FITS.File(xhr3.response);
+        requestCount += 1;
+        
+        if (numRequests === requestCount)
+          jasmine.getEnv().execute();
+      };
+      xhr3.send();
+      
     };
     
   </script>
