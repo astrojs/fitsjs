@@ -82,9 +82,6 @@ Parses a string representing a single key, adding it to the instance.
     hdr.hasDataUnit()
 Checks if the header has an associated data unit.
 
-
-
-
 *More to come ...*
 
 Examples

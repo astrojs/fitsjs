@@ -1,4 +1,3 @@
-require('jDataView/src/jdataview')
 Decompress  = require('fits.decompress')
 Header      = require('fits.header')
 Image       = require('fits.image')

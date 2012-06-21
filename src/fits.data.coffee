@@ -1,5 +1,3 @@
-require('jDataView/src/jdataview')
-
 FITS    = @FITS or require('fits')
 Module  = require('module')
 
