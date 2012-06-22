@@ -3,7 +3,7 @@ class Visualize
   @GET_A_WEBGL_BROWSER = '' + 'This page requires a browser that supports WebGL.<br/>' + '<a href="http://get.webgl.org">Click here to upgrade your browser.</a>'
   @OTHER_PROBLEM = '' + "It doesn't appear your computer can support WebGL.<br/>" + '<a href="http://get.webgl.org/troubleshooting/">Click here for more information.</a>'
 
-  # WebGL Shaders
+  # WebGL Vertex Shader
   @vertexShader = "
     attribute vec2 a_position;
     void main() {
@@ -11,6 +11,7 @@ class Visualize
     }
     "
 
+  # WebGL Fragment Shaders
   @fragmentShaderLinear = "
     precision mediump float;
 
@@ -168,8 +169,15 @@ class Visualize
     "
   
   # Initializes the Visualize object and starts a WebGL program
-  constructor: (@fitsImageSet, @canvas) ->
-    @gl = @getWebGLContext()
+  constructor: (@imgset, @el) ->
+    @imgset.getExtremes()
+    @width    = @imgset.getWidth()
+    @height   = @imgset.getHeight()
+    @minimum  = @imgset.minimum
+    @maximum  = @imgset.maximum
+    @setupUI(@width, @height, @minimum, @maximum)
+
+    @gl = @setupWebGL()
     unless @gl
       alert "No WebGL"
       return null
@@ -179,14 +187,8 @@ class Visualize
       alert "No OES_texture_float"
       return null
 
-    @fitsImageSet.getExtremes()
-    @width    = @fitsImageSet.getWidth()
-    @height   = @fitsImageSet.getHeight()
-    @minimum  = @fitsImageSet.minimum
-    @maximum  = @fitsImageSet.maximum
-
-    vertexShader = @loadShader(FITS.Visualize.vertexShader, @gl.VERTEX_SHADER)
-    fragmentShader = @loadShader(FITS.Visualize.fragmentShaderLinear, @gl.FRAGMENT_SHADER)
+    vertexShader = @loadShader(Visualize.vertexShader, @gl.VERTEX_SHADER)
+    fragmentShader = @loadShader(Visualize.fragmentShaderLinear, @gl.FRAGMENT_SHADER)
     @createProgram([vertexShader, fragmentShader])
     @gl.useProgram(@program)
     
@@ -208,7 +210,7 @@ class Visualize
     tex = @gl.createTexture()
     @gl.bindTexture(@gl.TEXTURE_2D, tex)
     
-    @gl.texImage2D(@gl.TEXTURE_2D, 0, @gl.LUMINANCE, @width, @height, 0, @gl.LUMINANCE, @gl.FLOAT, data)
+    @gl.texImage2D(@gl.TEXTURE_2D, 0, @gl.LUMINANCE, @width, @height, 0, @gl.LUMINANCE, @gl.FLOAT, @imgset[3].getHDU().data.getFrameWebGL())
     @gl.texParameteri(@gl.TEXTURE_2D, @gl.TEXTURE_WRAP_S, @gl.CLAMP_TO_EDGE)
     @gl.texParameteri(@gl.TEXTURE_2D, @gl.TEXTURE_WRAP_T, @gl.CLAMP_TO_EDGE)
     @gl.texParameteri(@gl.TEXTURE_2D, @gl.TEXTURE_MIN_FILTER, @gl.NEAREST)
@@ -216,8 +218,6 @@ class Visualize
 
     @gl.drawArrays(@gl.TRIANGLES, 0, 6)
     console.log(@gl.getError())
-    
-  getWebGLContext: -> return @setupWebGL()
 
   setupWebGL: (opt_attribs) ->
     
@@ -227,11 +227,11 @@ class Visualize
         container.innerHTML = @makeFailHTML(str)
     
     unless window.WebGLRenderingContext
-      showLink(FITS.Visualize.GET_A_WEBGL_BROWSER)
+      showLink(Visualize.GET_A_WEBGL_BROWSER)
       return null
     
     context = @create3DContext(@canvas, opt_attribs)
-    showLink(FITS.Visualize.OTHER_PROBLEM) unless context
+    showLink(Visualize.OTHER_PROBLEM) unless context
     
     return context
   
@@ -292,5 +292,25 @@ class Visualize
       return null
     
     return shader
+
+  setupUI: (width, height, minimum, maximum) ->
+    # Define the parent container
+    parent = document.createElement("div")
+    parent.setAttribute("class", "viewer")
+    
+    @canvas = document.createElement("canvas")
+    @canvas.setAttribute("width", width)
+    @canvas.setAttribute("height", height)
+    @minSlider = document.createElement("input")
+    @maxSlider = document.createElement("input")
+    @minSlider.setAttribute("type", "range")
+    @minSlider.setAttribute("min", "#{minimum}")
+    @maxSlider.setAttribute("type", "range")
+    @maxSlider.setAttribute("max", "#{maximum}")
+    
+    @el.appendChild(parent)
+    parent.appendChild(@canvas)
+    parent.appendChild(@minSlider)
+    parent.appendChild(@maxSlider)
 
 module?.exports = Visualize
