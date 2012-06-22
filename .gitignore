@@ -3,5 +3,3 @@ node_modules/
 doc/
 *.fits
 *.fits.fz
-lib/index.html
-lib/jdataview.js
