@@ -15,12 +15,9 @@ class BinTable extends Tabular
         do =>
           dataType = match[1]
           accessor = =>
-            # TODO: Find out how to pass dataType
-            length  = @view.getInt32()
-            offset  = @view.getInt32()
-            @current = @view.tell()
-            # Troublesome
-            # TODO: Find a way to preserve the dataType in this function for each column
+            length    = @view.getInt32()
+            offset    = @view.getInt32()
+            @current  = @view.tell()
             @view.seek(@begin + @tableLength + offset)
             data = []
             for i in [1..length]
@@ -30,21 +27,19 @@ class BinTable extends Tabular
           @accessors.push(accessor)
       else
         match = value.match(BinTable.dataTypePattern)
-        [r, dataType] = match[1..]
-        r = if r then parseInt(r) else 0
-        if r is 0
-          do =>
-            dataType = match[2]
-            accessor = (dt) =>
+        [length, dataType] = match[1..]
+        length = if length then parseInt(length) else 0
+        if length in [0, 1]
+          do (dataType) =>
+            accessor = =>
               data = BinTable.dataAccessors[dataType](@view)
               return data
             @accessors.push(accessor)
         else
-          do =>
-            dataType = match[2]
+          do (dataType) =>
             accessor = =>
               data = []
-              for i in [1..r]
+              for i in [1..length]
                 data.push BinTable.dataAccessors[dataType](@view)
               return data
             @accessors.push(accessor)

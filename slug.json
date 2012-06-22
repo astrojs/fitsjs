@@ -1,5 +1,5 @@
 {
-  "jsPath": "/fits.js",
+  "jsPath": "/application.js",
   "paths": ["./src"],
   "dependencies": [
     "jDataView"
