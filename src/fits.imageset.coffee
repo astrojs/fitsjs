@@ -1,7 +1,5 @@
-FITS  = @FITS or require('fits')
-
 # Container class for multiple FITS images
-class FITS.ImageSet
+class ImageSet
 
   constructor: ->
     @images = {}
@@ -43,6 +41,5 @@ class FITS.ImageSet
   getCount: -> return @count
   
   getData: (filter) -> return @[filter].hdus[0].data.data
-    
 
-module.exports = FITS.ImageSet
+module?.exports = ImageSet

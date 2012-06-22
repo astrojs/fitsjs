@@ -1,7 +1,6 @@
-FITS        = @FITS or require('fits')
-Tabular     = require('fits.tabular')
+Tabular = require('fits.tabular')
 
-class FITS.BinTable extends Tabular
+class BinTable extends Tabular
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
   @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
   
@@ -11,7 +10,7 @@ class FITS.BinTable extends Tabular
     for i in [1..@cols]
       keyword = "TFORM#{i}"
       value = header[keyword]
-      match = value.match(FITS.BinTable.arrayDescriptorPattern)
+      match = value.match(BinTable.arrayDescriptorPattern)
       if match?
         do =>
           dataType = match[1]
@@ -25,19 +24,19 @@ class FITS.BinTable extends Tabular
             @view.seek(@begin + @tableLength + offset)
             data = []
             for i in [1..length]
-              data.push FITS.BinTable.dataAccessors[dataType](@view)
+              data.push BinTable.dataAccessors[dataType](@view)
             @view.seek(@current)
             return data
           @accessors.push(accessor)
       else
-        match = value.match(FITS.BinTable.dataTypePattern)
+        match = value.match(BinTable.dataTypePattern)
         [r, dataType] = match[1..]
         r = if r then parseInt(r) else 0
         if r is 0
           do =>
             dataType = match[2]
             accessor = (dt) =>
-              data = FITS.BinTable.dataAccessors[dataType](@view)
+              data = BinTable.dataAccessors[dataType](@view)
               return data
             @accessors.push(accessor)
         else
@@ -46,8 +45,8 @@ class FITS.BinTable extends Tabular
             accessor = =>
               data = []
               for i in [1..r]
-                data.push FITS.BinTable.dataAccessors[dataType](@view)
+                data.push BinTable.dataAccessors[dataType](@view)
               return data
             @accessors.push(accessor)
 
-module?.exports = FITS.BinTable
+module?.exports = BinTable

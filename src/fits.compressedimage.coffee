@@ -1,8 +1,7 @@
-FITS        = @FITS or require('fits')
 Tabular     = require('fits.tabular')
 Decompress  = require('fits.decompress')
 
-class FITS.CompImage extends Tabular
+class CompImage extends Tabular
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
   @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
   @extend Decompress
@@ -25,8 +24,8 @@ class FITS.CompImage extends Tabular
     @zcmptype = header["ZCMPTYPE"]
     @zbitpix  = header["ZBITPIX"]
     @znaxis   = header["ZNAXIS"]
-    @zblank   = FITS.CompImage.setValue(header, "ZBLANK", undefined)
-    @blank    = FITS.CompImage.setValue(header, "BLANK", undefined)
+    @zblank   = CompImage.setValue(header, "ZBLANK", undefined)
+    @blank    = CompImage.setValue(header, "BLANK", undefined)
     
     @ztile = []
     for i in [1..@znaxis]
@@ -44,11 +43,11 @@ class FITS.CompImage extends Tabular
     
     @["setDefaultParameters_#{@zcmptype}"]()
     
-    @zmaskcmp = FITS.CompImage.setValue(header, "ZMASKCMP", undefined)
-    @zquantiz = FITS.CompImage.setValue(header, "ZQUANTIZ", "LINEAR_SCALING")
+    @zmaskcmp = CompImage.setValue(header, "ZMASKCMP", undefined)
+    @zquantiz = CompImage.setValue(header, "ZQUANTIZ", "LINEAR_SCALING")
     
-    @bzero  = FITS.CompImage.setValue(header, "BZERO", 0)
-    @bscale = FITS.CompImage.setValue(header, "BSCALE", 1)
+    @bzero  = CompImage.setValue(header, "BZERO", 0)
+    @bscale = CompImage.setValue(header, "BSCALE", 1)
     
     @defineColumnAccessors header
     @defineGetRow()
@@ -57,7 +56,7 @@ class FITS.CompImage extends Tabular
     @columnNames = {}
     for i in [1..@cols]
       value = header["TFORM#{i}"]
-      match = value.match(FITS.CompImage.arrayDescriptorPattern)
+      match = value.match(CompImage.arrayDescriptorPattern)
       ttype = header["TTYPE#{i}"].toUpperCase()
       @columnNames[ttype] = i - 1
       accessor = null
@@ -71,8 +70,8 @@ class FITS.CompImage extends Tabular
                 data = @_accessor(dataType)
                 return null unless data?
 
-                pixels = new FITS.CompImage.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
-                FITS.CompImage.Rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
+                pixels = new CompImage.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
+                CompImage.Rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
                 return pixels
           when "UNCOMPRESSED_DATA"
             do (dataType) => accessor = @_accessor(dataType)
@@ -83,18 +82,18 @@ class FITS.CompImage extends Tabular
             # Might not need this as default.  TODO: Check how NULL_PIXEL_MASK is stored
             do (dataType) => accessor = @_accessor(dataType)
       else
-        match = value.match(FITS.CompImage.dataTypePattern)
+        match = value.match(CompImage.dataTypePattern)
         [length, dataType] = match[1..]
         length = if length? then parseInt(length) else 0
         if length in [0, 1]
           do (dataType) =>
-            accessor = => return FITS.CompImage.dataAccessors[dataType](@view)
+            accessor = => return CompImage.dataAccessors[dataType](@view)
         else
           do (length, dataType) =>
             accessor = =>
-              data = new FITS.CompImage.typedArray[dataType](length)
+              data = new CompImage.typedArray[dataType](length)
               for i in [0..length - 1]
-                data[i] = FITS.CompImage.dataAccessors[dataType](@view)
+                data[i] = CompImage.dataAccessors[dataType](@view)
               return data
       @accessors.push(accessor)
   
@@ -144,11 +143,11 @@ class FITS.CompImage extends Tabular
     [length, offset]  = [@view.getInt32(), @view.getInt32()]
     return null if length is 0
     
-    data = new FITS.CompImage.typedArray[dataType](length)
+    data = new CompImage.typedArray[dataType](length)
     @current = @view.tell()
     @view.seek(@begin + @tableLength + offset)
     for i in [0..length - 1]
-      data[i] = FITS.CompImage.dataAccessors[dataType](@view)
+      data[i] = CompImage.dataAccessors[dataType](@view)
     @view.seek(@current)
     
     return data
@@ -169,4 +168,4 @@ class FITS.CompImage extends Tabular
   @subtractiveDither1: -> throw "Not yet implemented"
   @linearScaling: -> throw "Not yet implemented"
 
-module?.exports = FITS.CompImage
+module?.exports = CompImage

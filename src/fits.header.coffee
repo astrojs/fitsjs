@@ -1,12 +1,11 @@
-FITS        = @FITS or require('fits')
-Module      = require('module')
+Module      = require('fits.module')
 VerifyCards = require('fits.header.verify')
 
 # Header parses and stores the FITS header.  Verification is done for reserved
 # keywords (e.g. SIMPLE, BITPIX, etc).
 
 # TODO: Storage of COMMENT and HISTORY fields needs improvement
-class FITS.Header extends Module
+class Header extends Module
   @keywordPattern   = /([\w_-]+)\s*=?\s*(.*)/
   @nonStringPattern = /([^\/]*)\s*\/*(.*)/
   @stringPattern    = /'(.*)'\s*\/*(.*)/
@@ -105,5 +104,5 @@ class FITS.Header extends Module
   
   # Tells if a data unit follows based on NAXIS
   hasDataUnit: -> return if @["NAXIS"] is 0 then false else true
-  
-module?.exports = FITS.Header
+
+module?.exports = Header

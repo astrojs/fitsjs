@@ -1,5 +1,3 @@
-FITS = @FITS or require('fits')
-
 # # Decompress
 
 # Module will contain various decompression algorithms used in compressing FITS images.  Currently only
@@ -10,7 +8,7 @@ FITS = @FITS or require('fits')
 # * IRAF PLIO
 # * H-Compress
 
-FITS.Decompress =
+Decompress =
   
   # ### Rice
   # * array: Array of compressed bytes to be decompressed
@@ -167,4 +165,4 @@ FITS.Decompress =
   plio: (array, length) -> throw "Not yet implemented"
   hcompress: (array, length) -> throw "Not yet implemented"
 
-module?.exports = FITS.Decompress
+module?.exports = Decompress

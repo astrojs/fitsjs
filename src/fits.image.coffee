@@ -1,8 +1,7 @@
-FITS  = @FITS or require('fits')
 Data  = require('fits.data')
 
 # Image represents a standard image stored in the data unit of a FITS file
-class FITS.Image extends Data
+class Image extends Data
 
   constructor: (view, header) ->
     super
@@ -111,5 +110,5 @@ class FITS.Image extends Data
   # Get the value of a pixel.
   # Note: Indexing of pixels starts at 0.
   getPixel: (x, y) -> return @data[y * @naxis[0] + x]
-  
-module?.exports = FITS.Image
+
+module?.exports = Image

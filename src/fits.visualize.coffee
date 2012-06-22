@@ -1,8 +1,5 @@
-FITS    = @FITS or require('fits')
-Module  = require('module')
-
 # Helper class for initializng a WebGL viewer for a FITS image
-class FITS.Visualize
+class Visualize
   @GET_A_WEBGL_BROWSER = '' + 'This page requires a browser that supports WebGL.<br/>' + '<a href="http://get.webgl.org">Click here to upgrade your browser.</a>'
   @OTHER_PROBLEM = '' + "It doesn't appear your computer can support WebGL.<br/>" + '<a href="http://get.webgl.org/troubleshooting/">Click here for more information.</a>'
 
@@ -296,4 +293,4 @@ class FITS.Visualize
     
     return shader
 
-module?.exports = FITS.Visualize
+module?.exports = Visualize

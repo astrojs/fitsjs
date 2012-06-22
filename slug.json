@@ -1,8 +1,8 @@
 {
+  "jsPath": "/fits.js",
   "paths": ["./src"],
   "dependencies": [
-    "jDataView",
-    "deflate-js"
+    "jDataView"
   ],
   "libs": []
 }

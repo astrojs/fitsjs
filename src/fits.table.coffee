@@ -1,8 +1,7 @@
-FITS    = @FITS or require('fits')
 Tabular = require('fits.tabular')
 
 # Class to read ASCII tables from FITS files.
-class FITS.Table extends Tabular
+class Table extends Tabular
   @formPattern = /([AIFED])(\d+)\.(\d+)/
   
   @dataAccessors =
@@ -26,5 +25,4 @@ class FITS.Table extends Tabular
           return FITS.Table.dataAccessors[dataType](value)
         @accessors.push(accessor)
 
-
-module?.exports = FITS.Table
+module?.exports = Table

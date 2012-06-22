@@ -1,4 +1,3 @@
-
 # This module is a collection of function for verifying reserved keywords of the FITS standard
 # When new keywords and extensions are defined, this module may be extended.
 
@@ -184,4 +183,4 @@ VerifyCards =
       value = arguments[0]
       return @verifyInteger(key, value)
 
-module.exports = VerifyCards
+module?.exports = VerifyCards

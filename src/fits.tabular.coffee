@@ -1,8 +1,7 @@
-FITS  = @FITS or require('fits')
 Data  = require('fits.data')
 
 # Abstract class for tabular FITS extensions (e.g. TABLE, BINTABLE)
-class FITS.Tabular extends Data
+class Tabular extends Data
   @dataAccessors =
     L: (view) ->
       value = if view.getInt8() is 84 then true else false
@@ -53,4 +52,4 @@ class FITS.Tabular extends Data
     @rowsRead += 1
     return row
 
-module?.exports = FITS.Tabular
+module?.exports = Tabular

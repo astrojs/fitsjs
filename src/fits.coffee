@@ -1,9 +1,9 @@
-Decompress  = require('fits.decompress')
-Header      = require('fits.header')
-Image       = require('fits.image')
-BinTable    = require('fits.bintable')
-CompImage   = require('fits.compressedimage')
-Table       = require('fits.table')
+require('jDataView/src/jdataview')
+Header    = require('fits.header')
+Image     = require('fits.image')
+BinTable  = require('fits.bintable')
+CompImage = require('fits.compressedimage')
+Table     = require('fits.table')
 
 # Header data unit to store a header and its associated data unit
 class HDU
@@ -33,7 +33,7 @@ class File
       header = @readHeader()
       data = @readData(header)
       hdu = new HDU(header, data)
-      @hdus.push(hdu)
+      @hdus.push hdu
       break if @eof
 
   # ##Class Methods
@@ -110,10 +110,14 @@ class File
   # may be passed to point to a specific HDU.
   getData: (index = undefined) -> return @getHDU(index).data.getFrame()
 
-
 FITS = @FITS    = {}
 module?.exports = FITS
 
 FITS.version    = '0.0.1'
 FITS.File       = File
 FITS.HDU        = HDU
+FITS.Header     = Header
+FITS.Image      = Image
+FITS.BinTable   = BinTable
+FITS.CompImage  = CompImage
+FITS.Table      = Table
