@@ -1,14 +1,24 @@
 fitsjs
 ======
 
-A JavaScript library for reading the astronomical file format – FITS.  This library depends on [jDataView](https://github.com/vjeux/jDataView), and must be included by the developer.  Other dependencies installed by Node are only for the testing environment and generating documentation.
+A JavaScript library for reading the astronomical file format – FITS.  This library depends on [jDataView](https://github.com/vjeux/jDataView).  Other dependencies installed by Node are only for the testing environment and generating documentation.
+
+To install the dependencies and generate documentation:
 
     # Install the dependencies.
     npm install .
-    cake build
     
     # Generate documentation
     groc
+    
+To use the library copy public/fits.js to your project and include it using a script tag.  After including the library, the FITS object is exposed by calling require.
+
+    <script src="fits.js" type="text/javascript" charset="utf-8">
+    </script>
+    
+    <script type="text/javascript">
+      FITS = require('fits');
+    </script>
     
 This library may be used to read various forms of the FITS format.  This implementation is under active development.  In its current state it supports the following:
 
@@ -86,36 +96,44 @@ Checks if the header has an associated data unit.
 
 Examples
 --------
+
+    <script src="fits.js" type="text/javascript" charset="utf-8">
+    </script>
     
-    // Get an array buffer of the FITS file using XHR
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', "[/path/to/fits/file]");
-    
-    // Set the response type to arraybuffer
-    xhr.responseType = 'arraybuffer';
-    
-    // Define the onload function
-    xhr.onload = function(e) {
-        
-        // Initialize the FITS.File object using
-        // the array buffer returned from the XHR
-        var fits = new FITS.File(xhr.response);
-        
-        // Grab the first HDU with a data unit
-        var hdu = fits.getHDU();
-        
-        // Read a card from the header
-        var bitpix = hdu.getCard("BITPIX");
-        
-        // or we can read the card from the Header object
-        var bitpix = hdu.header["BITPIX"]
-        
-        // Grab the data object
-        var data = hdu.data
-    }
-    
-    // BAM! Send off the request
-    xhr.send();
+    <script type="text/javascript">
+      FITS = require('fits');
+      
+      // Get an array buffer of the FITS file using XHR
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', "[/path/to/fits/file]");
+      
+      // Set the response type to arraybuffer
+      xhr.responseType = 'arraybuffer';
+      
+      // Define the onload function
+      xhr.onload = function(e) {
+          
+          // Initialize the FITS.File object using
+          // the array buffer returned from the XHR
+          var fits = new FITS.File(xhr.response);
+          
+          // Grab the first HDU with a data unit
+          var hdu = fits.getHDU();
+          
+          // Read a card from the header
+          var bitpix = hdu.getCard("BITPIX");
+          
+          // or we can read the card from the Header object
+          var bitpix = hdu.header["BITPIX"]
+          
+          // Grab the data object
+          var data = hdu.data
+      }
+      
+      // BAM! Send off the request
+      xhr.send();
+      
+    </script>
 
 References
 ----------
