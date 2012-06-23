@@ -22,11 +22,12 @@ To use the library copy public/fits.js to your project and include it using a sc
     
 This library may be used to read various forms of the FITS format.  This implementation is under active development.  In its current state it supports the following:
 
-* Multiple Header Data Units
-* Reading FITS images
-* Reading Binary Tables
-* Reading ASCII Tables
-* Decompressing FITS Images using the Rice decompression algorithm
+* Reading of multiple header data units
+* Reading of FITS images
+* Reading of data cubes
+* Reading of binary tables
+* Reading of ASCII Tables
+* Decompressing images using the Rice algorithm
 
 API
 ---

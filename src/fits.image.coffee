@@ -18,6 +18,7 @@ class Image extends Data
 
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
     @data   = undefined
+    @frame = -1    # Only relevant for data cubes
     
     # Define the function to interpret the image data
     switch bitpix
@@ -69,6 +70,7 @@ class Image extends Data
   getFrame: ->
     @initArray() unless @data?
     @getRow() for i in [0..@naxis[1] - 1]
+    @frame += 1
     return @data
   
   # Read the entire image and return the pixels in a typed array for WebGL.
@@ -86,7 +88,8 @@ class Image extends Data
       for i in [0..rowLength - 1]
         @data[rowLength * @rowsRead + i] = @accessor()
       @rowsRead += 1
-
+      
+    @frame += 1
     return @data
   
   # Compute the minimum and maximum pixels
@@ -109,6 +112,6 @@ class Image extends Data
   
   # Get the value of a pixel.
   # Note: Indexing of pixels starts at 0.
-  getPixel: (x, y) -> return @data[y * @naxis[0] + x]
+  getPixel: (x, y) -> return @data[(@frame * @naxis[0] * @naxis[1]) + y * @naxis[0] + x]
 
 module?.exports = Image
