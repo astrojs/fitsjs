@@ -115,7 +115,6 @@ class CompImage extends Tabular
       row = @getRow()
       for value, index in row
         location = @rowsRead * @ztile[0] + index
-        console.log location
         pixels[@rowsRead * @ztile[0] + index] = value
       break if @rowsRead is @rows
     return pixels

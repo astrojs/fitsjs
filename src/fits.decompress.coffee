@@ -23,17 +23,15 @@ Decompress =
     
     [fsbits, fsmax, lastpix, pointer] = @RiceSetup[bytepix](array)
     
-    nonzeroCount = new Array(256)
+    nonzeroCount = new Uint8Array(256)
     nzero = 8
-    k = 128
-    i = 255
+    [k, i] = [128, 255]
     while i >= 0
       while i >= k
         nonzeroCount[i] = nzero
         i -= 1
       k = k / 2
       nzero -= 1
-    # FIXME: Not sure why this element is incorrectly -1024
     nonzeroCount[0] = 0
     
     # Bit buffer

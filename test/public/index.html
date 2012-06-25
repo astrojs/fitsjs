@@ -28,7 +28,7 @@
       xhr1.open('GET', "http://0.0.0.0:9294/data/m101.fits", true)
       xhr1.responseType = 'arraybuffer'
       xhr1.onload = function (e) {
-        fits = new FITS.File(xhr1.response);
+        fits = new FITS.File(xhr1.response);        
         requestCount += 1;
         
         if (numRequests === requestCount)

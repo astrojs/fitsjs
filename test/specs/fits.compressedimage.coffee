@@ -7,6 +7,7 @@ describe "FITS CompImage", ->
   it 'can read a FITS compressed image', ->
     
     data = compimg.getDataUnit()
+    data.getFrame()
     
     # # Check the values of the corner pixels ...
     # expect(data.getPixel(0, 0)).toEqual(3852)
