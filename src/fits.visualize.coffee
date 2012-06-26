@@ -315,6 +315,5 @@ class Visualize
     @gl.attachShader(@program, @fragmentShader)
     @gl.drawArrays(@gl.TRIANGLES, 0, 6)
     
-    
 
 module?.exports = Visualize
