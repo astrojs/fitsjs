@@ -21,7 +21,7 @@ describe "FITS", ->
     expect(bintable.hdus.length).toEqual(2)
     expect(bintable.eof).toBeTruthy()
     expect(bintable.hdus[0].data).toBeUndefined()
-    expect(bintable.hdus[1].data.constructor.name).toBe("BinTable")
+    expect(bintable.hdus[1].data.constructor.name).toBe("BinaryTable")
   
   # it 'can initialize a visualize object', ->
   # 
