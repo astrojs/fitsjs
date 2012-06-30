@@ -1,4 +1,4 @@
-Data  = require('fits.data')
+Data  = require('./fits.data')
 
 # Image represents a standard image stored in the data unit of a FITS file
 class Image extends Data

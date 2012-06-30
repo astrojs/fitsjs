@@ -1,5 +1,5 @@
-Module      = require('fits.module')
-VerifyCards = require('fits.header.verify')
+Module      = require('./fits.module')
+VerifyCards = require('./fits.header.verify')
 
 # Header parses and stores the FITS header.  Verification is done for reserved
 # keywords (e.g. SIMPLE, BITPIX, etc).

@@ -1,4 +1,4 @@
-Data  = require('fits.data')
+Data  = require('./fits.data')
 
 # Abstract class for tabular FITS extensions (e.g. TABLE, BINTABLE)
 class Tabular extends Data

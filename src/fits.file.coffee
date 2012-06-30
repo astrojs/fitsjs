@@ -1,9 +1,9 @@
-HDU         = require('fits.hdu')
-Header      = require('fits.header')
-Image       = require('fits.image')
-CompImage   = require('fits.compressedimage')
-Table       = require('fits.table')
-BinaryTable = require('fits.binarytable')
+HDU         = require('./fits.hdu')
+Header      = require('./fits.header')
+Image       = require('./fits.image')
+CompImage   = require('./fits.compressedimage')
+Table       = require('./fits.table')
+BinaryTable = require('./fits.binarytable')
 
 
 # File is the class that parses all the HDUs, initializes Header instances

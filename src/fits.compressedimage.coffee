@@ -1,5 +1,5 @@
-Tabular     = require('fits.tabular')
-Decompress  = require('fits.decompress')
+Tabular     = require('./fits.tabular')
+Decompress  = require('./fits.decompress')
 
 class CompImage extends Tabular
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/

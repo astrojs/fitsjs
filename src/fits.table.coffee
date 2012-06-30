@@ -1,4 +1,4 @@
-Tabular = require('fits.tabular')
+Tabular = require('./fits.tabular')
 
 # Class to read ASCII tables from FITS files.
 class Table extends Tabular

@@ -1,7 +1,7 @@
 require('jDataView/src/jdataview')
-Header    = require('fits.header')
-Image     = require('fits.image')
-CompImage = require('fits.compressedimage')
+Header    = require('./fits.header')
+Image     = require('./fits.image')
+CompImage = require('./fits.compressedimage')
 
 # Compute basic statistics for a image
 class ImageStats

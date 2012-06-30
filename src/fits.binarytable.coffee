@@ -1,4 +1,4 @@
-Tabular = require('fits.tabular')
+Tabular = require('./fits.tabular')
 
 class BinaryTable extends Tabular
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
