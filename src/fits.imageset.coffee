@@ -12,8 +12,9 @@ class ImageSet
     minimums = []
     maximums = []
     for key, image of @images
-      image.hdus[0].data.getFrameWebGL()
-      extremes = image.hdus[0].data.getExtremes()
+      data = image.getHDU().data
+      data.getFrame()
+      extremes = data.getExtremes()
       minimums.push extremes[0]
       maximums.push extremes[1]
     
@@ -21,7 +22,7 @@ class ImageSet
     @maximum = Math.max.apply Math, maximums
   
   addImage: (image) ->
-    filter = image.hdus[0].header["FILTER"] || @count
+    filter = image.getHDU().header["FILTER"] or @count
     @keys.push filter
     @images[filter] = image
     index = @count
@@ -31,15 +32,15 @@ class ImageSet
   getWidth: ->
     key = @keys[0]
     return null unless @images[key]?
-    return @images[key].hdus[0].header["NAXIS1"]
+    return @images[key].getHDU().header["NAXIS1"]
 
   getHeight: ->
     key = @keys[0]
     return null unless @images[key]?
-    return @images[key].hdus[0].header["NAXIS2"]
+    return @images[key].getHDU().header["NAXIS2"]
   
   getCount: -> return @count
   
-  getData: (filter) -> return @[filter].hdus[0].data.data
+  getData: (filter) -> return @[filter].getHDU().data.data
 
 module?.exports = ImageSet
