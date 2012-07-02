@@ -12,5 +12,6 @@ FITS.CompImage  = require('./fits.compressedimage')
 FITS.Table      = require('./fits.table')
 FITS.ImageSet   = require('./fits.imageset')
 FITS.Visualize  = require('./fits.visualize')
+FITS.ImageStats = require('./fits.imagestats')
 
 module?.exports = FITS

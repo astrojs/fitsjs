@@ -291,6 +291,10 @@ class Visualize
     return shader
 
   setupUI: (width, height) ->
+    container = document.getElementById(@el.getAttribute("id"))
+    unless container is null
+      container.removeChild(container.children[0]) while container.children.length > 0
+    
     parent = document.createElement("div")
     parent.setAttribute("class", "fits-viewer")
     
