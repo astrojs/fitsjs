@@ -45,6 +45,6 @@ class ImageSet
   
   seek: (frame = 0) ->
     for key, image of @images
-      image.getDataUnit.seek(frame)
+      image.getDataUnit().seek(frame)
 
 module?.exports = ImageSet
