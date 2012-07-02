@@ -27,6 +27,9 @@ class CompImage extends Tabular
     @zblank   = CompImage.setValue(header, "ZBLANK", undefined)
     @blank    = CompImage.setValue(header, "BLANK", undefined)
     
+    @min = if header["DATAMIN"]? then header["DATAMIN"] else undefined
+    @max = if header["DATAMAX"]? then header["DATAMAX"] else undefined
+    
     @ztile = []
     for i in [1..@znaxis]
       ztile = if header.contains("ZTILE#{i}") then header["ZTILE#{i}"] else if i is 1 then header["ZNAXIS1"] else 1
@@ -109,15 +112,15 @@ class CompImage extends Tabular
   
   getFrame: ->
     @rowsRead = 0
-    pixels = new Float32Array(@ztile[0] * @rows)
+    @data = new Float32Array(@ztile[0] * @rows)
     
     loop
       row = @getRow()
       for value, index in row
         location = @rowsRead * @ztile[0] + index
-        pixels[@rowsRead * @ztile[0] + index] = value
+        @data[@rowsRead * @ztile[0] + index] = value
       break if @rowsRead is @rows
-    return pixels
+    return @data
       
   getRowHasBlanks: ->
     [data, blank, scale, zero] = @_getRow()
@@ -163,6 +166,24 @@ class CompImage extends Tabular
     scale = row[@columnNames["ZSCALE"]] || @bscale
     zero  = row[@columnNames["ZZERO"]] || @bzero
     return [data, blank, scale, zero]
+  
+  # Compute the minimum and maximum pixels
+  getExtremes: ->
+    return [@min, @max] if @min? and @max?
+
+    for value, index in @data
+      continue if isNaN(value)
+      [min, max] = [value, value]
+      break
+
+    for i in [index..@data.length - 1]
+      value = @data[i]
+      continue if isNaN(value)
+      min = value if value < min
+      max = value if value > max
+
+    [@min, @max] = [min, max]
+    return [@min, @max]
 
   @subtractiveDither1: -> throw "Not yet implemented"
   @linearScaling: -> throw "Not yet implemented"

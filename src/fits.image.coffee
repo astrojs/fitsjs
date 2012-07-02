@@ -114,4 +114,14 @@ class Image extends Data
   # Note: Indexing of pixels starts at 0.
   getPixel: (x, y) -> return @data[(@frame * @naxis[0] * @naxis[1]) + y * @naxis[0] + x]
 
+  # Moves the pointer that is used to read the array buffer to a specified frame.  For 2D images
+  # this defaults to the first and only frame.  Indexing of the frame argument begins at 0.
+  seek: (frame = 0) ->
+    if @naxis.length is 2
+      @rowsRead = 0
+      @frame    = -1
+    else
+      @rowsRead = @naxis[1] * (frame + 1)
+      @frame    = @naxis[1] / @rowsRead - 1
+    
 module?.exports = Image
