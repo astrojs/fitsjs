@@ -42,5 +42,9 @@ class ImageSet
   getCount: -> return @count
   
   getData: (filter) -> return @[filter].getHDU().data.data
+  
+  seek: (frame = 0) ->
+    for key, image of @images
+      image.seek(frame)
 
 module?.exports = ImageSet
