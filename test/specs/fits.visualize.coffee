@@ -24,8 +24,8 @@ describe "FITS", ->
         
         if imageset.getCount() is 5
           viz = new Visualize(imageset, container)
-          viz.stretch('arcsinh')
-          viz.scale(0, 1)
+          viz.stretch('logarithm')
+          viz.scale(0, 10)
           console.log viz
           
       xhr.send()
