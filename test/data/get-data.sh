@@ -1,0 +1,6 @@
+curl -# -C - -o "HydraA.fits" "http://ubret.s3.amazonaws.com/Projects/fitsjs/data/587730845813244354_g.fits.fz"
+curl -# -C - -o "2MASS_NGC_6872_H.fits" "http://ubret.s3.amazonaws.com/Projects/fitsjs/data/2MASS_NGC_6872_H.fits"
+curl -# -C - -o "Arp245_EMMI_R.fits" "http://ubret.s3.amazonaws.com/Projects/fitsjs/data/Arp245_EMMI_R.fits"
+curl -# -C - -o "elgordo.fits" "http://ubret.s3.amazonaws.com/Projects/fitsjs/data/elgordo.fits"
+curl -# -C - -o "HydraA.fits" "http://ubret.s3.amazonaws.com/Projects/fitsjs/data/HydraA.fits"
+#curl -# -C - -o "HST_10098_09_ACS_WFC_F555W_drz.fits" "http://ubret.s3.amazonaws.com/Projects/fitsjs/data/HST_10098_09_ACS_WFC_F555W_drz.fits"

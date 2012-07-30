@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <title>Jasmine Spec Runner &ndash; astrojs::Fits</title>
+
+  <link rel="stylesheet" type="text/css" href="lib/jasmine.css">
+  <script type="text/javascript" src="lib/jasmine.js"></script>
+  <script type="text/javascript" src="lib/jasmine-html.js"></script>
+  <script type="text/javascript" src="jdataview.js"></script>
+  <script type="text/javascript" src="/module.js"></script>
+  <script type="text/javascript" src="/specs.js"></script>
+  
+  <script type="text/javascript">
+    (function() {
+      var jasmineEnv = jasmine.getEnv();
+      jasmineEnv.updateInterval = 1000;
+
+      var htmlReporter = new jasmine.HtmlReporter();
+
+      jasmineEnv.addReporter(htmlReporter);
+
+      jasmineEnv.specFilter = function(spec) {
+        return htmlReporter.specFilter(spec);
+      };
+
+      var currentWindowOnload = window.onload;
+
+      window.onload = function() {
+        if (currentWindowOnload) {
+          currentWindowOnload();
+        }
+        execJasmine();
+      };
+
+      function execJasmine() {
+        jasmineEnv.execute();
+      }
+
+    })();
+    
+    var fits, compimg, bintable, datacube;
+    var runTests = false;
+    
+    var numRequests = 4;
+    var requestCount = 0;
+    
+    window.onload = function () {
+      var xhr1 = new XMLHttpRequest();
+      xhr1.open('GET', "http://0.0.0.0:8000/data/m101.fits", true)
+      xhr1.responseType = 'arraybuffer'
+      xhr1.onload = function (e) {
+        fits = new FITS.File(xhr1.response);        
+        requestCount += 1;
+        
+        if (numRequests === requestCount)
+          jasmine.getEnv().execute();
+      };
+      xhr1.send();
+      
+      var xhr2 = new XMLHttpRequest();
+      xhr2.open('GET', "http://0.0.0.0:8000/data/CFHTLS_03_g_sci.fits.fz", true)
+      xhr2.responseType = 'arraybuffer'
+      xhr2.onload = function (e) {
+        compimg = new FITS.File(xhr2.response);
+        requestCount += 1;
+        
+        if (numRequests === requestCount)
+          jasmine.getEnv().execute();
+      };
+      xhr2.send();
+      
+      var xhr3 = new XMLHttpRequest();
+      xhr3.open('GET', "http://0.0.0.0:8000/data/spec-0406-51869-0012.fits", true)
+      xhr3.responseType = 'arraybuffer'
+      xhr3.onload = function (e) {
+        bintable = new FITS.File(xhr3.response);
+        requestCount += 1;
+        
+        if (numRequests === requestCount)
+          jasmine.getEnv().execute();
+      };
+      xhr3.send();
+      
+      var xhr4 = new XMLHttpRequest();
+      xhr4.open('GET', "http://0.0.0.0:8000/data/L1448_13CO.fits", true)
+      xhr4.responseType = 'arraybuffer'
+      xhr4.onload = function (e) {
+        datacube = new FITS.File(xhr4.response);
+        requestCount += 1;
+        
+        if (numRequests === requestCount)
+          jasmine.getEnv().execute();
+      };
+      xhr4.send();
+      
+    };
+    
+  </script>
+
+</head>
+
+<body>
+</body>
+</html>

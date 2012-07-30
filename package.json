@@ -1,0 +1,7 @@
+{
+  "name": "fits",
+  "version": "0.0.2",
+  "dependencies": {
+    "jDataView": "git://github.com/vjeux/jDataView.git"
+  }
+}
