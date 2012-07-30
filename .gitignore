@@ -2,3 +2,4 @@
 node_modules/
 *.fits
 *.fits.fz
+doc/

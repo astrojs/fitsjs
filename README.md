@@ -11,8 +11,9 @@ To install the dependencies and generate documentation:
     # Generate documentation
     groc
     
-To use the library copy public/fits.js to your project and include it using a script tag.  After including the library, the FITS object is exposed by calling require.
+To use the library include the dependency jDataView, then copy lib/fits.js to your project and include it using a script tag.  After including the library, the FITS object is exposed by calling require.
 
+    <script src="https://raw.github.com/vjeux/jDataView/master/src/jdataview.js" type="text/javascript" charset="utf-8">
     <script src="fits.js" type="text/javascript" charset="utf-8">
     </script>
     
