@@ -2,7 +2,7 @@
 
 FITS = @FITS = {}
 
-FITS.version    = '0.0.1'
+FITS.VERSION    = '0.0.2'
 FITS.HDU        = require('./fits.hdu')
 FITS.File       = require('./fits.file')
 FITS.Header     = require('./fits.header')
