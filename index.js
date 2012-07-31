@@ -1,1 +1,1 @@
-module.exports = require('./lib/Fits');
+module.exports = require('./lib/fits');

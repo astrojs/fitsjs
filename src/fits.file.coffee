@@ -12,7 +12,24 @@ class File
   @LINEWIDTH   = 80
   @BLOCKLENGTH = 2880
 
-  constructor: (buffer) ->
+  constructor: (buffer) ->    
+    switch buffer.constructor.name
+      when 'ArrayBuffer'
+        @initFromBuffer(buffer)
+      when 'Object'
+        @initFromObject(buffer)
+      else
+        throw 'fitsjs does not recognize the argument passed to the constructor'
+
+  # ##Class Methods
+
+  # Determine the number of characters following a header or data unit
+  @excessBytes: (length) -> return (File.BLOCKLENGTH - (length % File.BLOCKLENGTH)) % File.BLOCKLENGTH
+
+  # ##Instance Methods
+  
+  # Initialize the object from an array buffer
+  initFromBuffer: (buffer) ->
     @length     = buffer.byteLength
     @view       = new jDataView buffer, undefined, undefined, false
     @hdus       = []
@@ -24,14 +41,14 @@ class File
       hdu = new HDU(header, data)
       @hdus.push hdu
       break if @eof
-
-  # ##Class Methods
-
-  # Determine the number of characters following a header or data unit
-  @excessBytes: (length) -> return (File.BLOCKLENGTH - (length % File.BLOCKLENGTH)) % File.BLOCKLENGTH
-
-  # ##Instance Methods
-
+  
+  # Initialize the object from a serialized instance
+  initFromObject: (buffer) ->
+    @length = buffer.length
+    @view   = null
+    @hdus   = buffer.hdus
+    @eof    = true
+  
   # Read a header unit and initialize a Header object
   readHeader: ->
     linesRead = 0

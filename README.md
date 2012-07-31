@@ -44,7 +44,7 @@ Returns the header associated with the first HDU containing a data unit.  An opt
 may be passed to point to a specific HDU.
 
     fits.getDataUnit()
-Returns the data object associated with the first HDU containing a data unit.  This method does not read from the array buffer
+Returns the data object associated with the first HDU containing a data unit.  This method does not read from the array buffer.
 An optional argument may be passed to point to a specific HDU.
 
     fits.getData()
@@ -98,7 +98,7 @@ Checks if the header has an associated data unit.
 
 Examples
 --------
-
+    <script src="jdataview.js" type="text/javascript" charset="utf-8">
     <script src="fits.js" type="text/javascript" charset="utf-8">
     </script>
     

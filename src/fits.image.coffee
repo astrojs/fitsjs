@@ -18,7 +18,7 @@ class Image extends Data
 
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
     @data   = undefined
-    @frame = -1    # Only relevant for data cubes
+    @frame  = -1    # Only relevant for data cubes
     
     # Define the function to interpret the image data
     switch bitpix
