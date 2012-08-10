@@ -7,6 +7,17 @@
   FITS = require("fits");
 
   describe("FITS Table", function() {
+    it('can read the column names', function() {
+      var index, name, names, table, _i, _len, _results;
+      table = fits.getDataUnit(1);
+      names = ['XI', 'ETA', 'XI_CORR', 'ETA_CORR'];
+      _results = [];
+      for (index = _i = 0, _len = names.length; _i < _len; index = ++_i) {
+        name = names[index];
+        _results.push(expect(table.columns[index]).toEqual(name));
+      }
+      return _results;
+    });
     return it('can read a FITS table', function() {
       var i, row, table, _i, _ref;
       table = fits.getDataUnit(1);

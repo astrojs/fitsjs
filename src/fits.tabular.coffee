@@ -42,7 +42,8 @@ class Tabular extends Data
     @length       = @tableLength = @rowByteSize * @rows
     @rowsRead     = 0
     
-    @accessors = []
+    @columns      = @getColumnNames(header)
+    @accessors    = []
     
   getRow: ->
     @current = @begin + @rowsRead * @rowByteSize
@@ -51,5 +52,13 @@ class Tabular extends Data
     row.push accessor() for accessor in @accessors
     @rowsRead += 1
     return row
+
+  getColumnNames: (header) ->
+    columnNames = []
+    for i in [1..@cols]
+      key = "TTYPE#{i}"
+      return null unless header.contains(key)
+      columnNames.push header[key]
+    return columnNames
 
 module?.exports = Tabular

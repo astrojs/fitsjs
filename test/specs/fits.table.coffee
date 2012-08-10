@@ -4,6 +4,13 @@ FITS = require("fits")
 
 describe "FITS Table", ->
 
+  it 'can read the column names', ->
+    table = fits.getDataUnit(1)
+    
+    names = ['XI', 'ETA', 'XI_CORR', 'ETA_CORR']
+    for name, index in names
+      expect(table.columns[index]).toEqual(name)
+
   it 'can read a FITS table', ->
     table = fits.getDataUnit(1)
     
