@@ -31,6 +31,9 @@ describe "FITS Image", ->
     
     image = datacube.getDataUnit()
     
+    # Make sure the file is a data cube
+    expect(image.isDataCube()).toBeTruthy()
+    
     # First Frame
     image.getFrame()
     
