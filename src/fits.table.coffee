@@ -22,7 +22,7 @@ class Table extends Tabular
         accessor = =>
           value = ""
           value += @view.getChar() for i in [1..length]
-          return FITS.Table.dataAccessors[dataType](value)
+          return Table.dataAccessors[dataType](value)
         @accessors.push(accessor)
 
 module?.exports = Table
