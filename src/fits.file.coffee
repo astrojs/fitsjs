@@ -11,12 +11,15 @@ BinaryTable = require('./fits.binarytable')
 class File
   @LINEWIDTH   = 80
   @BLOCKLENGTH = 2880
-
-  constructor: (buffer) ->    
-    switch buffer.constructor.name
-      when 'ArrayBuffer'
+  
+  @getType: (obj) -> return Object.prototype.toString.call(obj).slice(8, -1).toLowerCase()
+  
+  constructor: (buffer) ->
+    name = File.getType(buffer)
+    switch name
+      when 'arraybuffer'
         @initFromBuffer(buffer)
-      when 'Object'
+      when 'object'
         @initFromObject(buffer)
       else
         throw 'fitsjs does not recognize the argument passed to the constructor'

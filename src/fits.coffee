@@ -1,6 +1,6 @@
 # require('jDataView/src/jdataview')
 
-FITS = @FITS = {}
+FITS = {}
 
 FITS.VERSION    = '0.0.2'
 FITS.HDU        = require('./fits.hdu')
