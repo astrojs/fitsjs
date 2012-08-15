@@ -125,6 +125,6 @@ class Image extends Data
       @frame    = @naxis[1] / @rowsRead - 1
   
   # Checks if the image is a data cube
-  isDataCube: -> return if @naxis.length is 3 then true else false
+  isDataCube: -> return if @naxis.length > 2 then true else false
     
 module?.exports = Image

@@ -32,7 +32,6 @@
       precision = 6;
       image = datacube.getDataUnit();
       expect(image.isDataCube()).toBeTruthy();
-      expect(image.isDataCube()).toBeFalsy();
       image.getFrame();
       expect(image.getPixel(0, 0)).toBeNaN();
       expect(image.getPixel(106, 0)).toBeNaN();
