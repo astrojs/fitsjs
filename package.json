@@ -2,7 +2,6 @@
   "name": "fits",
   "version": "0.0.2",
   "dependencies": {
-    "groc": "~0.2.8",
     "jDataView": "git://github.com/vjeux/jDataView.git"
   }
 }
