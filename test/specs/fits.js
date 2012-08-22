@@ -7,25 +7,65 @@
   describe("FITS", function() {
     var FITS;
     FITS = require("fits");
-    FITS.Visualize = require("fits.visualize");
-    FITS.ImageSet = require("fits.imageset");
     it('can open a FITS file with image and ASCII table', function() {
-      expect(fits.hdus.length).toEqual(2);
-      expect(fits.eof).toBeTruthy();
-      expect(fits.hdus[0].data.constructor.name).toBe("Image");
-      return expect(fits.hdus[1].data.constructor.name).toBe("Table");
+      var fits, xhr;
+      fits = null;
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', 'data/m101.fits');
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function() {
+        return fits = new FITS.File(xhr.response);
+      };
+      xhr.send();
+      waitsFor(function() {
+        return fits != null;
+      });
+      return runs(function() {
+        expect(fits.hdus.length).toEqual(2);
+        expect(fits.eof).toBeTruthy();
+        expect(fits.hdus[0].data.constructor.name).toBe("Image");
+        return expect(fits.hdus[1].data.constructor.name).toBe("Table");
+      });
     });
     it('can open a FITS file storing a compressed image', function() {
-      expect(compimg.hdus.length).toEqual(2);
-      expect(compimg.eof).toBeTruthy();
-      expect(compimg.hdus[0].data).toBeUndefined();
-      return expect(compimg.hdus[1].data.constructor.name).toBe("CompImage");
+      var fits, xhr;
+      fits = null;
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', 'data/CFHTLS_03_g_sci.fits.fz');
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function() {
+        return fits = new FITS.File(xhr.response);
+      };
+      xhr.send();
+      waitsFor(function() {
+        return fits != null;
+      });
+      return runs(function() {
+        expect(fits.hdus.length).toEqual(2);
+        expect(fits.eof).toBeTruthy();
+        expect(fits.hdus[0].data).toBeUndefined();
+        return expect(fits.hdus[1].data.constructor.name).toBe("CompImage");
+      });
     });
     return it('can open a FITS file storing a binary table', function() {
-      expect(bintable.hdus.length).toEqual(2);
-      expect(bintable.eof).toBeTruthy();
-      expect(bintable.hdus[0].data).toBeUndefined();
-      return expect(bintable.hdus[1].data.constructor.name).toBe("BinaryTable");
+      var fits, xhr;
+      fits = null;
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', 'data/spec-0406-51869-0012.fits');
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function() {
+        return fits = new FITS.File(xhr.response);
+      };
+      xhr.send();
+      waitsFor(function() {
+        return fits != null;
+      });
+      return runs(function() {
+        expect(fits.hdus.length).toEqual(2);
+        expect(fits.eof).toBeTruthy();
+        expect(fits.hdus[0].data).toBeUndefined();
+        return expect(fits.hdus[1].data.constructor.name).toBe("BinaryTable");
+      });
     });
   });
 
