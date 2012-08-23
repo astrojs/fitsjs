@@ -1,4 +1,3 @@
-# require('jDataView/src/jdataview')
 Header    = require('./fits.header')
 Image     = require('./fits.image')
 CompImage = require('./fits.compressedimage')
