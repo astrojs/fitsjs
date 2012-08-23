@@ -29,18 +29,86 @@ class File
   # Determine the number of characters following a header or data unit
   @excessBytes: (length) -> return (File.BLOCKLENGTH - (length % File.BLOCKLENGTH)) % File.BLOCKLENGTH
 
+  @extendDataView: (view) ->
+    
+    # Add methods to native DataView object
+    DataView::getString = (length) ->
+      value = ''
+      for i in [0..length - 1]
+        c = @getUint8()
+        value += String.fromCharCode(if c > 127 then 65533 else c)
+      return value
+
+    DataView::getChar = -> return @getString(1)
+    
+    view.offset = 0
+    
+    getInt8     = view.getInt8      # unsigned long byteOffset
+    getUint8    = view.getUint8     # unsigned long byteOffset
+    getInt16    = view.getInt16     # unsigned long byteOffset, optional boolean littleEndian
+    getUint16   = view.getUint16    # unsigned long byteOffset, optional boolean littleEndian
+    getInt32    = view.getInt32     # unsigned long byteOffset, optional boolean littleEndian
+    getUint32   = view.getUint32    # unsigned long byteOffset, optional boolean littleEndian
+    getFloat32  = view.getFloat32   # unsigned long byteOffset, optional boolean littleEndian
+    getFloat64  = view.getFloat64   # unsigned long byteOffset, optional boolean littleEndian
+    
+    view.getInt8 = ->
+      value = getInt8.apply(@, [@offset])
+      @offset += 1
+      return value
+    
+    view.getUint8 = ->
+      value = getUint8.apply(@, [@offset])
+      @offset += 1
+      return value
+      
+    view.getInt16 = ->
+      value = getInt16.apply(@, [@offset, false])
+      @offset += 2
+      return value
+      
+    view.getUint16 = ->
+      value = getUint16.apply(@, [@offset, false])
+      @offset += 2
+      return value
+      
+    view.getInt32 = ->
+      value = getInt32.apply(@, [@offset, false])
+      @offset += 4
+      return value
+      
+    view.getUint32 = ->
+      value = getUint32.apply(@, [@offset, false])
+      @offset += 4
+      return value
+      
+    view.getFloat32 = ->
+      value = getFloat32.apply(@, [@offset, false])
+      @offset += 4
+      return value
+      
+    view.getFloat64 = ->
+      value = getFloat64.apply(@, [@offset, false])
+      @offset += 8
+      return value
+    
+    view.seek = (offset) -> @offset = offset
+    view.tell = -> return @offset
+
   # ##Instance Methods
   
   # Initialize the object from an array buffer
   initFromBuffer: (buffer) ->
     @length     = buffer.byteLength
-    @view       = new jDataView buffer, undefined, undefined, false
+    @view       = new DataView buffer
     @hdus       = []
     @eof        = false
 
+    File.extendDataView(@view)
+
     loop
-      header = @readHeader()
-      data = @readData(header)
+      header  = @readHeader()
+      data    = @readData(header)
       hdu = new HDU(header, data)
       @hdus.push hdu
       break if @eof
@@ -64,7 +132,7 @@ class File
 
     # Seek to the next relavant block in file
     excess = File.excessBytes(linesRead * File.LINEWIDTH)
-    @view.seek(@view.tell() + excess)
+    @view.seek(@view.offset + excess)
     @checkEOF()
 
     return header
@@ -93,7 +161,7 @@ class File
     @checkEOF()
     return data
 
-  checkEOF: -> @eof = true if @view.tell() is @length
+  checkEOF: -> @eof = true if @view.offset is @length
 
   # Count the number of HDUs
   count: -> return @hdus.length

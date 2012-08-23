@@ -1,26 +1,17 @@
 fitsjs
 ======
 
-A JavaScript library for reading the astronomical file format – FITS.  This library depends on [jDataView](https://github.com/vjeux/jDataView).  Other dependencies installed by Node are only for the testing environment and generating documentation.
+A standalone JavaScript library for reading the astronomical file format – FITS.  This library is built for modern browsers supporting the DataView object.  These include at least Chrome 9, Firefox 15, and Safari 6.
 
-To install the dependencies and generate documentation:
+To use the library copy lib/fits.js to your project and include it using a script tag.  After including the library, the FITS object is exposed by calling require.
 
-    # Install the dependencies.
-    npm install .
-    
-    # Generate documentation
-    groc
-    
-To use the library include the dependency jDataView, then copy lib/fits.js to your project and include it using a script tag.  After including the library, the FITS object is exposed by calling require.
-
-    <script src="https://raw.github.com/vjeux/jDataView/master/src/jdataview.js" type="text/javascript" charset="utf-8">
     <script src="fits.js" type="text/javascript" charset="utf-8">
     </script>
     
     <script type="text/javascript">
       FITS = require('fits');
     </script>
-    
+
 This library may be used to read various forms of the FITS format.  This implementation is under active development.  In its current state it supports the following:
 
 * Reading of multiple header data units
@@ -98,7 +89,6 @@ Checks if the header has an associated data unit.
 
 Examples
 --------
-    <script src="jdataview.js" type="text/javascript" charset="utf-8">
     <script src="fits.js" type="text/javascript" charset="utf-8">
     </script>
     

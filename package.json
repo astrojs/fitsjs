@@ -1,7 +1,16 @@
 {
   "name": "fits",
-  "version": "0.0.2",
-  "dependencies": {
-    "jDataView": "git://github.com/vjeux/jDataView.git"
-  }
+  "version": "0.0.4",
+  "author": "Amit Kapadia <amit@zooniverse.org>",
+  "description": "Library for reading the astronomical file format",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/astrojs/fitsjs.git"
+  },
+  "keywords": [
+    "astronomy",
+    "astrophysics",
+    "fits"
+  ],
+  "license": "MIT"
 }

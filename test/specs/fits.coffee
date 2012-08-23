@@ -36,7 +36,7 @@ describe "FITS", ->
       expect(fits.eof).toBeTruthy()
       expect(fits.hdus[0].data).toBeUndefined()
       expect(fits.hdus[1].data.constructor.name).toBe("CompImage")
-  
+
   it 'can open a FITS file storing a binary table', ->
     fits = null
     
