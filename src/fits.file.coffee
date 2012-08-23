@@ -14,6 +14,15 @@ class File
   
   @getType: (obj) -> return Object.prototype.toString.call(obj).slice(8, -1).toLowerCase()
   
+  DataView::getString = (length, offset) ->
+    value = ''
+    for i in [0..length - 1]
+      c = @getUint8(offset + i)
+      value += String.fromCharCode(if c > 127 then 65533 else c)
+    return value
+  
+  DataView::getChar = (offset) -> return @getString(1, offset)
+  
   constructor: (buffer) ->
     name = File.getType(buffer)
     switch name
@@ -34,16 +43,19 @@ class File
   # Initialize the object from an array buffer
   initFromBuffer: (buffer) ->
     @length     = buffer.byteLength
-    @view       = new jDataView buffer, undefined, undefined, false
+    @view       = new DataView buffer
+    @offset     = 0
     @hdus       = []
     @eof        = false
 
     loop
       header = @readHeader()
-      data = @readData(header)
-      hdu = new HDU(header, data)
-      @hdus.push hdu
-      break if @eof
+      console.log header
+      break
+      # data = @readData(header)
+      # hdu = new HDU(header, data)
+      # @hdus.push hdu
+      # break if @eof
   
   # Initialize the object from a serialized instance
   initFromObject: (buffer) ->
@@ -57,14 +69,15 @@ class File
     linesRead = 0
     header = new Header()
     loop
-      line = @view.getString(File.LINEWIDTH)
+      line = @view.getString(File.LINEWIDTH, @offset)
+      @offset += File.LINEWIDTH
       linesRead += 1
       header.readCard(line)
       break if line[0..3] is "END "
 
     # Seek to the next relavant block in file
     excess = File.excessBytes(linesRead * File.LINEWIDTH)
-    @view.seek(@view.tell() + excess)
+    @offset = @offset + excess
     @checkEOF()
 
     return header
@@ -93,7 +106,7 @@ class File
     @checkEOF()
     return data
 
-  checkEOF: -> @eof = true if @view.tell() is @length
+  checkEOF: -> @eof = true if @offset is @length
 
   # Count the number of HDUs
   count: -> return @hdus.length

@@ -1,5 +1,3 @@
-# require('jDataView/src/jdataview')
-
 FITS = {}
 
 FITS.VERSION    = '0.0.2'
