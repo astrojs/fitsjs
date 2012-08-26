@@ -11,14 +11,20 @@ class Image extends Data
     
     @naxis = []
     @naxis.push header["NAXIS#{i}"] for i in [1..naxis]
-    @rowByteSize = header["NAXIS1"] * Math.abs(bitpix) / 8
-    @rowsRead = 0
+    
+    @width  = header["NAXIS1"]
+    @height = header["NAXIS2"]
+    
+    @rowByteSize = @width * Math.abs(bitpix) / 8
+    @totalRowsRead = 0
+    
+    # TODO: Some headers contain wrong values for DATAMIN/MAX
     @min = if header["DATAMIN"]? then header["DATAMIN"] else undefined
     @max = if header["DATAMAX"]? then header["DATAMAX"] else undefined
 
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
     @data   = undefined
-    @frame  = -1    # Only relevant for data cubes
+    @frame  = 0    # Only relevant for data cubes
     
     # Define the function to interpret the image data
     switch bitpix
@@ -51,26 +57,32 @@ class Image extends Data
       else
         throw "FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, 64, -32, -64]"
 
-  # Initializes a 1D array for storing image pixels
-  initArray: -> @data = new @arrayType(@naxis.reduce( (a, b) -> a * b))
+  # Initializes a 1D array for storing image pixels for a single frame
+  initArray: -> @data = new @arrayType(@width * @height)
 
   # Read a row of pixels from the array buffer.  The method initArray
   # must be called before requesting any rows.
   getRow: ->
-    @current = @begin + @rowsRead * @rowByteSize
-    rowLength = @naxis[0]
+    @current = @begin + @totalRowsRead * @rowByteSize
     @view.seek(@current)
-    for i in [0..rowLength - 1]
-      @data[rowLength * @rowsRead + i] = @accessor()
+    
+    for i in [0..@width - 1]
+      @data[@width * @rowsRead + i] = @accessor()
+    
     @rowsRead += 1
+    @totalRowsRead += 1
   
   # Read the entire frame of the image.  If the image is a data cube, it reads
   # a slice of the data.  It's not required to call initArray prior, though there
   # is no harm in doing so.
-  getFrame: ->
+  getFrame: (@frame = @frame) ->
     @initArray() unless @data?
-    @getRow() for i in [0..@naxis[1] - 1]
+    
+    @totalRowsRead = @width * @frame
+    @rowsRead = 0
+    @getRow() for i in [1..@height]
     @frame += 1
+    
     return @data
   
   # Read the entire image and return the pixels in a typed array for WebGL.
@@ -79,15 +91,15 @@ class Image extends Data
   # that out.
   getFrameWebGL: ->
     @data = new Float32Array(@naxis.reduce( (a, b) -> a * b))
-    @rowsRead = 0
+    @totalRowsRead = 0
     rowLength = @naxis[0]
     
     for j in [0..@naxis[1] - 1]
-      @current = @begin + @rowsRead * @rowByteSize
+      @current = @begin + @totalRowsRead * @rowByteSize
       @view.seek(@current)
       for i in [0..rowLength - 1]
-        @data[rowLength * @rowsRead + i] = @accessor()
-      @rowsRead += 1
+        @data[rowLength * @totalRowsRead + i] = @accessor()
+      @totalRowsRead += 1
       
     @frame += 1
     return @data
@@ -112,17 +124,17 @@ class Image extends Data
   
   # Get the value of a pixel.
   # Note: Indexing of pixels starts at 0.
-  getPixel: (x, y) -> return @data[(@frame * @naxis[0] * @naxis[1]) + y * @naxis[0] + x]
+  getPixel: (x, y) -> return @data[y * @width + x]
 
   # Moves the pointer that is used to read the array buffer to a specified frame.  For 2D images
   # this defaults to the first and only frame.  Indexing of the frame argument begins at 0.
   seek: (frame = 0) ->
     if @naxis.length is 2
-      @rowsRead = 0
-      @frame    = -1
+      @totalRowsRead = 0
+      @frame    = 0
     else
-      @rowsRead = @naxis[1] * (frame + 1)
-      @frame    = @naxis[1] / @rowsRead - 1
+      @totalRowsRead = @height * frame
+      @frame    = @height / @totalRowsRead - 1
   
   # Checks if the image is a data cube
   isDataCube: -> return if @naxis.length > 2 then true else false
