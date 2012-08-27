@@ -14,6 +14,58 @@
         }
       });
     });
+    it('can compare while versus for', function() {
+      var fits, xhr;
+      fits = null;
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', 'data/m101.fits');
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function() {
+        return fits = new FITS.File(xhr.response);
+      };
+      xhr.send();
+      waitsFor(function() {
+        return fits != null;
+      });
+      return runs(function() {
+        var end, i, image, number, start, _i;
+        image = fits.getDataUnit();
+        start = new Date();
+        number = 10;
+        for (i = _i = 1; 1 <= number ? _i <= number : _i >= number; i = 1 <= number ? ++_i : --_i) {
+          image.getFrame(0);
+        }
+        end = new Date();
+        return console.log("time = " + ((end - start) / number));
+      });
+    });
+    it('can read a FITS image', function() {
+      var fits, xhr;
+      fits = null;
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', 'data/m101.fits');
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function() {
+        return fits = new FITS.File(xhr.response);
+      };
+      xhr.send();
+      waitsFor(function() {
+        return fits != null;
+      });
+      return runs(function() {
+        var image;
+        image = fits.getDataUnit();
+        image.getFrame();
+        expect(image.getPixel(0, 0)).toEqual(3852);
+        expect(image.getPixel(890, 0)).toEqual(4223);
+        expect(image.getPixel(890, 892)).toEqual(4015);
+        expect(image.getPixel(0, 892)).toEqual(3898);
+        expect(image.getPixel(405, 600)).toEqual(9128);
+        expect(image.getPixel(350, 782)).toEqual(4351);
+        expect(image.getPixel(108, 345)).toEqual(4380);
+        return expect(image.getPixel(720, 500)).toEqual(5527);
+      });
+    });
     return it('can read a FITS data cube', function() {
       var fits, precision, xhr;
       precision = 6;

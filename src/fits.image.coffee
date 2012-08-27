@@ -80,28 +80,13 @@ class Image extends Data
     
     @totalRowsRead = @width * @frame
     @rowsRead = 0
-    @getRow() for i in [1..@height]
+    
+    height = @height
+    while height--
+      @getRow()
+    
     @frame += 1
     
-    return @data
-  
-  # Read the entire image and return the pixels in a typed array for WebGL.
-  # A Float32Array is used for now because I have not been able to render other
-  # typed arrays aside from Uint8.  This method will be deprecated when I figure
-  # that out.
-  getFrameWebGL: ->
-    @data = new Float32Array(@naxis.reduce( (a, b) -> a * b))
-    @totalRowsRead = 0
-    rowLength = @naxis[0]
-    
-    for j in [0..@naxis[1] - 1]
-      @current = @begin + @totalRowsRead * @rowByteSize
-      @view.seek(@current)
-      for i in [0..rowLength - 1]
-        @data[rowLength * @totalRowsRead + i] = @accessor()
-      @totalRowsRead += 1
-      
-    @frame += 1
     return @data
   
   # Compute the minimum and maximum pixels

@@ -137,3 +137,22 @@ Pence, W. D., L. Chiappetti, C. G. Page, R. a. Shaw, and E. Stobie. 2010. Defini
 Ponz, J.D., Thompson, R.W., Muñoz, J.R. The FITS Image Extension.
 
 White, Richard L, Perry Greenfield, William Pence, Nasa Gsfc, Doug Tody, and Rob Seaman. 2011. Tiled Image Convention for Storing Compressed Images in FITS Binary Tables: 1-17.
+
+
+Notes
+-----
+Currently rendering data as WebGL textures requires the use of Uint8 arrays or Float32 arrays.  Declare the data type:
+
+    var dataType = gl.UNSIGNED_BYTE;  # for Uint8 (BITPIX = 8)
+    var dataType = gl.FLOAT;          # for Uint16, Float32 (BITPIX 16, 32, -32)
+    
+    # Set parameters and data to texture
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width, height, 0, gl.LUMINANCE, dataType, pixels);
+
+Documentation at [Khronos](http://www.khronos.org/registry/webgl/specs/latest/#5.14.8) states the following are supported formats, however they do not appear to render when used as textures.
+
+  * gl.UNSIGNED_BYTE (Uint8Array)
+  * gl.UNSIGNED_SHORT_5_6_5 (Uint16Array)
+  * gl.UNSIGNED_SHORT_4_4_4_4 (Uint16Array)
+  * gl.UNSIGNED_SHORT_5_5_5_1 (Uint16Array)
+  * gl.FLOAT (Float32Array)
