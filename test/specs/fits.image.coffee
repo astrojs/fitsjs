@@ -136,7 +136,7 @@ describe "FITS Image", ->
       expect(image.frame).toEqual(0)
     
       image.seek()
-      expect(image.frame).toEqual(-1)
+      expect(image.frame).toEqual(0)
     
       image.getFrame()
     

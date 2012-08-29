@@ -106,7 +106,7 @@
         image = fits.getDataUnit();
         expect(image.frame).toEqual(0);
         image.seek();
-        expect(image.frame).toEqual(-1);
+        expect(image.frame).toEqual(0);
         image.getFrame();
         expect(image.getPixel(0, 0)).toEqual(3852);
         expect(image.getPixel(890, 0)).toEqual(4223);
