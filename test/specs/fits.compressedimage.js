@@ -27,7 +27,11 @@
         image.getFrame();
         image.getExtremes();
         expect(image.min).toBeCloseTo(-2.981497, precision);
-        return expect(image.max).toBeCloseTo(1273.853638, precision);
+        expect(image.max).toBeCloseTo(1273.853638, precision);
+        expect(image.getPixel(0, 1)).toBeCloseTo(0.173962, precision);
+        expect(image.getPixel(400, 1)).toBeCloseTo(0.347923, precision);
+        expect(image.getPixel(400, 400)).toBeCloseTo(0.365571, precision);
+        return expect(image.getPixel(0, 400)).toBeCloseTo(-0.913929, precision);
       });
     });
   });
