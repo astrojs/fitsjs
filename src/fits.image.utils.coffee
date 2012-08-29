@@ -5,18 +5,22 @@ ImageUtils =
   getExtremes: ->
     return [@min, @max] if @min? and @max?
     
-    for value, index in @data
+    index = @data.length
+    while index--
+      value = @data[index]
       continue if isNaN(value)
+      
       [min, max] = [value, value]
       break
     
-    for i in [index..@data.length - 1]
-      value = @data[i]
+    while index--
+      value = @data[index]
       continue if isNaN(value)
       min = value if value < min
       max = value if value > max
     
     [@min, @max] = [min, max]
     return [@min, @max]
+
 
 module?.exports = ImageUtils

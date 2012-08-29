@@ -143,15 +143,16 @@ describe "FITS Image", ->
       
       # Get and check the extremes
       image.getExtremes()
+      
       expect(image.min).toEqual(2396)
       expect(image.max).toEqual(26203)
-    
+          
       # Check the values of the corner pixels ...
       expect(image.getPixel(0, 0)).toEqual(3852)
       expect(image.getPixel(890, 0)).toEqual(4223)
       expect(image.getPixel(890, 892)).toEqual(4015)
       expect(image.getPixel(0, 892)).toEqual(3898)
-    
+          
       # ... and a few other random pixels
       expect(image.getPixel(405, 600)).toEqual(9128)
       expect(image.getPixel(350, 782)).toEqual(4351)
