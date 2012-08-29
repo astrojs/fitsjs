@@ -27,9 +27,6 @@ class CompImage extends Tabular
     @zblank   = CompImage.setValue(header, "ZBLANK", undefined)
     @blank    = CompImage.setValue(header, "BLANK", undefined)
     
-    @min = if header["DATAMIN"]? then header["DATAMIN"] else undefined
-    @max = if header["DATAMAX"]? then header["DATAMAX"] else undefined
-    
     @ztile = []
     for i in [1..@znaxis]
       ztile = if header.contains("ZTILE#{i}") then header["ZTILE#{i}"] else if i is 1 then header["ZNAXIS1"] else 1

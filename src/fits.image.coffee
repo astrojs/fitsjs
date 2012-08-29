@@ -18,10 +18,6 @@ class Image extends Data
     @rowByteSize = @width * Math.abs(bitpix) / 8
     @totalRowsRead = 0
     
-    # TODO: Some headers contain wrong values for DATAMIN/MAX
-    @min = if header["DATAMIN"]? then header["DATAMIN"] else undefined
-    @max = if header["DATAMAX"]? then header["DATAMAX"] else undefined
-
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
     @data   = undefined
     @frame  = 0    # Only relevant for data cubes
