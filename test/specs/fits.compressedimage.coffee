@@ -27,13 +27,13 @@ describe "FITS CompImage", ->
       expect(image.min).toBeCloseTo(-2.981497, precision)
       expect(image.max).toBeCloseTo(1273.853638, precision)
       
-      expect(image.getPixel(0, 1)).toBeCloseTo(0.173962, precision)
-      expect(image.getPixel(400, 1)).toBeCloseTo(0.347923, precision)
-      expect(image.getPixel(400, 400)).toBeCloseTo(0.365571, precision)
-      expect(image.getPixel(0, 400)).toBeCloseTo(-0.913929, precision)
+      expect(image.getPixel(0, 0)).toBeCloseTo(0.173962, precision)
+      expect(image.getPixel(400, 0)).toBeCloseTo(0.347923, precision)
+      expect(image.getPixel(400, 400)).toBeCloseTo(0.344889, precision)
+      expect(image.getPixel(0, 400)).toBeCloseTo(1.20711267, precision)
       
       # ... and a few other random pixels
-      # expect(data.getPixel(405, 600)).toEqual(9128)
-      # expect(data.getPixel(350, 782)).toEqual(4351)
-      # expect(data.getPixel(108, 345)).toEqual(4380)
-      # expect(data.getPixel(720, 500)).toEqual(5527)
+      expect(image.getPixel(33, 205)).toBeCloseTo(0.975486, precision)
+      expect(image.getPixel(44, 149)).toBeCloseTo(-0.774174, precision)
+      expect(image.getPixel(237, 377)).toBeCloseTo(-0.668716, precision)
+      expect(image.getPixel(393, 27)).toBeCloseTo(0.490127, precision)

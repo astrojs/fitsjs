@@ -115,53 +115,38 @@ class CompImage extends Tabular
   
   @setValue: (header, key, defaultValue) -> return if header.contains(key) then header[key] else defaultValue
   
+  # TODO: Test this function.  Need example file with blanks.
   getRowHasBlanks: ->
     [data, blank, scale, zero] = @_getRow()
     
-    pixels = new Float32Array(data.length)
     for value, index in data
-      if value is blank
-        pixels[index] = NaN
-        continue
-      pixels[index] = zero + (scale * value)
-    return pixels
+      location = @totalRowsRead * @width + index
+      @data[location] = if value is blank then NaN else (zero + scale * value)
+    
+    @rowsRead += 1
+    @totalRowsRead += 1
   
   getRowNoBlanks: ->
     [data, blank, scale, zero] = @_getRow()
     
-    pixels = new Float32Array(data.length)
     for value, index in data
-      pixels[index] = zero + scale * value
-    return pixels
+      location = @totalRowsRead * @width + index
+      @data[location] = zero + scale * value
+    
+    @rowsRead += 1
+    @totalRowsRead += 1
   
   getFrame: ->
+    @initArray(Float32Array) unless @data?
+    
+    @totalRowsRead = 0  # Here for future use for compressed data cubes (mind blown!)
     @rowsRead = 0
-    @data = new Float32Array(@width * @height)
+    height = @height
+    while height--
+      @getRow()
     
-    loop
-      row = @getRow()
-      for value, index in row
-        location = @rowsRead * @width + index
-        @data[location] = value
-      break if @rowsRead is @rows
     return @data
-    
-  # # Read the entire frame of the image.  If the image is a data cube, it reads
-  # # a slice of the data.
-  # getFrame: (@frame = @frame) ->
-  #   @initArray() unless @data?
-  # 
-  #   @totalRowsRead = @width * @frame
-  #   @rowsRead = 0
-  # 
-  #   height = @height
-  #   while height--
-  #     @getRow()
-  # 
-  #   @frame += 1
-  # 
-  #   return @data
-
+  
   _accessor: (dataType) ->
     [length, offset]  = [@view.getInt32(), @view.getInt32()]
     return null if length is 0
@@ -176,11 +161,10 @@ class CompImage extends Tabular
     return data
 
   _getRow: ->
-    @current = @begin + @rowsRead * @rowByteSize
+    @current = @begin + @totalRowsRead * @rowByteSize
     @view.seek(@current)
     row = []
     row.push accessor() for accessor in @accessors
-    @rowsRead += 1
     
     data  = row[@columnNames["COMPRESSED_DATA"]] || row[@columnNames["UNCOMPRESSED_DATA"]] || row[@columnNames["GZIP_COMPRESSED_DATA"]]
     blank = row[@columnNames["ZBLANK"]] || @zblank
