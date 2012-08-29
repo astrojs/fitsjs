@@ -37,6 +37,7 @@ class CompImage extends Tabular
     @width  = header["ZNAXIS1"]
     @height = header["ZNAXIS2"]
     
+    # Grab any algorithm specific parameters from header
     @algorithmParameters = {}
     i = 1
     loop
@@ -46,6 +47,7 @@ class CompImage extends Tabular
       @algorithmParameters[header[key]] = header[value]
       i += 1
     
+    # Set default parameters if not set in the header
     @["setDefaultParameters_#{@zcmptype}"]()
     
     @zmaskcmp = CompImage.setValue(header, "ZMASKCMP", undefined)
@@ -65,6 +67,7 @@ class CompImage extends Tabular
       ttype = header["TTYPE#{i}"].toUpperCase()
       @columnNames[ttype] = i - 1
       accessor = null
+      
       if match?
         # Define array accessor methods
         dataType = match[1]
@@ -84,7 +87,7 @@ class CompImage extends Tabular
             # TODO: Decompress using Gzip
             do (dataType) => accessor = @_accessor(dataType)
           else
-            # Might not need this as default.  TODO: Check how NULL_PIXEL_MASK is stored
+            # TODO: Check how NULL_PIXEL_MASK is stored. Might not need this as default.
             do (dataType) => accessor = @_accessor(dataType)
       else
         match = value.match(CompImage.dataTypePattern)
@@ -112,18 +115,6 @@ class CompImage extends Tabular
   
   @setValue: (header, key, defaultValue) -> return if header.contains(key) then header[key] else defaultValue
   
-  getFrame: ->
-    @rowsRead = 0
-    @data = new Float32Array(@width * @height)
-    
-    loop
-      row = @getRow()
-      for value, index in row
-        location = @rowsRead * @width + index
-        @data[@rowsRead * @width + index] = value
-      break if @rowsRead is @rows
-    return @data
-      
   getRowHasBlanks: ->
     [data, blank, scale, zero] = @_getRow()
     
@@ -142,6 +133,34 @@ class CompImage extends Tabular
     for value, index in data
       pixels[index] = zero + scale * value
     return pixels
+  
+  getFrame: ->
+    @rowsRead = 0
+    @data = new Float32Array(@width * @height)
+    
+    loop
+      row = @getRow()
+      for value, index in row
+        location = @rowsRead * @width + index
+        @data[location] = value
+      break if @rowsRead is @rows
+    return @data
+    
+  # # Read the entire frame of the image.  If the image is a data cube, it reads
+  # # a slice of the data.
+  # getFrame: (@frame = @frame) ->
+  #   @initArray() unless @data?
+  # 
+  #   @totalRowsRead = @width * @frame
+  #   @rowsRead = 0
+  # 
+  #   height = @height
+  #   while height--
+  #     @getRow()
+  # 
+  #   @frame += 1
+  # 
+  #   return @data
 
   _accessor: (dataType) ->
     [length, offset]  = [@view.getInt32(), @view.getInt32()]

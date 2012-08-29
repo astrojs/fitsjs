@@ -55,9 +55,6 @@ class Image extends Data
       else
         throw "FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, 64, -32, -64]"
 
-  # Initializes a 1D array for storing image pixels for a single frame
-  initArray: -> @data = new @arrayType(@width * @height)
-
   # Read a row of pixels from the array buffer.  The method initArray
   # must be called before requesting any rows.
   getRow: ->
@@ -71,10 +68,9 @@ class Image extends Data
     @totalRowsRead += 1
   
   # Read the entire frame of the image.  If the image is a data cube, it reads
-  # a slice of the data.  It's not required to call initArray prior, though there
-  # is no harm in doing so.
+  # a slice of the data.
   getFrame: (@frame = @frame) ->
-    @initArray() unless @data?
+    @initArray(@arrayType) unless @data?
     
     @totalRowsRead = @width * @frame
     @rowsRead = 0

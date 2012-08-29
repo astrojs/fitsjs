@@ -25,7 +25,6 @@
         var image;
         image = fits.getDataUnit();
         image.getFrame();
-        console.log("getPixel", image.data);
         image.getExtremes();
         expect(image.min).toBeCloseTo(-2.981497, precision);
         return expect(image.max).toBeCloseTo(1273.853638, precision);

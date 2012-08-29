@@ -1,6 +1,9 @@
 
 ImageUtils =
   
+  # Initializes a 1D array for storing image pixels for a single frame
+  initArray: (arrayType) -> @data = new arrayType(@width * @height)
+  
   # Compute the minimum and maximum pixels
   getExtremes: ->
     return [@min, @max] if @min? and @max?
