@@ -166,10 +166,10 @@ class CompImage extends Tabular
     row = []
     row.push accessor() for accessor in @accessors
     
-    data  = row[@columnNames["COMPRESSED_DATA"]] || row[@columnNames["UNCOMPRESSED_DATA"]] || row[@columnNames["GZIP_COMPRESSED_DATA"]]
-    blank = row[@columnNames["ZBLANK"]] || @zblank
-    scale = row[@columnNames["ZSCALE"]] || @bscale
-    zero  = row[@columnNames["ZZERO"]] || @bzero
+    data  = row[@columnNames["COMPRESSED_DATA"]] or row[@columnNames["UNCOMPRESSED_DATA"]] or row[@columnNames["GZIP_COMPRESSED_DATA"]]
+    blank = row[@columnNames["ZBLANK"]] or @zblank
+    scale = row[@columnNames["ZSCALE"]] or @bscale
+    zero  = row[@columnNames["ZZERO"]] or @bzero
     return [data, blank, scale, zero]
 
   @subtractiveDither1: -> throw "Not yet implemented"
