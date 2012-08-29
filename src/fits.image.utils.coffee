@@ -22,5 +22,12 @@ ImageUtils =
     [@min, @max] = [min, max]
     return [@min, @max]
 
+  # Get the value of a pixel.
+  # Note: Indexing of pixels starts at 0.
+  getPixel: (x, y) ->
+    return @data[y * @width + x]
+    # byteSize = @rowByteSize / @width
+    # @view.offset = @begin + (@frame - 1) * @height * @rowByteSize + y * @rowByteSize + x * byteSize
+    # return @accessor()
 
 module?.exports = ImageUtils

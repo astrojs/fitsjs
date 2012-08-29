@@ -86,14 +86,6 @@ class Image extends Data
     @frame += 1
     
     return @data
-  
-  # Get the value of a pixel.
-  # Note: Indexing of pixels starts at 0.
-  getPixel: (x, y) ->
-    return @data[y * @width + x]
-    # byteSize = @rowByteSize / @width
-    # @view.offset = @begin + (@frame - 1) * @height * @rowByteSize + y * @rowByteSize + x * byteSize
-    # return @accessor()
 
   # Moves the pointer that is used to read the array buffer to a specified frame.  For 2D images
   # this defaults to the first and only frame.  Indexing of the frame argument begins at 0.

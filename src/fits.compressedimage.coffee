@@ -34,6 +34,9 @@ class CompImage extends Tabular
       ztile = if header.contains("ZTILE#{i}") then header["ZTILE#{i}"] else if i is 1 then header["ZNAXIS1"] else 1
       @ztile.push ztile
     
+    @width  = header["ZNAXIS1"]
+    @height = header["ZNAXIS2"]
+    
     @algorithmParameters = {}
     i = 1
     loop
@@ -111,13 +114,13 @@ class CompImage extends Tabular
   
   getFrame: ->
     @rowsRead = 0
-    @data = new Float32Array(@ztile[0] * @rows)
+    @data = new Float32Array(@width * @height)
     
     loop
       row = @getRow()
       for value, index in row
-        location = @rowsRead * @ztile[0] + index
-        @data[@rowsRead * @ztile[0] + index] = value
+        location = @rowsRead * @width + index
+        @data[@rowsRead * @width + index] = value
       break if @rowsRead is @rows
     return @data
       
