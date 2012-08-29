@@ -1,8 +1,10 @@
-Data  = require('./fits.data')
+Data        = require('./fits.data')
+ImageUtils  = require('./fits.image.utils')
 
 # Image represents a standard image stored in the data unit of a FITS file
 class Image extends Data
-
+  @include ImageUtils
+  
   constructor: (view, header) ->
     super
 
@@ -84,24 +86,6 @@ class Image extends Data
     @frame += 1
     
     return @data
-  
-  # Compute the minimum and maximum pixels
-  getExtremes: ->
-    return [@min, @max] if @min? and @max?
-    
-    for value, index in @data
-      continue if isNaN(value)
-      [min, max] = [value, value]
-      break
-    
-    for i in [index..@data.length - 1]
-      value = @data[i]
-      continue if isNaN(value)
-      min = value if value < min
-      max = value if value > max
-    
-    [@min, @max] = [min, max]
-    return [@min, @max]
   
   # Get the value of a pixel.
   # Note: Indexing of pixels starts at 0.

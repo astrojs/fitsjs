@@ -108,6 +108,9 @@
         image.seek();
         expect(image.frame).toEqual(0);
         image.getFrame();
+        image.getExtremes();
+        expect(image.min).toEqual(2396);
+        expect(image.max).toEqual(26203);
         expect(image.getPixel(0, 0)).toEqual(3852);
         expect(image.getPixel(890, 0)).toEqual(4223);
         expect(image.getPixel(890, 892)).toEqual(4015);

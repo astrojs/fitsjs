@@ -138,7 +138,13 @@ describe "FITS Image", ->
       image.seek()
       expect(image.frame).toEqual(0)
     
+      # Grab the data
       image.getFrame()
+      
+      # Get and check the extremes
+      image.getExtremes()
+      expect(image.min).toEqual(2396)
+      expect(image.max).toEqual(26203)
     
       # Check the values of the corner pixels ...
       expect(image.getPixel(0, 0)).toEqual(3852)

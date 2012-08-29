@@ -1,9 +1,11 @@
 Tabular     = require('./fits.tabular')
 Decompress  = require('./fits.decompress')
+ImageUtils  = require('./fits.image.utils')
 
 class CompImage extends Tabular
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
   @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
+  @include ImageUtils
   @extend Decompress
   
   @typedArray =
@@ -163,24 +165,6 @@ class CompImage extends Tabular
     scale = row[@columnNames["ZSCALE"]] || @bscale
     zero  = row[@columnNames["ZZERO"]] || @bzero
     return [data, blank, scale, zero]
-  
-  # Compute the minimum and maximum pixels
-  getExtremes: ->
-    return [@min, @max] if @min? and @max?
-
-    for value, index in @data
-      continue if isNaN(value)
-      [min, max] = [value, value]
-      break
-
-    for i in [index..@data.length - 1]
-      value = @data[i]
-      continue if isNaN(value)
-      min = value if value < min
-      max = value if value > max
-
-    [@min, @max] = [min, max]
-    return [@min, @max]
 
   @subtractiveDither1: -> throw "Not yet implemented"
   @linearScaling: -> throw "Not yet implemented"
