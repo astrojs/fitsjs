@@ -16,7 +16,7 @@ describe "FITS Header", ->
     waitsFor -> return fits?
     
     runs ->
-      console.log 'we did good if we made it here', fits
+      console.log 'we did well if we made it here', fits
       dataunit = fits.getDataUnit(1)
       dataunit.getFrame()
       console.log dataunit.data

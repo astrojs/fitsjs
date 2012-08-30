@@ -22,7 +22,7 @@
       });
       return runs(function() {
         var dataunit;
-        console.log('we did good if we made it here', fits);
+        console.log('we did well if we made it here', fits);
         dataunit = fits.getDataUnit(1);
         dataunit.getFrame();
         return console.log(dataunit.data);
