@@ -4,6 +4,20 @@ FITS = require("fits")
 
 describe "FITS Header", ->
 
+  # http://0.0.0.0:8000/?spec=FITS%20Header%20can%20parse%20a%20huge%20header%20(~10000%20lines).
+  it 'can parse a huge header (~10000 lines)', ->
+    fits = null
+    xhr = new XMLHttpRequest()
+    xhr.open('GET', 'data/COS_21246_i.fits.fz')
+    xhr.responseType = 'arraybuffer'
+    xhr.onload = -> fits = new FITS.File(xhr.response)
+    xhr.send()
+    
+    # waitsFor -> return fits?
+    # 
+    # runs ->
+    #   console.log 'we did good if we made it here'
+
   it 'can parse a FITS header describing an image and ASCII table', ->
     fits = null
     

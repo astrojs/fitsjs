@@ -7,6 +7,17 @@
   FITS = require("fits");
 
   describe("FITS Header", function() {
+    it('can parse a huge header (~10000 lines)', function() {
+      var fits, xhr;
+      fits = null;
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', 'data/COS_21246_i.fits.fz');
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function() {
+        return fits = new FITS.File(xhr.response);
+      };
+      return xhr.send();
+    });
     it('can parse a FITS header describing an image and ASCII table', function() {
       var fits, xhr;
       fits = null;

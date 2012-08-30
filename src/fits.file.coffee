@@ -120,22 +120,46 @@ class File
     @hdus   = buffer.hdus
     @eof    = true
   
-  # Read a header unit and initialize a Header object
+  # # Read a header unit and initialize a Header object
+  # readHeader: ->
+  #   linesRead = 0
+  #   header = new Header()
+  #   loop
+  #     line = @view.getString(File.LINEWIDTH)
+  #     linesRead += 1
+  #     header.readCard(line)
+  #     break if line[0..3] is "END "
+  # 
+  #   # Seek to the next relavant block in file
+  #   excess = File.excessBytes(linesRead * File.LINEWIDTH)
+  #   @view.seek(@view.offset + excess)
+  #   @checkEOF()
+  # 
+  #   return header
+
   readHeader: ->
-    linesRead = 0
-    header = new Header()
+    whitespacePattern = /\s{80}/
+    endPattern = /END\s{77}/
+    number = 296
+    
     loop
-      line = @view.getString(File.LINEWIDTH)
-      linesRead += 1
-      header.readCard(line)
-      break if line[0..3] is "END "
-
-    # Seek to the next relavant block in file
-    excess = File.excessBytes(linesRead * File.LINEWIDTH)
-    @view.seek(@view.offset + excess)
-    @checkEOF()
-
-    return header
+      # Grab a 2880 block
+      block = @view.getString(File.BLOCKLENGTH)
+      
+      i = 0
+      loop
+        start = File.BLOCKLENGTH - File.LINEWIDTH * (i + 1)
+        end   = File.BLOCKLENGTH - File.LINEWIDTH * i
+        line  = block.slice(start, end)
+        
+        match = line.match(whitespacePattern)
+        i += 1
+        
+        unless match
+          match = line.match(endPattern)
+          excess = File.excessBytes(end)
+          @view.seek(@view.offset + excess)
+          break
 
   # Read a data unit and initialize an appropriate instance depending
   # on the type of data unit (e.g. image, binary table, ascii table).
