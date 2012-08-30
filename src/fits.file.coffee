@@ -148,18 +148,27 @@ class File
       
       i = 0
       loop
+        # Search from the last line of the block for the END keyword
         start = File.BLOCKLENGTH - File.LINEWIDTH * (i + 1)
         end   = File.BLOCKLENGTH - File.LINEWIDTH * i
         line  = block.slice(start, end)
         
+        # If white space is matched, search one line up
         match = line.match(whitespacePattern)
-        i += 1
+        if match
+          i += 1
+          continue
         
-        unless match
-          match = line.match(endPattern)
+        # Otherwise attempt to match END
+        match = line.match(endPattern)
+        if match
           excess = File.excessBytes(end)
           @view.seek(@view.offset + excess)
+          console.log @view.tell()
           break
+        
+        # Otherwise grab next block
+        break
 
   # Read a data unit and initialize an appropriate instance depending
   # on the type of data unit (e.g. image, binary table, ascii table).
