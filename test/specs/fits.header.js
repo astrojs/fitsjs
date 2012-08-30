@@ -16,7 +16,17 @@
       xhr.onload = function() {
         return fits = new FITS.File(xhr.response);
       };
-      return xhr.send();
+      xhr.send();
+      waitsFor(function() {
+        return fits != null;
+      });
+      return runs(function() {
+        var dataunit;
+        console.log('we did good if we made it here', fits);
+        dataunit = fits.getDataUnit(1);
+        dataunit.getFrame();
+        return console.log(dataunit.data);
+      });
     });
     it('can parse a FITS header describing an image and ASCII table', function() {
       var fits, xhr;

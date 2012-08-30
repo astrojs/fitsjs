@@ -13,10 +13,13 @@ describe "FITS Header", ->
     xhr.onload = -> fits = new FITS.File(xhr.response)
     xhr.send()
     
-    # waitsFor -> return fits?
-    # 
-    # runs ->
-    #   console.log 'we did good if we made it here'
+    waitsFor -> return fits?
+    
+    runs ->
+      console.log 'we did good if we made it here', fits
+      dataunit = fits.getDataUnit(1)
+      dataunit.getFrame()
+      console.log dataunit.data
 
   it 'can parse a FITS header describing an image and ASCII table', ->
     fits = null

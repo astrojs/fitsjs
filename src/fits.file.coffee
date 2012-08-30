@@ -105,18 +105,13 @@ class File
     @eof        = false
 
     File.extendDataView(@view)
-
-    header  = @readHeader()
-    # data    = @readData(header)
-    # hdu = new HDU(header, data)
-    # @hdus.push hdu
     
-    # loop
-    #   header  = @readHeader()
-    #   data    = @readData(header)
-    #   hdu = new HDU(header, data)
-    #   @hdus.push hdu
-    #   break if @eof
+    loop
+      header  = @readHeader()
+      data    = @readData(header)
+      hdu = new HDU(header, data)
+      @hdus.push hdu
+      break if @eof
   
   # Initialize the object from a serialized instance
   initFromObject: (buffer) ->
@@ -124,30 +119,11 @@ class File
     @view   = null
     @hdus   = buffer.hdus
     @eof    = true
-  
-  # # Read a header unit and initialize a Header object
-  # readHeader: ->
-  #   linesRead = 0
-  #   header = new Header()
-  #   loop
-  #     line = @view.getString(File.LINEWIDTH)
-  #     linesRead += 1
-  #     header.readCard(line)
-  #     break if line[0..3] is "END "
-  # 
-  #   # Seek to the next relavant block in file
-  #   excess = File.excessBytes(linesRead * File.LINEWIDTH)
-  #   @view.seek(@view.offset + excess)
-  #   @checkEOF()
-  # 
-  #   return header
 
   # Extracts a single header without interpreting each line (interpretation is slow for large headers)
   readHeader: ->
     whitespacePattern = /\s{80}/
     endPattern = /END\s{77}/
-    
-    # Need a way to capture the entire block representing the header
     
     # Store the current byte offset and mark when the header END has been reached
     beginOffset = @view.tell()
@@ -185,12 +161,11 @@ class File
           block = @view.getString(endOffset - beginOffset)
           
           # TODO: Send to Header object for interpretion of mandatory and reserved keywords
-          console.log block
-          console.log "============================\n\n"
-          
+          header = new Header()
+          header.init(block)
           done = true
           @checkEOF()
-          break
+          return header
         
         # Otherwise grab next block
         break

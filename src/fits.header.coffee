@@ -102,6 +102,19 @@ class Header extends Module
         @set(key, value, comment)
         @.__defineGetter__(key, -> return @cards[key][1])
   
+  # Initialize a header, interpretting only mandatory and reserved keywords
+  # HACK: For now interpretting only the first 100 lines ...
+  init: (block) =>
+    lineWidth = 80
+    
+    numLines = block.length / lineWidth
+    maxNumLines = 100
+    numLines = if numLines < maxNumLines then numLines else maxNumLines
+    
+    for i in [0..numLines - 1]
+      line = block.slice(i * lineWidth, (i + 1) * lineWidth)
+      @readCard(line)
+  
   # Tells if a data unit follows based on NAXIS
   hasDataUnit: -> return if @["NAXIS"] is 0 then false else true
 
