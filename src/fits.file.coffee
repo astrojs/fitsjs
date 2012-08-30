@@ -106,12 +106,17 @@ class File
 
     File.extendDataView(@view)
 
-    loop
-      header  = @readHeader()
-      data    = @readData(header)
-      hdu = new HDU(header, data)
-      @hdus.push hdu
-      break if @eof
+    header  = @readHeader()
+    # data    = @readData(header)
+    # hdu = new HDU(header, data)
+    # @hdus.push hdu
+    
+    # loop
+    #   header  = @readHeader()
+    #   data    = @readData(header)
+    #   hdu = new HDU(header, data)
+    #   @hdus.push hdu
+    #   break if @eof
   
   # Initialize the object from a serialized instance
   initFromObject: (buffer) ->
@@ -137,23 +142,31 @@ class File
   # 
   #   return header
 
+  # Extracts a single header without interpreting each line (interpretation is slow for large headers)
   readHeader: ->
     whitespacePattern = /\s{80}/
     endPattern = /END\s{77}/
-    number = 296
     
+    # Need a way to capture the entire block representing the header
+    
+    # Store the current byte offset and mark when the header END has been reached
+    beginOffset = @view.tell()
+    done = false
     loop
+      break if done
+      
       # Grab a 2880 block
       block = @view.getString(File.BLOCKLENGTH)
       
+      # Set a line counter
       i = 0
       loop
-        # Search from the last line of the block for the END keyword
+        # Search for the END keyword starting at the last line of the block
         start = File.BLOCKLENGTH - File.LINEWIDTH * (i + 1)
         end   = File.BLOCKLENGTH - File.LINEWIDTH * i
-        line  = block.slice(start, end)
+        line  = block.slice(start, end) # Is this expensive?
         
-        # If white space is matched, search one line up
+        # Search one line up if white space is matched
         match = line.match(whitespacePattern)
         if match
           i += 1
@@ -162,9 +175,21 @@ class File
         # Otherwise attempt to match END
         match = line.match(endPattern)
         if match
-          excess = File.excessBytes(end)
-          @view.seek(@view.offset + excess)
-          console.log @view.tell()
+          endOffset = @view.tell()
+          @view.seek(beginOffset)
+          
+          # Grab the entire chunk representing the header
+          # TODO: Another option would be to concatentate the header as we go.
+          #       Not sure if this is memory efficient when dealing with ~10000
+          #       line headers.
+          block = @view.getString(endOffset - beginOffset)
+          
+          # TODO: Send to Header object for interpretion of mandatory and reserved keywords
+          console.log block
+          console.log "============================\n\n"
+          
+          done = true
+          @checkEOF()
           break
         
         # Otherwise grab next block
