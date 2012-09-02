@@ -36,6 +36,9 @@ describe "FITS Header", ->
       hdr1 = fits.getHeader(0)
       hdr2 = fits.getHeader(1)
     
+      expect(hdr1.isPrimary()).toBeTruthy()
+      expect(hdr1.isExtension()).toBeFalsy()
+      
       expect(hdr1['SIMPLE']).toBeTruthy()
       expect(hdr1['BITPIX']).toEqual(16)
       expect(hdr1['NAXIS']).toEqual(2)
@@ -239,7 +242,10 @@ describe "FITS Header", ->
     runs ->
       hdr1 = fits.getHeader(0)
       hdr2 = fits.getHeader(1)
-    
+      
+      expect(hdr2.isPrimary()).toBeFalsy()
+      expect(hdr2.isExtension()).toBeTruthy()
+      
       expect(hdr1['SIMPLE']).toBeTruthy()
       expect(hdr1['BITPIX']).toEqual(16)
       expect(hdr1['NAXIS']).toEqual(0)

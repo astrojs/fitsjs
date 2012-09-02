@@ -13,6 +13,8 @@ class Header extends Module
   @include VerifyCards
   
   constructor: ->
+    @primary    = false
+    @extension  = false
     
     # Add verification methods to instance
     @verifyCard = {}
@@ -103,7 +105,7 @@ class Header extends Module
         @.__defineGetter__(key, -> return @cards[key][1])
   
   # Initialize a header, interpretting only mandatory and reserved keywords
-  # HACK: For now interpretting only the first 100 lines ...
+  # HACK: For now interpretting only the first 180 lines ...
   init: (block) =>
     lineWidth = 80
     
@@ -117,5 +119,9 @@ class Header extends Module
   
   # Tells if a data unit follows based on NAXIS
   hasDataUnit: -> return if @["NAXIS"] is 0 then false else true
+
+  # Check type of header
+  isPrimary: -> return @primary
+  isExtension: -> return @extension
 
 module?.exports = Header

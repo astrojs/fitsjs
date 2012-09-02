@@ -2,12 +2,7 @@
 # When new keywords and extensions are defined, this module may be extended.
 
 VerifyCards =
-  primary:    false
-  extension:  false
   
-  isPrimary: -> return @primary
-  isExtension: -> return @extension
-
   verifyOrder: (keyword, order) ->
     console.warn("#{keyword} should appear at index #{order} in the FITS header") unless order is @cardIndex
 
