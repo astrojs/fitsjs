@@ -123,7 +123,7 @@ class File
   # Extracts a single header without interpreting each line (interpretation is slow for large headers)
   readHeader: ->
     whitespacePattern = /\s{80}/
-    endPattern = /END\s{77}/
+    endPattern = /END\s{1}/
     
     # Store the current byte offset and mark when the header END has been reached
     beginOffset = @view.tell()
