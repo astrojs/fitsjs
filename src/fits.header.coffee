@@ -6,7 +6,7 @@ VerifyCards = require('./fits.header.verify')
 
 # TODO: Storage of COMMENT and HISTORY fields needs improvement
 class Header extends Module
-  @keywordPattern   = /([\w_-]+)\s*=?\s*(.*)/
+  @keywordPattern   = /([A-Z0-9_-]+)\s*=\s*(.*)/
   @nonStringPattern = /([^\/]*)\s*\/*(.*)/
   @stringPattern    = /'(.*)'\s*\/*(.*)/
   @arrayPattern     = /([A-Za-z]+)(\d+)/
@@ -96,7 +96,7 @@ class Header extends Module
     
     if @verifyCard.hasOwnProperty(keyToVerify)
       value = @verifyCard[keyToVerify](value, array, index)
-
+  
     switch key
       when "COMMENT" then @setComment(value)
       when "HISTORY" then @setHistory(value)

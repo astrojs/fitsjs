@@ -4,22 +4,20 @@
 VerifyCards =
   
   verifyOrder: (keyword, order) ->
-    console.warn("#{keyword} should appear at index #{order} in the FITS header") unless order is @cardIndex
+    console.warn("#{keyword} should appear at index #{@cardIndex} in the FITS header") unless order is @cardIndex
 
   verifyBetween: (keyword, value, lower, upper) ->
     throw "The #{keyword} value of #{value} is not between #{lower} and #{upper}" unless value >= lower and value <= upper
 
-  verifyInteger: (keyword, value) ->
-    val = parseInt(value)
-    throw "The #{keyword} value of #{value} is not an integer" unless val is value
-    return val
+  verifyBoolean: (value) ->
+    return if value is "T" then true else false
 
   Functions:
     SIMPLE: (args...) ->
       value = arguments[0]
       @primary = true
       @verifyOrder("SIMPLE", 0)
-      return if value is "T" then true else false
+      return @verifyBoolean(value)
       
     XTENSION: (args...) ->
       value = arguments[0]
@@ -30,16 +28,15 @@ VerifyCards =
       
     BITPIX: (args...) ->
       key = "BITPIX"
-      value = @verifyInteger(key, arguments[0])
+      value = parseInt(arguments[0])
       @verifyOrder(key, 1)
       throw "#{key} value #{value} is not permitted" unless value in [8, 16, 32, 64, -32, -64]
-      return parseInt(value)
+      return value
       
     NAXIS: (args...) ->
       key = "NAXIS"
-      value = arguments[0]
+      value = parseInt(arguments[0])
       array = arguments[1]
-      value = @verifyInteger(key, value)
       
       unless array
         @verifyOrder(key, 2)
@@ -53,7 +50,7 @@ VerifyCards =
     
     PCOUNT: (args...) ->
       key = "PCOUNT"
-      value = @verifyInteger(key, arguments[0])
+      value = parseInt(arguments[0])
       order = 1 + 1 + 1 + @["NAXIS"]
       @verifyOrder(key, order)
       
@@ -66,7 +63,7 @@ VerifyCards =
     
     GCOUNT: (args...) ->
       key = "GCOUNT"
-      value = @verifyInteger(key, arguments[0])
+      value = parseInt(arguments[0])
       order = 1 + 1 + 1 + @["NAXIS"] + 1
       @verifyOrder(key, order)
       
@@ -86,7 +83,7 @@ VerifyCards =
       key = "EXTEND"
       value = arguments[0]
       throw "#{key} must only appear in the primary header" unless @isPrimary()
-      return if value is "T" then true else false
+      return @verifyBoolean(value)
     
     BSCALE: (args...) ->
       return parseFloat(arguments[0])
@@ -98,7 +95,7 @@ VerifyCards =
       key = "BLANK"
       value = arguments[0]
       throw "#{key} is not to be used for BITPIX = #{@['BITPIX']}" unless @["BIXPIX"] > 0
-      return @verifyInteger(value)
+      return parseInt(value)
     
     DATAMIN: (args...) ->
       return parseFloat(arguments[0])
@@ -109,19 +106,19 @@ VerifyCards =
     EXTVER: (args...) ->
       key "EXTVER"
       value = arguments[0]
-      value = @verifyInteger(key, value)
+      value = parseInt(value)
       return value
       
     EXTLEVEL: (args...) ->
       key = "EXTLEVEL"
       value = arguments[0]
-      value = @verifyInteger(key, value)
+      value = parseInt(value)
       return value
     
     TFIELDS: (args...) ->
       key = "TFIELDS"
       value = arguments[0]
-      value = @verifyInteger(key, value)
+      value = parseInt(value)
       @verifyBetween(key, value, 0, 999)
       return value
     
@@ -135,26 +132,26 @@ VerifyCards =
     ZIMAGE: (args...) ->
       key = "ZIMAGE"
       value = arguments[0]
-      return if value is "T" then true else false
+      return @verifyBoolean(value)
     
     ZCMPTYPE: (args...) ->
       key = "ZCMPTYPE"
       value = arguments[0]
       throw "#{key} value #{value} is not permitted" unless value in ["GZIP_1", "RICE_1", "PLIO_1", "HCOMPRESS_1"]
-      throw "Compress type #{value} is not yet implement" unless value in ["RICE_1"]
+      throw "Compress type #{value} is not yet implement" unless value is "RICE_1"
       return value
     
     ZBITPIX: (args...) ->
       key = "ZBITPIX"
-      value = @verifyInteger(key, arguments[0])
+      value = parseInt(arguments[0])
       throw "#{key} value #{value} is not permitted" unless value in [8, 16, 32, 64, -32, -64]
-      return parseInt(value)
+      return value
       
     ZNAXIS: (args...) ->
       key = "ZNAXIS"
-      value = arguments[0]
+      value = parseInt(arguments[0])
       array = arguments[1]
-      value = @verifyInteger(key, value)
+      value = value
       
       @verifyBetween(key, value, 0, 999) unless array
       
@@ -162,20 +159,17 @@ VerifyCards =
     
     ZTILE: (args...) ->
       key = "ZTILE"
-      value = @verifyInteger(key, arguments[0])
-      return value
+      return parseInt(arguments[0])
     
     ZSIMPLE: (args...) ->
       return if arguments[0] is "T" then true else false
     
     ZPCOUNT: (args...) ->
       key = "ZPCOUNT"
-      value = arguments[0]
-      return @verifyInteger(key, value)
+      return parseInt(arguments[0])
     
     ZGCOUNT: (args...) ->
       key = "ZGCOUNT"
-      value = arguments[0]
-      return @verifyInteger(key, value)
+      return parseInt(arguments[0])
 
 module?.exports = VerifyCards

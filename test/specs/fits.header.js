@@ -7,27 +7,6 @@
   FITS = require("fits");
 
   describe("FITS Header", function() {
-    it('can parse a huge header (~10000 lines)', function() {
-      var fits, xhr;
-      fits = null;
-      xhr = new XMLHttpRequest();
-      xhr.open('GET', 'data/COS_21246_i.fits.fz');
-      xhr.responseType = 'arraybuffer';
-      xhr.onload = function() {
-        return fits = new FITS.File(xhr.response);
-      };
-      xhr.send();
-      waitsFor(function() {
-        return fits != null;
-      });
-      return runs(function() {
-        var dataunit;
-        console.log('we did well if we made it here', fits);
-        dataunit = fits.getDataUnit(1);
-        dataunit.getFrame();
-        return console.log(dataunit.data);
-      });
-    });
     it('can parse a FITS header describing an image and ASCII table', function() {
       var fits, xhr;
       fits = null;
