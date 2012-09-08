@@ -6,6 +6,7 @@ VerifyCards = require('./fits.header.verify')
 
 # TODO: Storage of COMMENT and HISTORY fields needs improvement
 class Header extends Module
+
   @keywordPattern   = /([A-Z0-9_-]+)\s*=\s*(.*)/
   @nonStringPattern = /([^\/]*)\s*\/*(.*)/
   @stringPattern    = /'(.*)'\s*\/*(.*)/

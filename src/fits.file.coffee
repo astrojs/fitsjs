@@ -22,7 +22,7 @@ class File
       when 'object'
         @initFromObject(buffer)
       else
-        throw 'fitsjs does not recognize the argument passed to the constructor'
+        throw 'fitsjs cannot initialize object'
 
   # ##Class Methods
 
@@ -123,7 +123,7 @@ class File
   # Extracts a single header without interpreting each line (interpretation is slow for large headers)
   readHeader: ->
     whitespacePattern = /\s{80}/
-    endPattern = /END\s{1}/
+    endPattern = /END\s/
     
     # Store the current byte offset and mark when the header END has been reached
     beginOffset = @view.tell()
@@ -187,6 +187,9 @@ class File
           data = new BinaryTable(@view, header)
       else if header.extensionType is "TABLE"
         data = new Table(@view, header)
+      else if header.extensionType is "IMAGE"
+        data = new Image(@view, header)
+      
     excess = File.excessBytes(data.length)
     
     # Forward to the next HDU

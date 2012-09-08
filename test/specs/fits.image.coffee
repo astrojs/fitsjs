@@ -158,4 +158,23 @@ describe "FITS Image", ->
       expect(image.getPixel(350, 782)).toEqual(4351)
       expect(image.getPixel(108, 345)).toEqual(4380)
       expect(image.getPixel(720, 500)).toEqual(5527)
-    
+
+  it 'can read a file with an IMAGE extension', ->
+    fits = null
+
+    xhr = new XMLHttpRequest()
+    xhr.open('GET', 'data/HST_10098_09_ACS_WFC_F555W_drz.fits')
+    xhr.responseType = 'arraybuffer'
+    xhr.onload = -> fits = new FITS.File(xhr.response)
+    xhr.send()
+
+    waitsFor -> return fits?
+
+    runs ->
+      image = fits.getDataUnit()
+      image.getFrame()
+      image.getExtremes()
+      
+      expect(image.min).toBeCloseTo(-60.139053, 6)
+      expect(image.max).toBeCloseTo(1660.3833, 4)
+      

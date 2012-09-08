@@ -104,7 +104,7 @@ VerifyCards =
       return parseFloat(arguments[0])
     
     EXTVER: (args...) ->
-      key "EXTVER"
+      key = "EXTVER"
       value = arguments[0]
       value = parseInt(value)
       return value
