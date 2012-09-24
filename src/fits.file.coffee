@@ -197,7 +197,7 @@ class File
     @checkEOF()
     return data
 
-  checkEOF: -> @eof = true if @view.offset is @length
+  checkEOF: -> @eof = true if @view.offset >= @length
 
   # Count the number of HDUs
   count: -> return @hdus.length
