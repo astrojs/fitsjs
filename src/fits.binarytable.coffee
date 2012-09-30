@@ -37,11 +37,28 @@ class BinaryTable extends Tabular
             @accessors.push(accessor)
         else
           do (dataType) =>
-            accessor = =>
-              data = []
-              for i in [1..length]
-                data.push BinaryTable.dataAccessors[dataType](@view)
-              return data
+            # Not interpretting data yet.  Just updating the offset appropriately.
+            if dataType is 'X'
+              length = Math.log(length) / Math.log(2)
+              accessor = =>
+                byte2bits = (byte) ->
+                  bitarray = []
+                  i = 128
+                  while i >= 1
+                    bitarray.push (if byte & i then 1 else 0)
+                    i /= 2
+                  return bitarray
+                
+                data = []
+                for i in [0..length]
+                  data.push @view.getUint8()
+                return data
+            else
+              accessor = =>
+                data = []
+                for i in [1..length]
+                  data.push BinaryTable.dataAccessors[dataType](@view)
+                return data
             @accessors.push(accessor)
 
 module?.exports = BinaryTable
