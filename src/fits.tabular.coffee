@@ -4,8 +4,7 @@ Data  = require('./fits.data')
 class Tabular extends Data
   @dataAccessors =
     L: (view) ->
-      value = if view.getInt8() is 84 then true else false
-      return value
+      return if view.getInt8() is 84 then true else false
     X: (view) ->
       throw "Data type not yet implemented"
     B: (view) ->

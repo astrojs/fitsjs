@@ -41,7 +41,7 @@ describe "FITS", ->
     fits = null
     
     xhr = new XMLHttpRequest()
-    xhr.open('GET', 'data/spec-0406-51869-0012.fits')
+    xhr.open('GET', 'data/bit.fits')
     xhr.responseType = 'arraybuffer'
     xhr.onload = -> fits = new FITS.File(xhr.response)
     xhr.send()
@@ -53,3 +53,17 @@ describe "FITS", ->
       expect(fits.eof).toBeTruthy()
       expect(fits.hdus[0].data).toBeUndefined()
       expect(fits.hdus[1].data.constructor.name).toBe("BinaryTable")
+  
+  it 'can read a bit array', ->
+    fits = null
+    
+    xhr = new XMLHttpRequest()
+    xhr.open('GET', 'data/spec-0406-51869-0012.fits')
+    xhr.responseType = 'arraybuffer'
+    xhr.onload = -> fits = new FITS.File(xhr.response)
+    xhr.send()
+    
+    waitsFor -> return fits?
+    
+    runs ->
+      console.log fits

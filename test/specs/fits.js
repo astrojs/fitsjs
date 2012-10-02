@@ -47,11 +47,11 @@
         return expect(fits.hdus[1].data.constructor.name).toBe("CompImage");
       });
     });
-    return it('can open a FITS file storing a binary table', function() {
+    it('can open a FITS file storing a binary table', function() {
       var fits, xhr;
       fits = null;
       xhr = new XMLHttpRequest();
-      xhr.open('GET', 'data/spec-0406-51869-0012.fits');
+      xhr.open('GET', 'data/bit.fits');
       xhr.responseType = 'arraybuffer';
       xhr.onload = function() {
         return fits = new FITS.File(xhr.response);
@@ -65,6 +65,23 @@
         expect(fits.eof).toBeTruthy();
         expect(fits.hdus[0].data).toBeUndefined();
         return expect(fits.hdus[1].data.constructor.name).toBe("BinaryTable");
+      });
+    });
+    return it('can read a bit array', function() {
+      var fits, xhr;
+      fits = null;
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', 'data/spec-0406-51869-0012.fits');
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function() {
+        return fits = new FITS.File(xhr.response);
+      };
+      xhr.send();
+      waitsFor(function() {
+        return fits != null;
+      });
+      return runs(function() {
+        return console.log(fits);
       });
     });
   });

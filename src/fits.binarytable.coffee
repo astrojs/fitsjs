@@ -37,9 +37,9 @@ class BinaryTable extends Tabular
             @accessors.push(accessor)
         else
           do (dataType) =>
-            # Not interpretting data yet.  Just updating the offset appropriately.
+            # Handling bit arrays
             if dataType is 'X'
-              length = Math.log(length) / Math.log(2)
+              numBytes = Math.log(length) / Math.log(2)
               accessor = =>
                 byte2bits = (byte) ->
                   bitarray = []
@@ -50,9 +50,12 @@ class BinaryTable extends Tabular
                   return bitarray
                 
                 data = []
-                for i in [0..length]
-                  data.push @view.getUint8()
-                return data
+                for i in [1..numBytes]
+                  byte = @view.getUint8()
+                  bitarray = byte2bits(byte)
+                  for bit in bitarray
+                    data.push bit
+                return data[0..length - 1]
             else
               accessor = =>
                 data = []
