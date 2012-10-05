@@ -111,7 +111,7 @@ class Header extends Module
     lineWidth = 80
     
     numLines = block.length / lineWidth
-    maxNumLines = 180 # Arbitrary number
+    maxNumLines = 600 # Arbitrary number
     numLines = if numLines < maxNumLines then numLines else maxNumLines
     
     for i in [0..numLines - 1]

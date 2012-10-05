@@ -48,7 +48,7 @@ class CompImage extends Tabular
       i += 1
     
     # Set default parameters if not set in the header
-    @["setDefaultParameters_#{@zcmptype}"]()
+    @setRiceDefaults() if @zcmptype is 'RICE_1'
     
     @zmaskcmp = CompImage.setValue(header, "ZMASKCMP", undefined)
     @zquantiz = CompImage.setValue(header, "ZQUANTIZ", "LINEAR_SCALING")
@@ -76,8 +76,12 @@ class CompImage extends Tabular
             do (dataType) =>
               accessor = =>
                 data = @_accessor(dataType)
+                
+                # Take these 2 lines out ...
+                return data
                 return null unless data?
-
+                
+                # TODO: Assuming Rice compression
                 pixels = new CompImage.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
                 CompImage.Rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
                 return pixels
@@ -112,10 +116,12 @@ class CompImage extends Tabular
       @accessors.push(accessor)
   
   defineGetRow: ->
+    @totalRowsRead = 0
+    
     hasBlanks = @zblank? or @blank? or @columnNames.hasOwnProperty("ZBLANK")
     @getRow = if hasBlanks then @getRowHasBlanks else @getRowNoBlanks
   
-  setDefaultParameters_RICE_1: ->
+  setRiceDefaults: ->
     @algorithmParameters["BLOCKSIZE"] = 32 unless @algorithmParameters.hasOwnProperty("BLOCKSIZE")
     @algorithmParameters["BYTEPIX"] = 4 unless @algorithmParameters.hasOwnProperty("BYTEPIX")
   
@@ -134,7 +140,12 @@ class CompImage extends Tabular
   
   getRowNoBlanks: ->
     [data, blank, scale, zero] = @_getRow()
-    
+    console.log [data, blank, scale, zero]
+    blah = "["
+    for datum in data
+      blah += "#{datum}, "
+    blah = blah[..-3] + "]"
+    console.log blah
     for value, index in data
       location = @totalRowsRead * @width + index
       @data[location] = zero + scale * value
@@ -170,7 +181,8 @@ class CompImage extends Tabular
     @current = @begin + @totalRowsRead * @rowByteSize
     @view.seek(@current)
     row = []
-    row.push accessor() for accessor in @accessors
+    for accessor in @accessors
+      row.push accessor()
     
     data  = row[@columnNames["COMPRESSED_DATA"]] or row[@columnNames["UNCOMPRESSED_DATA"]] or row[@columnNames["GZIP_COMPRESSED_DATA"]]
     blank = row[@columnNames["ZBLANK"]] or @zblank

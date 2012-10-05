@@ -2,7 +2,7 @@ Tabular = require('./fits.tabular')
 
 # Class to read ASCII tables from FITS files.
 class Table extends Tabular
-  @formPattern = /([AIFED])(\d+)\.(\d+)/
+  @formPattern = /([AIFED])(\d+)\.*(\d+)*/
   
   @dataAccessors =
     A: (value) -> return value
@@ -13,7 +13,6 @@ class Table extends Tabular
   
   constructor: (view, header) ->
     super
-    
     for i in [1..@cols]
       form = header["TFORM#{i}"]
       match = form.match(Table.formPattern)

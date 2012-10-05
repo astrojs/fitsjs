@@ -137,8 +137,8 @@ VerifyCards =
     ZCMPTYPE: (args...) ->
       key = "ZCMPTYPE"
       value = arguments[0]
-      throw "#{key} value #{value} is not permitted" unless value in ["GZIP_1", "RICE_1", "PLIO_1", "HCOMPRESS_1"]
-      throw "Compress type #{value} is not yet implement" unless value is "RICE_1"
+      throw "#{key} value #{value} is not permitted" unless value in ['GZIP_1', 'RICE_1', 'PLIO_1', 'HCOMPRESS_1']
+      throw "Compress type #{value} is not yet implement" unless value in ['RICE_1', 'GZIP_1']
       return value
     
     ZBITPIX: (args...) ->
