@@ -5,7 +5,7 @@ class Table extends Tabular
   @formPattern = /([AIFED])(\d+)\.*(\d+)*/
   
   @dataAccessors =
-    A: (value) -> return value
+    A: (value) -> return value.trim()
     I: (value) -> return parseInt(value)
     F: (value) -> return parseFloat(value)
     E: (value) -> return parseFloat(value)
@@ -20,7 +20,7 @@ class Table extends Tabular
         [dataType, length, decimals] = match[1..]
         accessor = =>
           value = ""
-          value += @view.getChar() for i in [1..length]
+          value += @view.getChar() for i in [0..length]
           return Table.dataAccessors[dataType](value)
         @accessors.push(accessor)
 

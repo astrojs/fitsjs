@@ -48,7 +48,10 @@ class Tabular extends Data
     @current = @begin + @rowsRead * @rowByteSize
     @view.seek(@current)
     row = []
-    row.push accessor() for accessor in @accessors
+    for accessor in @accessors
+      value = accessor()
+      # console.log value
+      row.push value
     @rowsRead += 1
     return row
 
