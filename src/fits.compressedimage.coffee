@@ -142,12 +142,6 @@ class CompImage extends Tabular
   
   getRowNoBlanks: ->
     [data, blank, scale, zero] = @_getRow()
-    console.log [data, blank, scale, zero]
-    blah = "["
-    for datum in data
-      blah += "#{datum}, "
-    blah = blah[..-3] + "]"
-    console.log blah
     for value, index in data
       location = @totalRowsRead * @width + index
       @data[location] = zero + scale * value
