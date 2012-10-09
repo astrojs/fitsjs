@@ -87,15 +87,17 @@ class CompImage extends Tabular
                 return pixels
           when "UNCOMPRESSED_DATA"
             do (dataType) => accessor = @_accessor(dataType)
+          # TODO: Decompress using Gzip
           when "GZIP_COMPRESSED_DATA"
             do (dataType) =>
               accessor = =>
                 data = @_accessor(dataType)
-                return null unless data?
-                
-                # TODO: Decompress using Gzip
-                
-                return data
+                if data?
+                  data = new Float32Array(@width)
+                  data[index] = NaN for item, index in data
+                  return data
+                else
+                  return null
           else
             # TODO: Check how NULL_PIXEL_MASK is stored. Might not need this as default.
             do (dataType) => accessor = @_accessor(dataType)
