@@ -50,7 +50,6 @@ class Tabular extends Data
     row = []
     for accessor in @accessors
       value = accessor()
-      # console.log value
       row.push value
     @rowsRead += 1
     return row

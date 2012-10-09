@@ -18,10 +18,20 @@ class Table extends Tabular
       match = form.match(Table.formPattern)
       do =>
         [dataType, length, decimals] = match[1..]
-        accessor = =>
-          value = ""
-          value += @view.getChar() for i in [0..length]
+        accessor = (value) =>
           return Table.dataAccessors[dataType](value)
         @accessors.push(accessor)
+
+  getRow: =>
+    @current = @begin + @rowsRead * @rowByteSize
+    @view.seek(@current)
+    row = ""
+    row += @view.getChar() for i in [1..@rowByteSize]
+    row = row.trim().split(/\s+/)
+    
+    for value, index in row
+      row[index] = @accessors[index](value)
+    @rowsRead += 1
+    return row
 
 module?.exports = Table

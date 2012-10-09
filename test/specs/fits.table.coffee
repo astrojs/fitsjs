@@ -32,10 +32,9 @@ describe "FITS Table", ->
     xhr.send()
     
     waitsFor -> return fits?
-    
     runs ->
       table = fits.getDataUnit(1)
-    
+      
       for i in [0..table.rows - 1]
         row = table.getRow()
 
@@ -75,6 +74,8 @@ describe "FITS Table", ->
       
       dataunit = fits.getDataUnit(1)
       row = dataunit.getRow()
+      console.log row
+      
       expect(row[0]).toBeCloseTo(67.691614473688006, 6)
       expect(row[1]).toBeCloseTo(64.864541508173005, 6)
       expect(row[2]).toBeCloseTo(386.5, 6)
