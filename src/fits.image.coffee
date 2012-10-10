@@ -15,7 +15,7 @@ class Image extends Data
     @naxis.push header["NAXIS#{i}"] for i in [1..naxis]
     
     @width  = header["NAXIS1"]
-    @height = header["NAXIS2"]
+    @height = header["NAXIS2"] or 1
     
     @rowByteSize = @width * Math.abs(bitpix) / 8
     @totalRowsRead = 0
