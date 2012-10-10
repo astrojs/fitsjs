@@ -46,7 +46,7 @@ describe "FITS Header", ->
       expect(hdr1['NAXIS1']).toEqual(891)
       expect(hdr1['NAXIS2']).toEqual(893)
       expect(hdr1['EXTEND']).toBeTruthy()
-      expect(hdr1['DATE']).toBe('2011-10-27')
+      expect(hdr1['DATE']).toBe('2011-08-26')
       expect(hdr1['ORIGIN']).toBe('STScI/MAST')
       expect(hdr1['SURVEY']).toBe('POSSII-F')
       expect(hdr1['REGION']).toBe('XP174')
