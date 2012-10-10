@@ -41,18 +41,17 @@ describe "FITS CompImage", ->
   it 'can decompress gziped data', ->
     
     fits = null
-
+  
     xhr = new XMLHttpRequest()
-    xhr.open('GET', 'data/gzip.fits.fz')
+    xhr.open('GET', 'data/row.fits.fz')
     xhr.responseType = 'arraybuffer'
     xhr.onload = -> fits = new FITS.File(xhr.response)
     xhr.send()
     
     waitsFor -> return fits?
-
+  
     runs ->
       dataunit = fits.getDataUnit()
-      console.log dataunit.columns
-      row = dataunit.getRow()
-      console.log row
+      dataunit.getFrame()
+      
       

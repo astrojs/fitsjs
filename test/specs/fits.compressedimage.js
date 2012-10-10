@@ -42,7 +42,7 @@
       var fits, xhr;
       fits = null;
       xhr = new XMLHttpRequest();
-      xhr.open('GET', 'data/gzip.fits.fz');
+      xhr.open('GET', 'data/row.fits.fz');
       xhr.responseType = 'arraybuffer';
       xhr.onload = function() {
         return fits = new FITS.File(xhr.response);
@@ -52,11 +52,9 @@
         return fits != null;
       });
       return runs(function() {
-        var dataunit, row;
+        var dataunit;
         dataunit = fits.getDataUnit();
-        console.log(dataunit.columns);
-        row = dataunit.getRow();
-        return console.log(row);
+        return dataunit.getFrame();
       });
     });
   });

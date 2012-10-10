@@ -35,7 +35,7 @@ class CompImage extends Tabular
       @ztile.push ztile
     
     @width  = header["ZNAXIS1"]
-    @height = header["ZNAXIS2"]
+    @height = header["ZNAXIS2"] or 1
     
     # Grab any algorithm specific parameters from header
     @algorithmParameters = {}
@@ -77,13 +77,10 @@ class CompImage extends Tabular
               accessor = =>
                 data = @_accessor(dataType)
                 
-                # Take these 2 lines out ...
-                return data
-                return null unless data?
-                
                 # TODO: Assuming Rice compression
                 pixels = new CompImage.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
                 CompImage.Rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
+                console.log pixels
                 return pixels
           when "UNCOMPRESSED_DATA"
             do (dataType) => accessor = @_accessor(dataType)
@@ -116,7 +113,7 @@ class CompImage extends Tabular
                 data[i] = CompImage.dataAccessors[dataType](@view)
               return data
       @accessors.push(accessor)
-  
+
   defineGetRow: ->
     @totalRowsRead = 0
     
