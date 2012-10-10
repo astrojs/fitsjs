@@ -36,7 +36,7 @@ class BinaryTable extends Tabular
               return data
             @accessors.push(accessor)
         else
-          do (dataType) =>
+          do (dataType, length) =>
             # Handling bit arrays
             if dataType is 'X'
               numBytes = Math.log(length) / Math.log(2)
@@ -56,6 +56,14 @@ class BinaryTable extends Tabular
                   for bit in bitarray
                     data.push bit
                 return data[0..length - 1]
+            
+            # Handle character arrays
+            else if dataType is 'A'
+              accessor = =>
+                data = ''
+                for i in [1..length]
+                  data += BinaryTable.dataAccessors[dataType](@view)
+                return data
             else
               accessor = =>
                 data = []

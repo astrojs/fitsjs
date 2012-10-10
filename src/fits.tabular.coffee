@@ -49,8 +49,7 @@ class Tabular extends Data
     @view.seek(@current)
     row = []
     for accessor in @accessors
-      value = accessor()
-      row.push value
+      row.push accessor()
     @rowsRead += 1
     return row
 

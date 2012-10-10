@@ -88,7 +88,7 @@
         return expect(image.getPixel(92, 24)).toBeCloseTo(-0.163851, precision);
       });
     });
-    it('can get extremes, seek, then get data without blowing up', function() {
+    return it('can get extremes, seek, then get data without blowing up', function() {
       var fits, xhr;
       fits = null;
       xhr = new XMLHttpRequest();
@@ -119,28 +119,6 @@
         expect(image.getPixel(350, 782)).toEqual(4351);
         expect(image.getPixel(108, 345)).toEqual(4380);
         return expect(image.getPixel(720, 500)).toEqual(5527);
-      });
-    });
-    return it('can read a file with an IMAGE extension', function() {
-      var fits, xhr;
-      fits = null;
-      xhr = new XMLHttpRequest();
-      xhr.open('GET', 'data/HST_10098_09_ACS_WFC_F555W_drz.fits');
-      xhr.responseType = 'arraybuffer';
-      xhr.onload = function() {
-        return fits = new FITS.File(xhr.response);
-      };
-      xhr.send();
-      waitsFor(function() {
-        return fits != null;
-      });
-      return runs(function() {
-        var image;
-        image = fits.getDataUnit();
-        image.getFrame();
-        image.getExtremes();
-        expect(image.min).toBeCloseTo(-60.139053, 6);
-        return expect(image.max).toBeCloseTo(1660.3833, 4);
       });
     });
   });
