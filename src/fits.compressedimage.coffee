@@ -81,7 +81,6 @@ class CompImage extends Tabular
                 # TODO: Assuming Rice compression
                 pixels = new CompImage.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
                 CompImage.Rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
-                console.log pixels
                 return pixels
           when "UNCOMPRESSED_DATA"
             do (dataType) => accessor = @_accessor(dataType)

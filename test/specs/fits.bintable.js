@@ -59,6 +59,29 @@
         return expect(row[30]).toBeCloseTo(0.038667, precision);
       });
     });
+    it('can read a binary table with various data types II', function() {
+      var fits, precision, xhr;
+      fits = null;
+      precision = 6;
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', 'data/allskytable.fits');
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function() {
+        return fits = new FITS.File(xhr.response);
+      };
+      xhr.send();
+      waitsFor(function() {
+        return fits != null;
+      });
+      return runs(function() {
+        var allsky, dataunit, xinterp, yinterp, _ref;
+        dataunit = fits.getDataUnit();
+        _ref = dataunit.getRow(), allsky = _ref[0], xinterp = _ref[1], yinterp = _ref[2];
+        expect(allsky[0]).toBeCloseTo(187.24862671, precision);
+        expect(xinterp[0]).toBeCloseTo(-4.37500000e-01, precision);
+        return expect(yinterp[0]).toBeCloseTo(0.5625, 4);
+      });
+    });
     return it('can read a bit array', function() {
       var fits, xhr;
       fits = null;

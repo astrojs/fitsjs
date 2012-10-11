@@ -53,7 +53,27 @@ describe "FITS Binary Table", ->
       expect(row[29]).toBeCloseTo(0.045941, precision)
       expect(row[30]).toBeCloseTo(0.038667, precision)
 
+  it 'can read a binary table with various data types II', ->
+    fits = null
+    precision = 6
 
+    xhr = new XMLHttpRequest()
+    xhr.open('GET', 'data/allskytable.fits')
+    xhr.responseType = 'arraybuffer'
+    xhr.onload = -> fits = new FITS.File(xhr.response)
+    xhr.send()
+
+    waitsFor -> return fits?
+
+    runs ->
+      dataunit = fits.getDataUnit()
+      [allsky, xinterp, yinterp] = dataunit.getRow()
+      
+      expect(allsky[0]).toBeCloseTo(187.24862671, precision)
+      expect(xinterp[0]).toBeCloseTo(-4.37500000e-01, precision)
+      expect(yinterp[0]).toBeCloseTo(0.5625, 4)
+      
+          
   it 'can read a bit array', ->
     fits = null
     
