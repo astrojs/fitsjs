@@ -63,7 +63,7 @@ class BinaryTable extends Tabular
                 data = ''
                 for i in [1..length]
                   data += BinaryTable.dataAccessors[dataType](@view)
-                return data
+                return data.trim()
             else
               accessor = =>
                 data = []
