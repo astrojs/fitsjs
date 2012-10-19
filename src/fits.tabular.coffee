@@ -44,7 +44,8 @@ class Tabular extends Data
     @columns      = @getColumnNames(header)
     @accessors    = []
     
-  getRow: ->
+  getRow: (row = null) =>
+    @rowsRead = row if row?
     @current = @begin + @rowsRead * @rowByteSize
     @view.seek(@current)
     row = []

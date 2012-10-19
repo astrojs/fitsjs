@@ -22,7 +22,8 @@ class Table extends Tabular
           return Table.dataAccessors[dataType](value)
         @accessors.push(accessor)
 
-  getRow: =>
+  getRow: (row = null) =>
+    @rowsRead = row if row?
     @current = @begin + @rowsRead * @rowByteSize
     @view.seek(@current)
     row = ""

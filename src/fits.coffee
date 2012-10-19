@@ -1,6 +1,6 @@
 FITS = {}
 
-FITS.VERSION    = '0.1.4'
+FITS.VERSION    = '0.1.5'
 FITS.HDU        = require('./fits.hdu')
 FITS.File       = require('./fits.file')
 FITS.Header     = require('./fits.header')

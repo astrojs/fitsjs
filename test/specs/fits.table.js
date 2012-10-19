@@ -46,23 +46,25 @@
         return fits != null;
       });
       return runs(function() {
-        var i, row, table, _i, _ref;
+        var lastrow, row, table;
         table = fits.getDataUnit(1);
-        for (i = _i = 0, _ref = table.rows - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-          row = table.getRow();
-          if (i === 0) {
-            expect(row[0]).toEqual(-3.12);
-            expect(row[1]).toEqual(-3.12);
-            expect(row[2]).toEqual(0);
-            expect(row[3]).toEqual(0);
-          }
-          if (i === 800) {
-            expect(row[0]).toEqual(-3.12);
-            expect(row[1]).toEqual(0.08);
-            expect(row[2]).toEqual(-0.59);
-            expect(row[3]).toEqual(0.09);
-          }
-        }
+        row = table.getRow();
+        expect(row[0]).toEqual(-3.12);
+        expect(row[1]).toEqual(-3.12);
+        expect(row[2]).toEqual(0);
+        expect(row[3]).toEqual(0);
+        row = table.getRow(0);
+        expect(row[0]).toEqual(-3.12);
+        expect(row[1]).toEqual(-3.12);
+        expect(row[2]).toEqual(0);
+        expect(row[3]).toEqual(0);
+        row = table.getRow(800);
+        expect(row[0]).toEqual(-3.12);
+        expect(row[1]).toEqual(0.08);
+        expect(row[2]).toEqual(-0.59);
+        expect(row[3]).toEqual(0.09);
+        lastrow = table.rows - 1;
+        row = table.getRow(lastrow);
         expect(row[0]).toEqual(3.12);
         expect(row[1]).toEqual(3.12);
         expect(row[2]).toEqual(-0.20);

@@ -35,24 +35,30 @@ describe "FITS Table", ->
     runs ->
       table = fits.getDataUnit(1)
       
-      for i in [0..table.rows - 1]
-        row = table.getRow()
-
-        # Check the first row ...
-        if i is 0
-          expect(row[0]).toEqual(-3.12)
-          expect(row[1]).toEqual(-3.12)
-          expect(row[2]).toEqual(0)
-          expect(row[3]).toEqual(0)
+      # Read the first row
+      row = table.getRow()
+      expect(row[0]).toEqual(-3.12)
+      expect(row[1]).toEqual(-3.12)
+      expect(row[2]).toEqual(0)
+      expect(row[3]).toEqual(0)
       
-        # ... and a random row ...      
-        if i is 800
-          expect(row[0]).toEqual(-3.12)
-          expect(row[1]).toEqual(0.08)
-          expect(row[2]).toEqual(-0.59)
-          expect(row[3]).toEqual(0.09)
-        
-      # ... and the last row
+      # Read the first row again by passing an argument
+      row = table.getRow(0)
+      expect(row[0]).toEqual(-3.12)
+      expect(row[1]).toEqual(-3.12)
+      expect(row[2]).toEqual(0)
+      expect(row[3]).toEqual(0)
+      
+      # Read the 801th row
+      row = table.getRow(800)
+      expect(row[0]).toEqual(-3.12)
+      expect(row[1]).toEqual(0.08)
+      expect(row[2]).toEqual(-0.59)
+      expect(row[3]).toEqual(0.09)
+      
+      # Read the last row
+      lastrow = table.rows - 1
+      row = table.getRow(lastrow)
       expect(row[0]).toEqual(3.12)
       expect(row[1]).toEqual(3.12)
       expect(row[2]).toEqual(-0.20)
