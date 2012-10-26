@@ -7,7 +7,6 @@ class Image extends Data
   
   constructor: (view, header) ->
     super
-
     naxis   = header["NAXIS"]
     bitpix  = header["BITPIX"]
     
@@ -80,8 +79,19 @@ class Image extends Data
       @getRow()
     
     @frame += 1
-    
     return @data
+
+  # getFrame: (@frame = @frame) =>
+  #   length = @width * @height
+  #   buffer = @view.buffer.slice(@begin, @begin + 2 * length)
+  #   @data = new Uint16Array(buffer)
+  #   for index in [0..length-1]
+  #     value = @data[index]
+  #     @data[index] = (((value & 0xFF) << 8) | ((value >> 8) & 0xFF))
+  #     
+  #   @frame += 1
+  #   @rowsRead = @totalRowsRead = @frame * @width
+  #   return @data
 
   # Moves the pointer that is used to read the array buffer to a specified frame.  For 2D images
   # this defaults to the first and only frame.  Indexing of the frame argument begins at 0.
