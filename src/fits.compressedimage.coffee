@@ -76,7 +76,7 @@ class CompImage extends Tabular
             do (dataType) =>
               accessor = =>
                 data = @_accessor(dataType)
-                return new Float32Array(@ztiles[0]) unless data?
+                return new Float32Array(@ztile[0]) unless data?
                 
                 # TODO: Assuming Rice compression
                 pixels = new CompImage.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
