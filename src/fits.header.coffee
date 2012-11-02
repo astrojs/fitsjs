@@ -7,7 +7,7 @@ VerifyCards = require('./fits.header.verify')
 # TODO: Storage of COMMENT and HISTORY fields needs improvement
 class Header extends Module
 
-  @keywordPattern   = /([A-Z0-9_-]+)\s*=\s*(.*)/
+  @keywordPattern   = /^([A-Z0-9_-]+)\s*=\s*(.*)/
   @nonStringPattern = /([^\/]*)\s*\/*(.*)/
   @stringPattern    = /'(.*)'\s*\/*(.*)/
   @arrayPattern     = /([A-Za-z]+)(\d+)/
@@ -106,7 +106,7 @@ class Header extends Module
         @.__defineGetter__(key, -> return @cards[key][1])
   
   # Initialize a header, interpretting only mandatory and reserved keywords
-  # HACK: For now interpretting only the first 180 lines ...
+  # HACK: For now interpretting only the first 600 lines ...
   init: (block) =>
     lineWidth = 80
     
