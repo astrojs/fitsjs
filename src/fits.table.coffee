@@ -26,12 +26,14 @@ class Table extends Tabular
     @rowsRead = row if row?
     @current = @begin + @rowsRead * @rowByteSize
     @view.seek(@current)
-    row = ""
-    row += @view.getChar() for i in [1..@rowByteSize]
-    row = row.trim().split(/\s+/)
+    line = ""
+    line += @view.getChar() for i in [1..@rowByteSize]
+    line = line.trim().split(/\s+/)
     
-    for value, index in row
-      row[index] = @accessors[index](value)
+    row = {}
+    for value, index in line
+      row[@columns[index]] = @accessors[index](value)
+
     @rowsRead += 1
     return row
 

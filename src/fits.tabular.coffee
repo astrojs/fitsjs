@@ -43,16 +43,6 @@ class Tabular extends Data
     
     @columns      = @getColumnNames(header)
     @accessors    = []
-    
-  # getRow: (row = null) =>
-  #   @rowsRead = row if row?
-  #   @current = @begin + @rowsRead * @rowByteSize
-  #   @view.seek(@current)
-  #   row = []
-  #   for accessor in @accessors
-  #     row.push accessor()
-  #   @rowsRead += 1
-  #   return row
 
   getRow: (row = null) =>
     @rowsRead = row if row?
@@ -60,7 +50,6 @@ class Tabular extends Data
     @view.seek(@current)
     row = {}
     for accessor, index in @accessors
-      @columns[index]
       row[@columns[index]] = accessor()
     @rowsRead += 1
     return row
