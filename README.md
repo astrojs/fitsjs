@@ -21,6 +21,8 @@ This library may be used to read various forms of the FITS format.  This impleme
 * Reading of ASCII Tables
 * Decompressing images using the Rice algorithm
 
+If you incorporate this library in your project, please let me know.  I would like to maintain a list of users :)
+
 API
 ---
 
