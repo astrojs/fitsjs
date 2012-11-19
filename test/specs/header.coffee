@@ -1,3 +1,4 @@
+
 window.FITS = astro.FITS
 
 describe "FITS Header", ->

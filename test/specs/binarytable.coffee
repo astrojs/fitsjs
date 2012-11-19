@@ -88,10 +88,10 @@ describe "FITS Binary Table", ->
       row = dataunit.getRow()
       
       bitarray = row['status']
-      expect(bitarray[0]).toEqual(1);
-      expect(bitarray[31]).toEqual(0);
+      expect(bitarray[0]).toEqual(1)
+      expect(bitarray[31]).toEqual(0)
 
       row = dataunit.getRow()
       bitarray = row['status']
-      expect(bitarray[1]).toEqual(1);
-      expect(bitarray[31]).toEqual(0);
+      expect(bitarray[1]).toEqual(1)
+      expect(bitarray[31]).toEqual(0)
