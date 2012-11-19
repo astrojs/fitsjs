@@ -1,4 +1,3 @@
-Tabular = require('./fits.tabular')
 
 class BinaryTable extends Tabular
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
@@ -72,4 +71,5 @@ class BinaryTable extends Tabular
                 return data
             @accessors.push(accessor)
 
-module?.exports = BinaryTable
+
+@astro.FITS.BinaryTable = BinaryTable

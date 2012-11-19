@@ -1,10 +1,3 @@
-HDU         = require('./fits.hdu')
-Header      = require('./fits.header')
-Image       = require('./fits.image')
-CompImage   = require('./fits.compressedimage')
-Table       = require('./fits.table')
-BinaryTable = require('./fits.binarytable')
-
 
 # File is the class that parses all the HDUs, initializes Header instances
 # and appropriate Data instances.
@@ -182,7 +175,7 @@ class File
     else if header.isExtension()
       if header.extensionType is "BINTABLE"
         if header.contains("ZIMAGE")
-          data = new CompImage(@view, header)
+          data = new CompressedImage(@view, header)
         else
           data = new BinaryTable(@view, header)
       else if header.extensionType is "TABLE"
@@ -222,5 +215,6 @@ class File
   # Returns the data associated with the first HDU containing a data unit.  An optional argument
   # may be passed to point to a specific HDU.
   getData: (index = undefined) -> return @getHDU(index).data.getFrame()
-  
-module?.exports = File
+
+
+@astro.FITS.File = File

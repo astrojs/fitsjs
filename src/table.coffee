@@ -1,4 +1,3 @@
-Tabular = require('./fits.tabular')
 
 # Class to read ASCII tables from FITS files.
 class Table extends Tabular
@@ -37,4 +36,4 @@ class Table extends Tabular
     @rowsRead += 1
     return row
 
-module?.exports = Table
+@astro.FITS.Table = Table

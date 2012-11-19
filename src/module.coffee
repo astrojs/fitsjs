@@ -1,4 +1,3 @@
-# Module borrowed from Spine to extend class and instance functionality
 moduleKeywords = ['included', 'extended']
 
 class Module
@@ -22,4 +21,4 @@ class Module
   proxy: (func) ->
     => func.apply(this, arguments)
 
-module?.exports = Module
+@astro.FITS.Module = Module

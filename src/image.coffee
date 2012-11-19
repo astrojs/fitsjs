@@ -1,8 +1,6 @@
-Data        = require('./fits.data')
-ImageUtils  = require('./fits.image.utils')
 
 # Image represents a standard image stored in the data unit of a FITS file
-class Image extends Data
+class Image extends DataUnit
   @include ImageUtils
   
   constructor: (view, header) ->
@@ -36,8 +34,8 @@ class Image extends Data
         @accessor   = => return @view.getInt32()
       when 64
         @arrayType  = Int32Array
+        console.warn "Something funky happens here when dealing with 64 bit integers.  Be wary!!!"
         @accessor   = =>
-          console.warn "Something funky happens here when dealing with 64 bit integers.  Be wary!!!"
           highByte  = Math.abs @view.getInt32()
           lowByte   = Math.abs @view.getInt32()
           mod       = highByte % 10
@@ -105,5 +103,5 @@ class Image extends Data
   
   # Checks if the image is a data cube
   isDataCube: -> return if @naxis.length > 2 then true else false
-    
-module?.exports = Image
+
+@astro.FITS.Image = Image

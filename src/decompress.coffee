@@ -163,4 +163,5 @@ Decompress =
   plio: (array, length) -> throw "Not yet implemented"
   hcompress: (array, length) -> throw "Not yet implemented"
 
-module?.exports = Decompress
+
+@astro.FITS.Decompress = Decompress

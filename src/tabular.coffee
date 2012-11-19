@@ -1,7 +1,6 @@
-Data  = require('./fits.data')
 
 # Abstract class for tabular FITS extensions (e.g. TABLE, BINTABLE)
-class Tabular extends Data
+class Tabular extends DataUnit
   @dataAccessors =
     L: (view) ->
       return if view.getInt8() is 84 then true else false
@@ -62,4 +61,5 @@ class Tabular extends Data
       columnNames.push header[key]
     return columnNames
 
-module?.exports = Tabular
+
+@astro.FITS.Tabular = Tabular

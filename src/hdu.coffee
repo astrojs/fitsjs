@@ -10,4 +10,5 @@ class HDU
   # Returns the value from the header of the user specifed key
   getCard: (key) -> return @header[key]
 
-module?.exports = HDU
+
+@astro.FITS.HDU = HDU

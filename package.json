@@ -1,6 +1,6 @@
 {
   "name": "fits",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "author": "Amit Kapadia <amit@zooniverse.org>",
   "description": "Library for reading the astronomical file format",
   "repository": {
@@ -12,5 +12,21 @@
     "astrophysics",
     "fits"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "_dependencyOrder": [
+    "fits",
+    "module",
+    "dataunit",
+    "header.verify",
+    "header",
+    "image.utils",
+    "image",
+    "tabular",
+    "table",
+    "binarytable",
+    "decompress",
+    "compressedimage",
+    "hdu",
+    "file"
+  ]
 }

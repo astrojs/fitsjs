@@ -1,5 +1,3 @@
-Module      = require('./fits.module')
-VerifyCards = require('./fits.header.verify')
 
 # Header parses and stores the FITS header.  Verification is done for reserved
 # keywords (e.g. SIMPLE, BITPIX, etc).
@@ -11,7 +9,7 @@ class Header extends Module
   @nonStringPattern = /([^\/]*)\s*\/*(.*)/
   @stringPattern    = /'(.*)'\s*\/*(.*)/
   @arrayPattern     = /([A-Za-z]+)(\d+)/
-  @include VerifyCards
+  @include HeaderVerify
   
   constructor: ->
     @primary    = false
@@ -125,4 +123,4 @@ class Header extends Module
   isPrimary: -> return @primary
   isExtension: -> return @extension
 
-module?.exports = Header
+@astro.FITS.Header = Header

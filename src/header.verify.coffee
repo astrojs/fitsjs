@@ -1,7 +1,7 @@
 # This module is a collection of function for verifying reserved keywords of the FITS standard
 # When new keywords and extensions are defined, this module may be extended.
 
-VerifyCards =
+HeaderVerify =
   
   verifyOrder: (keyword, order) ->
     console.warn("#{keyword} should appear at index #{@cardIndex} in the FITS header") unless order is @cardIndex
@@ -172,4 +172,4 @@ VerifyCards =
       key = "ZGCOUNT"
       return parseInt(arguments[0])
 
-module?.exports = VerifyCards
+@astro.FITS.HeaderVerify = HeaderVerify

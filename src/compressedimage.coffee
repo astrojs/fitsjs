@@ -1,8 +1,5 @@
-Tabular     = require('./fits.tabular')
-Decompress  = require('./fits.decompress')
-ImageUtils  = require('./fits.image.utils')
 
-class CompImage extends Tabular
+class CompressedImage extends Tabular
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
   @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
   @include ImageUtils
@@ -26,8 +23,8 @@ class CompImage extends Tabular
     @zcmptype = header["ZCMPTYPE"]
     @zbitpix  = header["ZBITPIX"]
     @znaxis   = header["ZNAXIS"]
-    @zblank   = CompImage.setValue(header, "ZBLANK", undefined)
-    @blank    = CompImage.setValue(header, "BLANK", undefined)
+    @zblank   = CompressedImage.setValue(header, "ZBLANK", undefined)
+    @blank    = CompressedImage.setValue(header, "BLANK", undefined)
     
     @ztile = []
     for i in [1..@znaxis]
@@ -50,11 +47,11 @@ class CompImage extends Tabular
     # Set default parameters if not set in the header
     @setRiceDefaults() if @zcmptype is 'RICE_1'
     
-    @zmaskcmp = CompImage.setValue(header, "ZMASKCMP", undefined)
-    @zquantiz = CompImage.setValue(header, "ZQUANTIZ", "LINEAR_SCALING")
+    @zmaskcmp = CompressedImage.setValue(header, "ZMASKCMP", undefined)
+    @zquantiz = CompressedImage.setValue(header, "ZQUANTIZ", "LINEAR_SCALING")
     
-    @bzero  = CompImage.setValue(header, "BZERO", 0)
-    @bscale = CompImage.setValue(header, "BSCALE", 1)
+    @bzero  = CompressedImage.setValue(header, "BZERO", 0)
+    @bscale = CompressedImage.setValue(header, "BSCALE", 1)
     
     @defineColumnAccessors header
     @defineGetRow()
@@ -63,7 +60,7 @@ class CompImage extends Tabular
     @columnNames = {}
     for i in [1..@cols]
       value = header["TFORM#{i}"]
-      match = value.match(CompImage.arrayDescriptorPattern)
+      match = value.match(CompressedImage.arrayDescriptorPattern)
       ttype = header["TTYPE#{i}"].toUpperCase()
       @columnNames[ttype] = i - 1
       accessor = null
@@ -79,8 +76,8 @@ class CompImage extends Tabular
                 return new Float32Array(@ztile[0]) unless data?
                 
                 # TODO: Assuming Rice compression
-                pixels = new CompImage.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
-                CompImage.Rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
+                pixels = new CompressedImage.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
+                CompressedImage.Rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
                 return pixels
           when "UNCOMPRESSED_DATA"
             do (dataType) => accessor = @_accessor(dataType)
@@ -99,18 +96,18 @@ class CompImage extends Tabular
             # TODO: Check how NULL_PIXEL_MASK is stored. Might not need this as default.
             do (dataType) => accessor = @_accessor(dataType)
       else
-        match = value.match(CompImage.dataTypePattern)
+        match = value.match(CompressedImage.dataTypePattern)
         [length, dataType] = match[1..]
         length = if length? then parseInt(length) else 0
         if length in [0, 1]
           do (dataType) =>
-            accessor = => return CompImage.dataAccessors[dataType](@view)
+            accessor = => return CompressedImage.dataAccessors[dataType](@view)
         else
           do (length, dataType) =>
             accessor = =>
-              data = new CompImage.typedArray[dataType](length)
+              data = new CompressedImage.typedArray[dataType](length)
               for i in [0..length - 1]
-                data[i] = CompImage.dataAccessors[dataType](@view)
+                data[i] = CompressedImage.dataAccessors[dataType](@view)
               return data
       @accessors.push(accessor)
 
@@ -161,11 +158,11 @@ class CompImage extends Tabular
     [length, offset]  = [@view.getInt32(), @view.getInt32()]
     return null if length is 0
     
-    data = new CompImage.typedArray[dataType](length)
+    data = new CompressedImage.typedArray[dataType](length)
     @current = @view.tell()
     @view.seek(@begin + @tableLength + offset)
     for i in [0..length - 1]
-      data[i] = CompImage.dataAccessors[dataType](@view)
+      data[i] = CompressedImage.dataAccessors[dataType](@view)
     @view.seek(@current)
     
     return data
@@ -186,4 +183,5 @@ class CompImage extends Tabular
   @subtractiveDither1: -> throw "Not yet implemented"
   @linearScaling: -> throw "Not yet implemented"
 
-module?.exports = CompImage
+
+@astro.FITS.CompressedImage = CompressedImage

@@ -33,4 +33,4 @@ ImageUtils =
     # @view.offset = @begin + (@frame - 1) * @height * @rowByteSize + y * @rowByteSize + x * byteSize
     # return @accessor()
 
-module?.exports = ImageUtils
+@astro.FITS.ImageUtils = ImageUtils
