@@ -3,13 +3,13 @@ fitsjs
 
 A standalone JavaScript library for reading the astronomical file format – FITS.  This library is built for modern browsers supporting the DataView object.  These include at least Chrome 9, Firefox 15, and Safari 6.
 
-To use the library copy lib/fits.js to your project and include it using a script tag.  After including the library, the FITS object is exposed by calling require.
+To use the library copy `lib/fits.js` to your project and include it using a script tag.  After including the library, the FITS object is exposed under the `astro` namespace.
 
     <script src="fits.js" type="text/javascript" charset="utf-8">
     </script>
     
     <script type="text/javascript">
-      FITS = require('fits');
+      var FITS = astro.FITS;
     </script>
 
 This library may be used to read various forms of the FITS format.  This implementation is under active development.  In its current state it supports the following:
@@ -95,7 +95,7 @@ Examples
     </script>
     
     <script type="text/javascript">
-      FITS = require('fits');
+      var FITS = astro.FITS;
       
       // Get an array buffer of the FITS file using XHR
       var xhr = new XMLHttpRequest();
