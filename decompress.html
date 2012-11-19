@@ -1,0 +1,153 @@
+<!DOCTYPE html><html lang="en"><head><title>decompress</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="decompress"><meta name="groc-project-path" content="src/decompress.coffee"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/decompress.coffee</div></div><div id="document"><div class="segment"><div class="comments"><div class="wrapper"><h1 id="decompress">Decompress</h1></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Module will contain various decompression algorithms used in compressing FITS images.  Currently only
+the Rice decompression algorithm is implemented.  The four adopted algorithms are:</p></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><ul>
+<li>Rice</li>
+<li>Gzip</li>
+<li>IRAF PLIO</li>
+<li>H-Compress</li>
+</ul></div></div><div class="code"><div class="wrapper"><span class="nv">Decompress =</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><h3 id="rice">Rice</h3>
+
+<ul>
+<li>array: Array of compressed bytes to be decompressed</li>
+<li>arrayLen: Length of array</li>
+<li>blocksize: Number of pixels encoded in a block</li>
+<li>bytepix: Number of 8-bit bytes of the original integer pixel</li>
+<li>pixels: Output array containing the decompressed values</li>
+<li>nx: Length of pixels (ztile1)</li>
+</ul></div></div><div class="code"><div class="wrapper">  <span class="nv">Rice: </span><span class="nf">(array, arrayLen, blocksize, bytepix, pixels, nx) -&gt;</span>
+    
+    <span class="nv">bbits = </span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="nx">fsbits</span>
+    
+    <span class="p">[</span><span class="nx">fsbits</span><span class="p">,</span> <span class="nx">fsmax</span><span class="p">,</span> <span class="nx">lastpix</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@RiceSetup</span><span class="p">[</span><span class="nx">bytepix</span><span class="p">](</span><span class="nx">array</span><span class="p">)</span>
+    
+    <span class="nv">nonzeroCount = </span><span class="k">new</span> <span class="nx">Uint8Array</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span>
+    <span class="nv">nzero = </span><span class="mi">8</span>
+    <span class="p">[</span><span class="nx">k</span><span class="p">,</span> <span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">255</span><span class="p">]</span>
+    <span class="k">while</span> <span class="nx">i</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+      <span class="k">while</span> <span class="nx">i</span> <span class="o">&gt;=</span> <span class="nx">k</span>
+        <span class="nx">nonzeroCount</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">nzero</span>
+        <span class="nx">i</span> <span class="o">-=</span> <span class="mi">1</span>
+      <span class="nv">k = </span><span class="nx">k</span> <span class="err">/ 2</span>
+      <span class="nx">nzero</span> <span class="o">-=</span> <span class="mi">1</span>
+    <span class="nx">nonzeroCount</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Bit buffer</p></div></div><div class="code"><div class="wrapper">    <span class="nv">b = </span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">]</span>
+    <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Number of bits remaining in b</p></div></div><div class="code"><div class="wrapper">    <span class="nv">nbits = </span><span class="mi">8</span>
+    
+    <span class="nv">i = </span><span class="mi">0</span>
+    <span class="k">while</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">nx</span>
+
+      <span class="nx">nbits</span> <span class="o">-=</span> <span class="nx">fsbits</span>
+      <span class="k">while</span> <span class="nx">nbits</span> <span class="o">&lt;</span> <span class="mi">0</span>
+        <span class="nv">b = </span><span class="p">(</span><span class="nx">b</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">])</span>
+        <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="nx">nbits</span> <span class="o">+=</span> <span class="mi">8</span>
+      <span class="nv">fs = </span><span class="p">(</span><span class="nx">b</span> <span class="o">&gt;&gt;</span> <span class="nx">nbits</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+      <span class="nx">b</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="nx">nbits</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+      <span class="nv">imax = </span><span class="nx">i</span> <span class="o">+</span> <span class="nx">blocksize</span>
+      <span class="nv">imax = </span><span class="nx">nx</span> <span class="k">if</span> <span class="nx">imax</span> <span class="o">&gt;</span> <span class="nx">nx</span>
+
+      <span class="k">if</span> <span class="nx">fs</span> <span class="o">&lt;</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">imax</span>
+          <span class="nx">array</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">lastpix</span>
+          <span class="nx">i</span><span class="o">++</span>
+      <span class="k">else</span> <span class="k">if</span> <span class="nx">fs</span> <span class="o">is</span> <span class="nx">fsmax</span>
+        <span class="k">while</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">imax</span>
+          <span class="nv">k = </span><span class="nx">bbits</span> <span class="o">-</span> <span class="nx">nbits</span>
+          <span class="nv">diff = </span><span class="nx">b</span> <span class="o">&lt;&lt;</span> <span class="nx">k</span>
+          <span class="nx">k</span> <span class="o">-=</span> <span class="mi">8</span>
+          <span class="k">while</span> <span class="nx">k</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+            <span class="nv">b = </span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">]</span>
+            <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="nx">diff</span> <span class="o">|=</span> <span class="nx">b</span> <span class="o">&lt;&lt;</span> <span class="nx">k</span>
+            <span class="nx">k</span> <span class="o">-=</span> <span class="mi">8</span>
+          <span class="k">if</span> <span class="nx">nbits</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="nv">b = </span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">]</span>
+            <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="nx">diff</span> <span class="o">|=</span> <span class="nx">b</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="o">-</span><span class="nx">k</span><span class="p">)</span>
+            <span class="nx">b</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="nx">nbits</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+          <span class="k">else</span>
+            <span class="nv">b = </span><span class="mi">0</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">diff</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">is</span> <span class="mi">0</span>
+            <span class="nv">diff = </span><span class="nx">diff</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span>
+          <span class="k">else</span>
+            <span class="nv">diff = </span><span class="o">~</span><span class="p">(</span><span class="nx">diff</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span>
+          <span class="nx">array</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">diff</span> <span class="o">+</span> <span class="nx">lastpix</span>
+          <span class="nv">lastpix = </span><span class="nx">array</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span>
+          <span class="nx">i</span><span class="o">++</span>
+      <span class="k">else</span>
+        <span class="k">while</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">imax</span>
+          <span class="k">while</span> <span class="nx">b</span> <span class="o">is</span> <span class="mi">0</span>
+            <span class="nx">nbits</span> <span class="o">+=</span> <span class="mi">8</span>
+            <span class="nv">b = </span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">]</span>
+            <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+          <span class="nv">nzero = </span><span class="nx">nbits</span> <span class="o">-</span> <span class="nx">nonzeroCount</span><span class="p">[</span><span class="nx">b</span><span class="p">]</span>
+          <span class="nx">nbits</span> <span class="o">-=</span> <span class="nx">nzero</span> <span class="o">+</span> <span class="mi">1</span>
+          <span class="nx">b</span> <span class="o">^=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="nx">nbits</span>
+          <span class="nx">nbits</span> <span class="o">-=</span> <span class="nx">fs</span>
+          <span class="k">while</span> <span class="nx">nbits</span> <span class="o">&lt;</span> <span class="mi">0</span>
+            <span class="nv">b = </span><span class="p">(</span><span class="nx">b</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">])</span>
+            <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="nx">nbits</span> <span class="o">+=</span> <span class="mi">8</span>
+          <span class="nv">diff = </span><span class="p">(</span><span class="nx">nzero</span> <span class="o">&lt;&lt;</span> <span class="nx">fs</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="nx">b</span> <span class="o">&gt;&gt;</span> <span class="nx">nbits</span><span class="p">)</span>
+          <span class="nx">b</span> <span class="o">&amp;=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="nx">nbits</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">diff</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">is</span> <span class="mi">0</span>
+            <span class="nv">diff = </span><span class="nx">diff</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span>
+          <span class="k">else</span>
+            <span class="nv">diff = </span><span class="o">~</span><span class="p">(</span><span class="nx">diff</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span><span class="p">)</span>
+          <span class="nx">pixels</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">diff</span> <span class="o">+</span> <span class="nx">lastpix</span>
+          <span class="nv">lastpix = </span><span class="nx">pixels</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span>
+          <span class="nx">i</span><span class="o">++</span>
+
+    <span class="k">return</span> <span class="nx">pixels</span>
+
+  <span class="nv">RiceSetup:</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set up for bytepix = 1</p></div></div><div class="code"><div class="wrapper">    <span class="mi">1</span><span class="o">:</span> <span class="nf">(array) -&gt;</span>
+      <span class="nv">pointer = </span><span class="mi">0</span>
+      <span class="nv">fsbits = </span><span class="mi">3</span>
+      <span class="nv">fsmax = </span><span class="mi">6</span>
+      
+      <span class="nv">lastpix = </span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">]</span>
+      <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+      
+      <span class="k">return</span> <span class="p">[</span><span class="nx">fsbits</span><span class="p">,</span> <span class="nx">fsmax</span><span class="p">,</span> <span class="nx">lastpix</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">]</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set up for bytepix = 2</p></div></div><div class="code"><div class="wrapper">    <span class="mi">2</span><span class="o">:</span> <span class="nf">(array) -&gt;</span>
+      <span class="nv">pointer = </span><span class="mi">0</span>
+      <span class="nv">fsbits = </span><span class="mi">4</span>
+      <span class="nv">fsmax = </span><span class="mi">14</span>
+      
+      <span class="nv">lastpix = </span><span class="mi">0</span>
+      <span class="nv">bytevalue = </span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">]</span>
+      <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="nv">lastpix = </span><span class="nx">lastpix</span> <span class="o">|</span> <span class="p">(</span><span class="nx">bytevalue</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span>
+      <span class="nv">bytevalue = </span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">]</span>
+      <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="nv">lastpix = </span><span class="nx">lastpix</span> <span class="o">|</span> <span class="nx">bytevalue</span>
+      
+      <span class="k">return</span> <span class="p">[</span><span class="nx">fsbits</span><span class="p">,</span> <span class="nx">fsmax</span><span class="p">,</span> <span class="nx">lastpix</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">]</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set up for bytepix = 4</p></div></div><div class="code"><div class="wrapper">    <span class="mi">4</span><span class="o">:</span> <span class="nf">(array) -&gt;</span>
+      <span class="nv">pointer = </span><span class="mi">0</span>
+      <span class="nv">fsbits = </span><span class="mi">5</span>
+      <span class="nv">fsmax = </span><span class="mi">25</span>
+
+      <span class="nv">lastpix = </span><span class="mi">0</span>
+      <span class="nv">bytevalue = </span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">]</span>
+      <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="nv">lastpix = </span><span class="nx">lastpix</span> <span class="o">|</span> <span class="p">(</span><span class="nx">bytevalue</span> <span class="o">&lt;&lt;</span> <span class="mi">24</span><span class="p">)</span>
+      <span class="nv">bytevalue = </span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">]</span>
+      <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="nv">lastpix = </span><span class="nx">lastpix</span> <span class="o">|</span> <span class="p">(</span><span class="nx">bytevalue</span> <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">)</span>
+      <span class="nv">bytevalue = </span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">]</span>
+      <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="nv">lastpix = </span><span class="nx">lastpix</span> <span class="o">|</span> <span class="p">(</span><span class="nx">bytevalue</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span>
+      <span class="nv">bytevalue = </span><span class="nx">array</span><span class="p">[</span><span class="nx">pointer</span><span class="p">]</span>
+      <span class="nx">pointer</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="nv">lastpix = </span><span class="nx">lastpix</span> <span class="o">|</span> <span class="nx">bytevalue</span>
+
+      <span class="k">return</span> <span class="p">[</span><span class="nx">fsbits</span><span class="p">,</span> <span class="nx">fsmax</span><span class="p">,</span> <span class="nx">lastpix</span><span class="p">,</span> <span class="nx">pointer</span><span class="p">]</span>
+        
+  <span class="nv">gzip: </span><span class="nf">(array) -&gt;</span> <span class="k">throw</span> <span class="s2">&quot;Not yet implemented&quot;</span>
+  <span class="nv">plio: </span><span class="nf">(array, length) -&gt;</span> <span class="k">throw</span> <span class="s2">&quot;Not yet implemented&quot;</span>
+  <span class="nv">hcompress: </span><span class="nf">(array, length) -&gt;</span> <span class="k">throw</span> <span class="s2">&quot;Not yet implemented&quot;</span>
+
+
+<span class="vi">@astro.FITS.Decompress = </span><span class="nx">Decompress</span></div></div></div></div></body></html>

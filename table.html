@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="en"><head><title>table</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="table"><meta name="groc-project-path" content="src/table.coffee"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/table.coffee</div></div><div id="document"><div class="segment"></div><div class="segment"><div class="comments"><div class="wrapper"><p>Class to read ASCII tables from FITS files.</p></div></div><div class="code"><div class="wrapper"><span class="k">class</span> <span class="nx">Table</span> <span class="k">extends</span> <span class="nx">Tabular</span>
+  <span class="vi">@formPattern = </span><span class="sr">/([AIFED])(\d+)\.*(\d+)*/</span>
+  
+  <span class="vi">@dataAccessors =</span>
+    <span class="nv">A: </span><span class="nf">(value) -&gt;</span> <span class="k">return</span> <span class="nx">value</span><span class="p">.</span><span class="nx">trim</span><span class="p">()</span>
+    <span class="nv">I: </span><span class="nf">(value) -&gt;</span> <span class="k">return</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+    <span class="nv">F: </span><span class="nf">(value) -&gt;</span> <span class="k">return</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+    <span class="nv">E: </span><span class="nf">(value) -&gt;</span> <span class="k">return</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+    <span class="nv">D: </span><span class="nf">(value) -&gt;</span> <span class="k">return</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+  
+  <span class="nv">constructor: </span><span class="nf">(view, header) -&gt;</span>
+    <span class="k">super</span>
+    <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">@cols</span><span class="p">]</span>
+      <span class="nv">form = </span><span class="nx">header</span><span class="p">[</span><span class="s2">&quot;TFORM#{i}&quot;</span><span class="p">]</span>
+      <span class="nv">match = </span><span class="nx">form</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="nx">Table</span><span class="p">.</span><span class="nx">formPattern</span><span class="p">)</span>
+      <span class="nx">do</span> <span class="o">=&gt;</span>
+        <span class="p">[</span><span class="nx">dataType</span><span class="p">,</span> <span class="nx">length</span><span class="p">,</span> <span class="nx">decimals</span><span class="p">]</span> <span class="o">=</span> <span class="nx">match</span><span class="p">[</span><span class="mi">1</span><span class="p">..]</span>
+        <span class="nv">accessor = </span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="o">=&gt;</span>
+          <span class="k">return</span> <span class="nx">Table</span><span class="p">.</span><span class="nx">dataAccessors</span><span class="p">[</span><span class="nx">dataType</span><span class="p">](</span><span class="nx">value</span><span class="p">)</span>
+        <span class="nx">@accessors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">accessor</span><span class="p">)</span>
+
+  <span class="nv">getRow: </span><span class="p">(</span><span class="nv">row = </span><span class="kc">null</span><span class="p">)</span> <span class="o">=&gt;</span>
+    <span class="vi">@rowsRead = </span><span class="nx">row</span> <span class="k">if</span> <span class="nx">row</span><span class="o">?</span>
+    <span class="vi">@current = </span><span class="nx">@begin</span> <span class="o">+</span> <span class="nx">@rowsRead</span> <span class="o">*</span> <span class="nx">@rowByteSize</span>
+    <span class="nx">@view</span><span class="p">.</span><span class="nx">seek</span><span class="p">(</span><span class="nx">@current</span><span class="p">)</span>
+    <span class="nv">line = </span><span class="s2">&quot;&quot;</span>
+    <span class="nx">line</span> <span class="o">+=</span> <span class="nx">@view</span><span class="p">.</span><span class="nx">getChar</span><span class="p">()</span> <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">@rowByteSize</span><span class="p">]</span>
+    <span class="nv">line = </span><span class="nx">line</span><span class="p">.</span><span class="nx">trim</span><span class="p">().</span><span class="nx">split</span><span class="p">(</span><span class="sr">/\s+/</span><span class="p">)</span>
+    
+    <span class="nv">row = </span><span class="p">{}</span>
+    <span class="k">for</span> <span class="nx">value</span><span class="p">,</span> <span class="nx">index</span> <span class="k">in</span> <span class="nx">line</span>
+      <span class="nx">row</span><span class="p">[</span><span class="nx">@columns</span><span class="p">[</span><span class="nx">index</span><span class="p">]]</span> <span class="o">=</span> <span class="nx">@accessors</span><span class="p">[</span><span class="nx">index</span><span class="p">](</span><span class="nx">value</span><span class="p">)</span>
+
+    <span class="nx">@rowsRead</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="nx">row</span>
+
+<span class="vi">@astro.FITS.Table = </span><span class="nx">Table</span></div></div></div></div></body></html>

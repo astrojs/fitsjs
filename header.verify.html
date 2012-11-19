@@ -1,0 +1,171 @@
+<!DOCTYPE html><html lang="en"><head><title>header.verify</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="header.verify"><meta name="groc-project-path" content="src/header.verify.coffee"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/header.verify.coffee</div></div><div id="document"><div class="segment"><div class="comments"><div class="wrapper"><p>This module is a collection of function for verifying reserved keywords of the FITS standard
+When new keywords and extensions are defined, this module may be extended.</p></div></div><div class="code"><div class="wrapper"><span class="nv">HeaderVerify =</span>
+  
+  <span class="nv">verifyOrder: </span><span class="nf">(keyword, order) -&gt;</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">warn</span><span class="p">(</span><span class="s2">&quot;#{keyword} should appear at index #{@cardIndex} in the FITS header&quot;</span><span class="p">)</span> <span class="nx">unless</span> <span class="nx">order</span> <span class="o">is</span> <span class="nx">@cardIndex</span>
+
+  <span class="nv">verifyBetween: </span><span class="nf">(keyword, value, lower, upper) -&gt;</span>
+    <span class="k">throw</span> <span class="s2">&quot;The #{keyword} value of #{value} is not between #{lower} and #{upper}&quot;</span> <span class="nx">unless</span> <span class="nx">value</span> <span class="o">&gt;=</span> <span class="nx">lower</span> <span class="o">and</span> <span class="nx">value</span> <span class="o">&lt;=</span> <span class="nx">upper</span>
+
+  <span class="nv">verifyBoolean: </span><span class="nf">(value) -&gt;</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="nx">value</span> <span class="o">is</span> <span class="s2">&quot;T&quot;</span> <span class="k">then</span> <span class="kc">true</span> <span class="k">else</span> <span class="kc">false</span>
+
+  <span class="nv">Functions:</span>
+    <span class="nv">SIMPLE: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">value = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="vi">@primary = </span><span class="kc">true</span>
+      <span class="nx">@verifyOrder</span><span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nx">@verifyBoolean</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+      
+    <span class="nv">XTENSION: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">value = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="vi">@extension = </span><span class="kc">true</span>
+      <span class="vi">@extensionType = </span><span class="nx">value</span>
+      <span class="nx">@verifyOrder</span><span class="p">(</span><span class="s2">&quot;XTENSION&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nx">value</span>
+      
+    <span class="nv">BITPIX: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;BITPIX&quot;</span>
+      <span class="nv">value = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+      <span class="nx">@verifyOrder</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="k">throw</span> <span class="s2">&quot;#{key} value #{value} is not permitted&quot;</span> <span class="nx">unless</span> <span class="nx">value</span> <span class="k">in</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="o">-</span><span class="mi">32</span><span class="p">,</span> <span class="o">-</span><span class="mi">64</span><span class="p">]</span>
+      <span class="k">return</span> <span class="nx">value</span>
+      
+    <span class="nv">NAXIS: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;NAXIS&quot;</span>
+      <span class="nv">value = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+      <span class="nv">array = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      
+      <span class="nx">unless</span> <span class="nx">array</span>
+        <span class="nx">@verifyOrder</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="nx">@verifyBetween</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">value</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">999</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nx">@isExtension</span><span class="p">()</span>
+          <span class="k">if</span> <span class="nx">@extensionType</span> <span class="k">in</span> <span class="p">[</span><span class="s2">&quot;TABLE&quot;</span><span class="p">,</span> <span class="s2">&quot;BINTABLE&quot;</span><span class="p">]</span>
+            <span class="nv">required = </span><span class="mi">2</span>
+            <span class="k">throw</span> <span class="s2">&quot;#{key} must be #{required} for TABLE and BINTABLE extensions&quot;</span> <span class="nx">unless</span> <span class="nx">value</span> <span class="o">is</span> <span class="nx">required</span>
+      
+      <span class="k">return</span> <span class="nx">value</span>
+    
+    <span class="nv">PCOUNT: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;PCOUNT&quot;</span>
+      <span class="nv">value = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+      <span class="nv">order = </span><span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="err">@</span><span class="p">[</span><span class="s2">&quot;NAXIS&quot;</span><span class="p">]</span>
+      <span class="nx">@verifyOrder</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">order</span><span class="p">)</span>
+      
+      <span class="k">if</span> <span class="nx">@isExtension</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nx">@extensionType</span> <span class="k">in</span> <span class="p">[</span><span class="s2">&quot;IMAGE&quot;</span><span class="p">,</span> <span class="s2">&quot;TABLE&quot;</span><span class="p">]</span>
+          <span class="nv">required = </span><span class="mi">0</span>
+          <span class="k">throw</span> <span class="s2">&quot;#{key} must be #{required} for the #{@extensionType} extensions&quot;</span> <span class="nx">unless</span> <span class="nx">value</span> <span class="o">is</span> <span class="nx">required</span>
+      
+      <span class="k">return</span> <span class="nx">value</span>
+    
+    <span class="nv">GCOUNT: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;GCOUNT&quot;</span>
+      <span class="nv">value = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+      <span class="nv">order = </span><span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="err">@</span><span class="p">[</span><span class="s2">&quot;NAXIS&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+      <span class="nx">@verifyOrder</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">order</span><span class="p">)</span>
+      
+      <span class="k">if</span> <span class="nx">@isExtension</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nx">@extensionType</span> <span class="k">in</span> <span class="p">[</span><span class="s2">&quot;IMAGE&quot;</span><span class="p">,</span> <span class="s2">&quot;TABLE&quot;</span><span class="p">,</span> <span class="s2">&quot;BINTABLE&quot;</span><span class="p">]</span>
+          <span class="nv">required = </span><span class="mi">1</span>
+          <span class="k">throw</span> <span class="s2">&quot;#{key} must be #{required} for the #{@extensionType} extensions&quot;</span> <span class="nx">unless</span> <span class="nx">value</span> <span class="o">is</span> <span class="nx">required</span>
+      
+      <span class="k">return</span> <span class="nx">value</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>DATE: (args...) ->
+  key = "DATE"
+  value = new Date(arguments[0])
+  return value</p></div></div><div class="code"><div class="wrapper">    
+    <span class="nv">EXTEND: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;EXTEND&quot;</span>
+      <span class="nv">value = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="k">throw</span> <span class="s2">&quot;#{key} must only appear in the primary header&quot;</span> <span class="nx">unless</span> <span class="nx">@isPrimary</span><span class="p">()</span>
+      <span class="k">return</span> <span class="nx">@verifyBoolean</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+    
+    <span class="nv">BSCALE: </span><span class="nf">(args...) -&gt;</span>
+      <span class="k">return</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    
+    <span class="nv">BZERO: </span><span class="nf">(args...) -&gt;</span>
+      <span class="k">return</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+      
+    <span class="nv">BLANK: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;BLANK&quot;</span>
+      <span class="nv">value = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="k">throw</span> <span class="s2">&quot;#{key} is not to be used for BITPIX = #{@[&#39;BITPIX&#39;]}&quot;</span> <span class="nx">unless</span> <span class="err">@</span><span class="p">[</span><span class="s2">&quot;BIXPIX&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+      <span class="k">return</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+    
+    <span class="nv">DATAMIN: </span><span class="nf">(args...) -&gt;</span>
+      <span class="k">return</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    
+    <span class="nv">DATAMAX: </span><span class="nf">(args...) -&gt;</span>
+      <span class="k">return</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    
+    <span class="nv">EXTVER: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;EXTVER&quot;</span>
+      <span class="nv">value = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="nv">value = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nx">value</span>
+      
+    <span class="nv">EXTLEVEL: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;EXTLEVEL&quot;</span>
+      <span class="nv">value = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="nv">value = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nx">value</span>
+    
+    <span class="nv">TFIELDS: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;TFIELDS&quot;</span>
+      <span class="nv">value = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="nv">value = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+      <span class="nx">@verifyBetween</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">value</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">999</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nx">value</span>
+    
+    <span class="nv">TBCOL: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;TBCOL&quot;</span>
+      <span class="nv">value = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="nv">index = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="nx">@verifyBetween</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">index</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="err">@</span><span class="p">[</span><span class="s2">&quot;TFIELDS&quot;</span><span class="p">])</span>
+      <span class="k">return</span> <span class="nx">value</span>
+    
+    <span class="nv">ZIMAGE: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;ZIMAGE&quot;</span>
+      <span class="nv">value = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="k">return</span> <span class="nx">@verifyBoolean</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+    
+    <span class="nv">ZCMPTYPE: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;ZCMPTYPE&quot;</span>
+      <span class="nv">value = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="k">throw</span> <span class="s2">&quot;#{key} value #{value} is not permitted&quot;</span> <span class="nx">unless</span> <span class="nx">value</span> <span class="k">in</span> <span class="p">[</span><span class="s1">&#39;GZIP_1&#39;</span><span class="p">,</span> <span class="s1">&#39;RICE_1&#39;</span><span class="p">,</span> <span class="s1">&#39;PLIO_1&#39;</span><span class="p">,</span> <span class="s1">&#39;HCOMPRESS_1&#39;</span><span class="p">]</span>
+      <span class="k">throw</span> <span class="s2">&quot;Compress type #{value} is not yet implement&quot;</span> <span class="nx">unless</span> <span class="nx">value</span> <span class="k">in</span> <span class="p">[</span><span class="s1">&#39;RICE_1&#39;</span><span class="p">,</span> <span class="s1">&#39;GZIP_1&#39;</span><span class="p">]</span>
+      <span class="k">return</span> <span class="nx">value</span>
+    
+    <span class="nv">ZBITPIX: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;ZBITPIX&quot;</span>
+      <span class="nv">value = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+      <span class="k">throw</span> <span class="s2">&quot;#{key} value #{value} is not permitted&quot;</span> <span class="nx">unless</span> <span class="nx">value</span> <span class="k">in</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="o">-</span><span class="mi">32</span><span class="p">,</span> <span class="o">-</span><span class="mi">64</span><span class="p">]</span>
+      <span class="k">return</span> <span class="nx">value</span>
+      
+    <span class="nv">ZNAXIS: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;ZNAXIS&quot;</span>
+      <span class="nv">value = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+      <span class="nv">array = </span><span class="nx">arguments</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      <span class="nv">value = </span><span class="nx">value</span>
+      
+      <span class="nx">@verifyBetween</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">value</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">999</span><span class="p">)</span> <span class="nx">unless</span> <span class="nx">array</span>
+      
+      <span class="k">return</span> <span class="nx">value</span>
+    
+    <span class="nv">ZTILE: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;ZTILE&quot;</span>
+      <span class="k">return</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    
+    <span class="nv">ZSIMPLE: </span><span class="nf">(args...) -&gt;</span>
+      <span class="k">return</span> <span class="k">if</span> <span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">is</span> <span class="s2">&quot;T&quot;</span> <span class="k">then</span> <span class="kc">true</span> <span class="k">else</span> <span class="kc">false</span>
+    
+    <span class="nv">ZPCOUNT: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;ZPCOUNT&quot;</span>
+      <span class="k">return</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    
+    <span class="nv">ZGCOUNT: </span><span class="nf">(args...) -&gt;</span>
+      <span class="nv">key = </span><span class="s2">&quot;ZGCOUNT&quot;</span>
+      <span class="k">return</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="vi">@astro.FITS.HeaderVerify = </span><span class="nx">HeaderVerify</span></div></div></div></div></body></html>

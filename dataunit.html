@@ -1,0 +1,9 @@
+<!DOCTYPE html><html lang="en"><head><title>dataunit</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="dataunit"><meta name="groc-project-path" content="src/dataunit.coffee"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/dataunit.coffee</div></div><div id="document"><div class="segment"></div><div class="segment"><div class="comments"><div class="wrapper"><p>Base class for FITS data units (e.g. Primary, BINTABLE, TABLE, IMAGE).  Derived classes must
+define an instance attribute called length describing the byte length of the data unit.</p></div></div><div class="code"><div class="wrapper"><span class="k">class</span> <span class="nx">DataUnit</span> <span class="k">extends</span> <span class="nx">Module</span>
+
+  <span class="nv">constructor: </span><span class="nf">(view, header) -&gt;</span>
+    <span class="vi">@view   = </span><span class="nx">view</span>
+    <span class="vi">@begin  = @current = </span><span class="nx">view</span><span class="p">.</span><span class="nx">tell</span><span class="p">()</span>
+    <span class="vi">@length = </span><span class="kc">undefined</span>
+
+<span class="vi">@astro.FITS.DataUnit = </span><span class="nx">DataUnit</span></div></div></div></div></body></html>

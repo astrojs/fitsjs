@@ -1,0 +1,91 @@
+<!DOCTYPE html><html lang="en"><head><title>image</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="image"><meta name="groc-project-path" content="src/image.coffee"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/image.coffee</div></div><div id="document"><div class="segment"></div><div class="segment"><div class="comments"><div class="wrapper"><p>Image represents a standard image stored in the data unit of a FITS file</p></div></div><div class="code"><div class="wrapper"><span class="k">class</span> <span class="nx">Image</span> <span class="k">extends</span> <span class="nx">DataUnit</span>
+  <span class="nx">@include</span> <span class="nx">ImageUtils</span>
+  
+  <span class="nv">constructor: </span><span class="nf">(view, header) -&gt;</span>
+    <span class="k">super</span>
+    <span class="nv">naxis   = </span><span class="nx">header</span><span class="p">[</span><span class="s2">&quot;NAXIS&quot;</span><span class="p">]</span>
+    <span class="nv">bitpix  = </span><span class="nx">header</span><span class="p">[</span><span class="s2">&quot;BITPIX&quot;</span><span class="p">]</span>
+    
+    <span class="vi">@naxis = </span><span class="p">[]</span>
+    <span class="nx">@naxis</span><span class="p">.</span><span class="nx">push</span> <span class="nx">header</span><span class="p">[</span><span class="s2">&quot;NAXIS#{i}&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">naxis</span><span class="p">]</span>
+    
+    <span class="vi">@width  = </span><span class="nx">header</span><span class="p">[</span><span class="s2">&quot;NAXIS1&quot;</span><span class="p">]</span>
+    <span class="vi">@height = </span><span class="nx">header</span><span class="p">[</span><span class="s2">&quot;NAXIS2&quot;</span><span class="p">]</span> <span class="o">or</span> <span class="mi">1</span>
+    
+    <span class="vi">@rowByteSize = </span><span class="nx">@width</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span><span class="p">(</span><span class="nx">bitpix</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span>
+    <span class="vi">@totalRowsRead = </span><span class="mi">0</span>
+    
+    <span class="vi">@length = </span><span class="nx">@naxis</span><span class="p">.</span><span class="nx">reduce</span><span class="p">(</span> <span class="nf">(a, b) -&gt;</span> <span class="nx">a</span> <span class="o">*</span> <span class="nx">b</span><span class="p">)</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span><span class="p">(</span><span class="nx">bitpix</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span>
+    <span class="vi">@data   = </span><span class="kc">undefined</span>
+    <span class="vi">@frame  = </span><span class="mi">0</span>    <span class="c1"># Only relevant for data cubes</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Define the function to interpret the image data</p></div></div><div class="code"><div class="wrapper">    <span class="k">switch</span> <span class="nx">bitpix</span>
+      <span class="k">when</span> <span class="mi">8</span>
+        <span class="vi">@arrayType  = </span><span class="nx">Uint8Array</span>
+        <span class="vi">@accessor   = </span><span class="o">=&gt;</span> <span class="k">return</span> <span class="nx">@view</span><span class="p">.</span><span class="nx">getUint8</span><span class="p">()</span>
+      <span class="k">when</span> <span class="mi">16</span>
+        <span class="vi">@arrayType  = </span><span class="nx">Int16Array</span>
+        <span class="vi">@accessor   = </span><span class="o">=&gt;</span> <span class="k">return</span> <span class="nx">@view</span><span class="p">.</span><span class="nx">getInt16</span><span class="p">()</span>
+      <span class="k">when</span> <span class="mi">32</span>
+        <span class="vi">@arrayType  = </span><span class="nx">Int32Array</span>
+        <span class="vi">@accessor   = </span><span class="o">=&gt;</span> <span class="k">return</span> <span class="nx">@view</span><span class="p">.</span><span class="nx">getInt32</span><span class="p">()</span>
+      <span class="k">when</span> <span class="mi">64</span>
+        <span class="vi">@arrayType  = </span><span class="nx">Int32Array</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">warn</span> <span class="s2">&quot;Something funky happens here when dealing with 64 bit integers.  Be wary!!!&quot;</span>
+        <span class="vi">@accessor   = </span><span class="o">=&gt;</span>
+          <span class="nv">highByte  = </span><span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span> <span class="nx">@view</span><span class="p">.</span><span class="nx">getInt32</span><span class="p">()</span>
+          <span class="nv">lowByte   = </span><span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span> <span class="nx">@view</span><span class="p">.</span><span class="nx">getInt32</span><span class="p">()</span>
+          <span class="nv">mod       = </span><span class="nx">highByte</span> <span class="o">%</span> <span class="mi">10</span>
+          <span class="nv">factor    = </span><span class="k">if</span> <span class="nx">mod</span> <span class="k">then</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="mi">1</span>
+          <span class="nx">highByte</span>  <span class="o">-=</span> <span class="nx">mod</span>
+          <span class="nv">value     = </span><span class="nx">factor</span> <span class="o">*</span> <span class="p">((</span><span class="nx">highByte</span> <span class="o">&lt;&lt;</span> <span class="mi">32</span><span class="p">)</span> <span class="o">|</span> <span class="nx">lowByte</span><span class="p">)</span>
+          <span class="k">return</span> <span class="nx">value</span>
+      <span class="k">when</span> <span class="o">-</span><span class="mi">32</span>
+        <span class="vi">@arrayType  = </span><span class="nx">Float32Array</span>
+        <span class="vi">@accessor   = </span><span class="o">=&gt;</span> <span class="k">return</span> <span class="nx">@view</span><span class="p">.</span><span class="nx">getFloat32</span><span class="p">()</span>
+      <span class="k">when</span> <span class="o">-</span><span class="mi">64</span>
+        <span class="vi">@arrayType  = </span><span class="nx">Float64Array</span>
+        <span class="vi">@accessor   = </span><span class="o">=&gt;</span> <span class="k">return</span> <span class="nx">@view</span><span class="p">.</span><span class="nx">getFloat64</span><span class="p">()</span>
+      <span class="k">else</span>
+        <span class="k">throw</span> <span class="s2">&quot;FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, 64, -32, -64]&quot;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Read a row of pixels from the array buffer.  The method initArray
+must be called before requesting any rows.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">getRow: </span><span class="o">-&gt;</span>
+    <span class="vi">@current = </span><span class="nx">@begin</span> <span class="o">+</span> <span class="nx">@totalRowsRead</span> <span class="o">*</span> <span class="nx">@rowByteSize</span>
+    <span class="nx">@view</span><span class="p">.</span><span class="nx">seek</span><span class="p">(</span><span class="nx">@current</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">..</span><span class="nx">@width</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+      <span class="nx">@data</span><span class="p">[</span><span class="nx">@width</span> <span class="o">*</span> <span class="nx">@rowsRead</span> <span class="o">+</span> <span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@accessor</span><span class="p">()</span>
+    
+    <span class="nx">@rowsRead</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="nx">@totalRowsRead</span> <span class="o">+=</span> <span class="mi">1</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Read the entire frame of the image.  If the image is a data cube, it reads
+a slice of the data.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">getFrame: </span><span class="nf">(@frame = @frame) -&gt;</span>
+    <span class="nx">@initArray</span><span class="p">(</span><span class="nx">@arrayType</span><span class="p">)</span> <span class="nx">unless</span> <span class="nx">@data</span><span class="o">?</span>
+    
+    <span class="vi">@totalRowsRead = </span><span class="nx">@width</span> <span class="o">*</span> <span class="nx">@frame</span>
+    <span class="vi">@rowsRead = </span><span class="mi">0</span>
+    
+    <span class="nv">height = </span><span class="nx">@height</span>
+    <span class="k">while</span> <span class="nx">height</span><span class="o">--</span>
+      <span class="nx">@getRow</span><span class="p">()</span>
+    
+    <span class="nx">@frame</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="nx">@data</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>getFrame: (@frame = @frame) =>
+  length = @width * @height
+  buffer = @view.buffer.slice(@begin, @begin + 2 * length)
+  @data = new Uint16Array(buffer)
+  for index in [0..length-1]
+    value = @data[index]
+    @data[index] = (((value &amp; 0xFF) &lt;&lt; 8) | ((value >> 8) &amp; 0xFF))</p>
+
+<p>@frame += 1
+  @rowsRead = @totalRowsRead = @frame * @width
+  return @data</p></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Moves the pointer that is used to read the array buffer to a specified frame.  For 2D images
+this defaults to the first and only frame.  Indexing of the frame argument begins at 0.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">seek: </span><span class="nf">(frame = 0) -&gt;</span>
+    <span class="k">if</span> <span class="nx">@naxis</span><span class="p">.</span><span class="nx">length</span> <span class="o">is</span> <span class="mi">2</span>
+      <span class="vi">@totalRowsRead = </span><span class="mi">0</span>
+      <span class="vi">@frame    = </span><span class="mi">0</span>
+    <span class="k">else</span>
+      <span class="vi">@totalRowsRead = </span><span class="nx">@height</span> <span class="o">*</span> <span class="nx">frame</span>
+      <span class="vi">@frame    = </span><span class="nx">@height</span> <span class="err">/ @totalRowsRead - 1</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Checks if the image is a data cube</p></div></div><div class="code"><div class="wrapper">  <span class="nv">isDataCube: </span><span class="o">-&gt;</span> <span class="k">return</span> <span class="k">if</span> <span class="nx">@naxis</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">then</span> <span class="kc">true</span> <span class="k">else</span> <span class="kc">false</span>
+
+<span class="vi">@astro.FITS.Image = </span><span class="nx">Image</span></div></div></div></div></body></html>

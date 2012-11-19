@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="en"><head><title>binarytable</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="binarytable"><meta name="groc-project-path" content="src/binarytable.coffee"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/binarytable.coffee</div></div><div id="document"><div class="segment"><div class="code"><div class="wrapper"><span class="k">class</span> <span class="nx">BinaryTable</span> <span class="k">extends</span> <span class="nx">Tabular</span>
+  <span class="vi">@dataTypePattern = </span><span class="sr">/(\d*)([L|X|B|I|J|K|A|E|D|C|M])/</span>
+  <span class="vi">@arrayDescriptorPattern = </span><span class="sr">/[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/</span>
+  
+  <span class="nv">constructor: </span><span class="nf">(view, header) -&gt;</span>
+    <span class="k">super</span>
+
+    <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">@cols</span><span class="p">]</span>
+      <span class="nv">keyword = </span><span class="s2">&quot;TFORM#{i}&quot;</span>
+      <span class="nv">value = </span><span class="nx">header</span><span class="p">[</span><span class="nx">keyword</span><span class="p">]</span>
+      <span class="nv">match = </span><span class="nx">value</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="nx">BinaryTable</span><span class="p">.</span><span class="nx">arrayDescriptorPattern</span><span class="p">)</span>
+      <span class="k">if</span> <span class="nx">match</span><span class="o">?</span>
+        <span class="nx">do</span> <span class="o">=&gt;</span>
+          <span class="nv">dataType = </span><span class="nx">match</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+          <span class="nv">accessor = </span><span class="o">=&gt;</span>
+            <span class="nv">length    = </span><span class="nx">@view</span><span class="p">.</span><span class="nx">getInt32</span><span class="p">()</span>
+            <span class="nv">offset    = </span><span class="nx">@view</span><span class="p">.</span><span class="nx">getInt32</span><span class="p">()</span>
+            <span class="vi">@current  = </span><span class="nx">@view</span><span class="p">.</span><span class="nx">tell</span><span class="p">()</span>
+            <span class="nx">@view</span><span class="p">.</span><span class="nx">seek</span><span class="p">(</span><span class="nx">@begin</span> <span class="o">+</span> <span class="nx">@tableLength</span> <span class="o">+</span> <span class="nx">offset</span><span class="p">)</span>
+            <span class="nv">data = </span><span class="p">[]</span>
+            <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">length</span><span class="p">]</span>
+              <span class="nx">data</span><span class="p">.</span><span class="nx">push</span> <span class="nx">BinaryTable</span><span class="p">.</span><span class="nx">dataAccessors</span><span class="p">[</span><span class="nx">dataType</span><span class="p">](</span><span class="nx">@view</span><span class="p">)</span>
+            <span class="nx">@view</span><span class="p">.</span><span class="nx">seek</span><span class="p">(</span><span class="nx">@current</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nx">data</span>
+          <span class="nx">@accessors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">accessor</span><span class="p">)</span>
+      <span class="k">else</span>
+        <span class="nv">match = </span><span class="nx">value</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="nx">BinaryTable</span><span class="p">.</span><span class="nx">dataTypePattern</span><span class="p">)</span>
+        <span class="p">[</span><span class="nx">length</span><span class="p">,</span> <span class="nx">dataType</span><span class="p">]</span> <span class="o">=</span> <span class="nx">match</span><span class="p">[</span><span class="mi">1</span><span class="p">..]</span>
+        <span class="nv">length = </span><span class="k">if</span> <span class="nx">length</span> <span class="k">then</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">length</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="nx">length</span> <span class="k">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+          <span class="nx">do</span> <span class="p">(</span><span class="nx">dataType</span><span class="p">)</span> <span class="o">=&gt;</span>
+            <span class="nv">accessor = </span><span class="o">=&gt;</span>
+              <span class="nv">data = </span><span class="nx">BinaryTable</span><span class="p">.</span><span class="nx">dataAccessors</span><span class="p">[</span><span class="nx">dataType</span><span class="p">](</span><span class="nx">@view</span><span class="p">)</span>
+              <span class="k">return</span> <span class="nx">data</span>
+            <span class="nx">@accessors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">accessor</span><span class="p">)</span>
+        <span class="k">else</span>
+          <span class="nx">do</span> <span class="p">(</span><span class="nx">dataType</span><span class="p">,</span> <span class="nx">length</span><span class="p">)</span> <span class="o">=&gt;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Handling bit arrays</p></div></div><div class="code"><div class="wrapper">            <span class="k">if</span> <span class="nx">dataType</span> <span class="o">is</span> <span class="s1">&#39;X&#39;</span>
+              <span class="nv">numBytes = </span><span class="nb">Math</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">length</span><span class="p">)</span> <span class="o">/</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+              <span class="nv">accessor = </span><span class="o">=&gt;</span>
+                <span class="nv">byte2bits = </span><span class="nf">(byte) -&gt;</span>
+                  <span class="nv">bitarray = </span><span class="p">[]</span>
+                  <span class="nv">i = </span><span class="mi">128</span>
+                  <span class="k">while</span> <span class="nx">i</span> <span class="o">&gt;=</span> <span class="mi">1</span>
+                    <span class="nx">bitarray</span><span class="p">.</span><span class="nx">push</span> <span class="p">(</span><span class="k">if</span> <span class="nx">byte</span> <span class="o">&amp;</span> <span class="nx">i</span> <span class="k">then</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="nx">i</span> <span class="err">/= 2</span>
+                  <span class="k">return</span> <span class="nx">bitarray</span>
+                
+                <span class="nv">data = </span><span class="p">[]</span>
+                <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">numBytes</span><span class="p">]</span>
+                  <span class="nv">byte = </span><span class="nx">@view</span><span class="p">.</span><span class="nx">getUint8</span><span class="p">()</span>
+                  <span class="nv">bitarray = </span><span class="nx">byte2bits</span><span class="p">(</span><span class="nx">byte</span><span class="p">)</span>
+                  <span class="k">for</span> <span class="nx">bit</span> <span class="k">in</span> <span class="nx">bitarray</span>
+                    <span class="nx">data</span><span class="p">.</span><span class="nx">push</span> <span class="nx">bit</span>
+                <span class="k">return</span> <span class="nx">data</span><span class="p">[</span><span class="mi">0</span><span class="p">..</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Handle character arrays</p></div></div><div class="code"><div class="wrapper">            <span class="k">else</span> <span class="k">if</span> <span class="nx">dataType</span> <span class="o">is</span> <span class="s1">&#39;A&#39;</span>
+              <span class="nv">accessor = </span><span class="o">=&gt;</span>
+                <span class="nv">data = </span><span class="s1">&#39;&#39;</span>
+                <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">length</span><span class="p">]</span>
+                  <span class="nx">data</span> <span class="o">+=</span> <span class="nx">BinaryTable</span><span class="p">.</span><span class="nx">dataAccessors</span><span class="p">[</span><span class="nx">dataType</span><span class="p">](</span><span class="nx">@view</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nx">data</span><span class="p">.</span><span class="nx">trim</span><span class="p">()</span>
+            <span class="k">else</span>
+              <span class="nv">accessor = </span><span class="o">=&gt;</span>
+                <span class="nv">data = </span><span class="p">[]</span>
+                <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">length</span><span class="p">]</span>
+                  <span class="nx">data</span><span class="p">.</span><span class="nx">push</span> <span class="nx">BinaryTable</span><span class="p">.</span><span class="nx">dataAccessors</span><span class="p">[</span><span class="nx">dataType</span><span class="p">](</span><span class="nx">@view</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nx">data</span>
+            <span class="nx">@accessors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">accessor</span><span class="p">)</span>
+
+
+<span class="vi">@astro.FITS.BinaryTable = </span><span class="nx">BinaryTable</span></div></div></div></div></body></html>

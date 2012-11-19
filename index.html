@@ -1,0 +1,197 @@
+<!DOCTYPE html><html lang="en"><head><title>index</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="index"><meta name="groc-project-path" content="README.md"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path">README.md</div></div><div id="document"><div class="segment"><div class="comments"><div class="wrapper"><h1 id="fitsjs">fitsjs</h1>
+
+<p>A standalone JavaScript library for reading the astronomical file format – FITS.  This library is built for modern browsers supporting the DataView object.  These include at least Chrome 9, Firefox 15, and Safari 6.</p>
+
+<p>To use the library copy <code>lib/fits.js</code> to your project and include it using a script tag.  After including the library, the FITS object is exposed under the <code>astro</code> namespace.</p>
+
+<pre><code>&lt;script src="fits.js" type="text/javascript" charset="utf-8"&gt;
+&lt;/script&gt;
+
+&lt;script type="text/javascript"&gt;
+  var FITS = astro.FITS;
+&lt;/script&gt;
+</code></pre>
+
+<p>This library may be used to read various forms of the FITS format.  This implementation is under active development.  In its current state it supports the following:</p>
+
+<ul>
+<li>Reading of multiple header data units</li>
+<li>Reading of FITS images</li>
+<li>Reading of data cubes</li>
+<li>Reading of binary tables</li>
+<li>Reading of ASCII Tables</li>
+<li>Decompressing images using the Rice algorithm</li>
+</ul>
+
+<p>If you incorporate this library in your project, please let me know.  I would like to maintain a list of users :)</p>
+
+<h2 id="api">API</h2>
+
+<h3 id="fitsfile">FITS.File</h3>
+
+<pre><code>fits.getHDU()
+</code></pre>
+
+<p>Returns the first HDU containing a data unit.  An optional argument may be passed to retrieve 
+a specific HDU.</p>
+
+<pre><code>fits.getHeader()
+</code></pre>
+
+<p>Returns the header associated with the first HDU containing a data unit.  An optional argument
+may be passed to point to a specific HDU.</p>
+
+<pre><code>fits.getDataUnit()
+</code></pre>
+
+<p>Returns the data object associated with the first HDU containing a data unit.  This method does not read from the array buffer.
+An optional argument may be passed to point to a specific HDU.</p>
+
+<pre><code>fits.getData()
+</code></pre>
+
+<p>Returns the data associated with the first HDU containing a data unit.  An optional argument
+may be passed to point to a specific HDU.</p>
+
+<h3 id="fitshdu">FITS.HDU</h3>
+
+<pre><code>hdu.getCard(key)
+</code></pre>
+
+<p>Returns the value from the header of the user specified key.</p>
+
+<h3 id="fitsheader">FITS.Header</h3>
+
+<pre><code>hdr.get(key)
+</code></pre>
+
+<p>Returns the index, value, and comment of the key.</p>
+
+<pre><code>hdr[key]
+</code></pre>
+
+<p>Returns the value of the key.</p>
+
+<pre><code>hdr.getIndex(key)
+</code></pre>
+
+<p>Returns the index of the key.</p>
+
+<pre><code>hdr.getComment(key)
+</code></pre>
+
+<p>Returns the comment associated with the key.</p>
+
+<pre><code>hdr.getComments(key)
+</code></pre>
+
+<p>Returns the value of all COMMENT fields.</p>
+
+<pre><code>hdr.getHistory(key)
+</code></pre>
+
+<p>Returns the value of all HISTORY fields.</p>
+
+<pre><code>hdr.set(key, value, comment)
+</code></pre>
+
+<p>Sets the value and comment for a key.  Note: This function is used internally, and not yet suited for use outside of the library.</p>
+
+<pre><code>hdr.setComment(comment)
+</code></pre>
+
+<p>Sets a comment associated with the COMMENT key.  Note: This function is used internally, and not yet suited for use outside of the library.</p>
+
+<pre><code>hdr.setHistory(history)
+</code></pre>
+
+<p>Sets a history associated with the HISTORY key.  Note: This function is used internally, and not yet suited for use outside of the library.</p>
+
+<pre><code>hdr.contains(key)
+</code></pre>
+
+<p>Checks if a key is contained in the header instance.</p>
+
+<pre><code>hdr.readCard(line)
+</code></pre>
+
+<p>Parses a string representing a single key, adding it to the instance.</p>
+
+<pre><code>hdr.hasDataUnit()
+</code></pre>
+
+<p>Checks if the header has an associated data unit.</p>
+
+<p><em>More to come ...</em></p>
+
+<h2 id="examples">Examples</h2>
+
+<pre><code>&lt;script src="fits.js" type="text/javascript" charset="utf-8"&gt;
+&lt;/script&gt;
+
+&lt;script type="text/javascript"&gt;
+  var FITS = astro.FITS;
+
+  // Get an array buffer of the FITS file using XHR
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', "[/path/to/fits/file]");
+
+  // Set the response type to arraybuffer
+  xhr.responseType = 'arraybuffer';
+
+  // Define the onload function
+  xhr.onload = function(e) {
+
+      // Initialize the FITS.File object using
+      // the array buffer returned from the XHR
+      var fits = new FITS.File(xhr.response);
+
+      // Grab the first HDU with a data unit
+      var hdu = fits.getHDU();
+
+      // Read a card from the header
+      var bitpix = hdu.getCard("BITPIX");
+
+      // or we can read the card from the Header object
+      var bitpix = hdu.header["BITPIX"]
+
+      // Grab the data object
+      var data = hdu.data
+  }
+
+  // BAM! Send off the request
+  xhr.send();
+
+&lt;/script&gt;
+</code></pre>
+
+<h2 id="references">References</h2>
+
+<p>Pence, W. D. Binary Table Extension To FITS.</p>
+
+<p>Pence, W. D., L. Chiappetti, C. G. Page, R. a. Shaw, and E. Stobie. 2010. Definition of the Flexible Image Transport System ( FITS ), version 3.0. Astronomy &amp; Astrophysics 524 (November 22): A42. doi:10.1051/0004-6361/201015362. http://www.aanda.org/10.1051/0004-6361/201015362.</p>
+
+<p>Ponz, J.D., Thompson, R.W., Muñoz, J.R. The FITS Image Extension.</p>
+
+<p>White, Richard L, Perry Greenfield, William Pence, Nasa Gsfc, Doug Tody, and Rob Seaman. 2011. Tiled Image Convention for Storing Compressed Images in FITS Binary Tables: 1-17.</p>
+
+<h2 id="notes">Notes</h2>
+
+<p>Currently rendering data as WebGL textures requires the use of Uint8 arrays or Float32 arrays.  Declare the data type:</p>
+
+<pre><code>var dataType = gl.UNSIGNED_BYTE;  # for Uint8 (BITPIX = 8)
+var dataType = gl.FLOAT;          # for Uint16, Float32 (BITPIX 16, 32, -32)
+
+# Set parameters and data to texture
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width, height, 0, gl.LUMINANCE, dataType, pixels);
+</code></pre>
+
+<p>Documentation at <a href="http://www.khronos.org/registry/webgl/specs/latest/#5.14.8">Khronos</a> states the following are supported formats, however they do not appear to render when used as textures.</p>
+
+<ul>
+<li>gl.UNSIGNED_BYTE (Uint8Array)</li>
+<li>gl.UNSIGNED<em>SHORT</em>5<em>6</em>5 (Uint16Array)</li>
+<li>gl.UNSIGNED<em>SHORT</em>4<em>4</em>4_4 (Uint16Array)</li>
+<li>gl.UNSIGNED<em>SHORT</em>5<em>5</em>5_1 (Uint16Array)</li>
+<li>gl.FLOAT (Float32Array)</li>
+</ul></div></div></div></div></body></html>
