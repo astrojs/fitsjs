@@ -11,4 +11,4 @@ class HDU
   getCard: (key) -> return @header[key]
 
 
-@astro.fits.HDU = HDU
+@astro.FITS.HDU = HDU

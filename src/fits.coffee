@@ -1,6 +1,6 @@
 @astro = {} unless @astro?
 
-fits = {}
-fits.version = '0.2.0'
+FITS = {}
+FITS.version = '0.2.0'
 
-@astro.fits = fits
+@astro.FITS = FITS

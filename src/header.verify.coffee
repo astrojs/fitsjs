@@ -172,4 +172,4 @@ HeaderVerify =
       key = "ZGCOUNT"
       return parseInt(arguments[0])
 
-@astro.fits.HeaderVerify = HeaderVerify
+@astro.FITS.HeaderVerify = HeaderVerify

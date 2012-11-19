@@ -62,4 +62,4 @@ class Tabular extends DataUnit
     return columnNames
 
 
-@astro.fits.Tabular = Tabular
+@astro.FITS.Tabular = Tabular

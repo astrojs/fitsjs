@@ -8,4 +8,4 @@ class DataUnit extends Module
     @begin  = @current = view.tell()
     @length = undefined
 
-@astro.fits.DataUnit = DataUnit
+@astro.FITS.DataUnit = DataUnit

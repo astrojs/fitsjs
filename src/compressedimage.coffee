@@ -184,4 +184,4 @@ class CompressedImage extends Tabular
   @linearScaling: -> throw "Not yet implemented"
 
 
-@astro.fits.CompressedImage = CompressedImage
+@astro.FITS.CompressedImage = CompressedImage

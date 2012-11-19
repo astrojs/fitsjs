@@ -217,4 +217,4 @@ class File
   getData: (index = undefined) -> return @getHDU(index).data.getFrame()
 
 
-@astro.fits.File = File
+@astro.FITS.File = File

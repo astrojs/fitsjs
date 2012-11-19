@@ -123,4 +123,4 @@ class Header extends Module
   isPrimary: -> return @primary
   isExtension: -> return @extension
 
-@astro.fits.Header = Header
+@astro.FITS.Header = Header

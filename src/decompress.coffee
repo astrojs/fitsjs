@@ -164,4 +164,4 @@ Decompress =
   hcompress: (array, length) -> throw "Not yet implemented"
 
 
-@astro.fits.Decompress = Decompress
+@astro.FITS.Decompress = Decompress

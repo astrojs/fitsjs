@@ -36,4 +36,4 @@ class Table extends Tabular
     @rowsRead += 1
     return row
 
-@astro.fits.Table = Table
+@astro.FITS.Table = Table

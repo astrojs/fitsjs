@@ -72,4 +72,4 @@ class BinaryTable extends Tabular
             @accessors.push(accessor)
 
 
-@astro.fits.BinaryTable = BinaryTable
+@astro.FITS.BinaryTable = BinaryTable

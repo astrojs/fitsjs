@@ -104,4 +104,4 @@ class Image extends DataUnit
   # Checks if the image is a data cube
   isDataCube: -> return if @naxis.length > 2 then true else false
 
-@astro.fits.Image = Image
+@astro.FITS.Image = Image

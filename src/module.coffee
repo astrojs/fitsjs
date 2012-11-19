@@ -21,4 +21,4 @@ class Module
   proxy: (func) ->
     => func.apply(this, arguments)
 
-@astro.fits.Module = Module
+@astro.FITS.Module = Module
