@@ -157,6 +157,31 @@ describe "FITS Image", ->
       expect(image.getPixel(108, 345)).toEqual(4380)
       expect(image.getPixel(720, 500)).toEqual(5527)
 
+  it 'can read an image with BSCALE and BZERO params', ->
+    fits = null
+    
+    xhr = new XMLHttpRequest()
+    xhr.open('GET', 'data/m101_scaleparams.fits')
+    xhr.responseType = 'arraybuffer'
+    xhr.onload = -> fits = new FITS.File(xhr.response)
+    xhr.send()
+    
+    waitsFor -> return fits?
+    
+    runs ->
+      image = fits.getDataUnit()
+    
+      # Grab the data
+      image.getFrame()
+      
+      # Get and check the extremes
+      image.getExtremes()
+      
+      expect(image.min).toEqual(1298.0)
+      expect(image.max).toEqual(13201.5)
+      
+      expect(image.getPixel(0, 0)).toEqual(2026)
+
   # it 'can read a file with an IMAGE extension', ->
   #   fits = null
   # 

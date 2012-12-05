@@ -14,6 +14,9 @@ class Image extends DataUnit
     @width  = header["NAXIS1"]
     @height = header["NAXIS2"] or 1
     
+    @bzero  = header["BZERO"] or 0
+    @bscale = header["BSCALE"] or 1
+    
     @rowByteSize = @width * Math.abs(bitpix) / 8
     @totalRowsRead = 0
     
@@ -25,16 +28,16 @@ class Image extends DataUnit
     switch bitpix
       when 8
         @arrayType  = Uint8Array
-        @accessor   = => return @view.getUint8()
+        @accessor   = => return @bzero + @bscale * @view.getUint8()
       when 16
         @arrayType  = Int16Array
-        @accessor   = => return @view.getInt16()
+        @accessor   = => return @bzero + @bscale * @view.getInt16()
       when 32
         @arrayType  = Int32Array
-        @accessor   = => return @view.getInt32()
+        @accessor   = => return @bzero + @bscale * @view.getInt32()
       when 64
         @arrayType  = Int32Array
-        console.warn "Something funky happens here when dealing with 64 bit integers.  Be wary!!!"
+        console.warn "Unusual behaviour with 64 bit integers."
         @accessor   = =>
           highByte  = Math.abs @view.getInt32()
           lowByte   = Math.abs @view.getInt32()
@@ -42,15 +45,15 @@ class Image extends DataUnit
           factor    = if mod then -1 else 1
           highByte  -= mod
           value     = factor * ((highByte << 32) | lowByte)
-          return value
+          return @bzero + @bscale * value
       when -32
         @arrayType  = Float32Array
-        @accessor   = => return @view.getFloat32()
+        @accessor   = => return @bzero + @bscale * @view.getFloat32()
       when -64
         @arrayType  = Float64Array
-        @accessor   = => return @view.getFloat64()
+        @accessor   = => return @bzero + @bscale * @view.getFloat64()
       else
-        throw "FITS keyword BITPIX does not conform to one of the following set values [8, 16, 32, 64, -32, -64]"
+        throw "Invalid BITPIX."
 
   # Read a row of pixels from the array buffer.  The method initArray
   # must be called before requesting any rows.
@@ -78,18 +81,6 @@ class Image extends DataUnit
     
     @frame += 1
     return @data
-
-  # getFrame: (@frame = @frame) =>
-  #   length = @width * @height
-  #   buffer = @view.buffer.slice(@begin, @begin + 2 * length)
-  #   @data = new Uint16Array(buffer)
-  #   for index in [0..length-1]
-  #     value = @data[index]
-  #     @data[index] = (((value & 0xFF) << 8) | ((value >> 8) & 0xFF))
-  #     
-  #   @frame += 1
-  #   @rowsRead = @totalRowsRead = @frame * @width
-  #   return @data
 
   # Moves the pointer that is used to read the array buffer to a specified frame.  For 2D images
   # this defaults to the first and only frame.  Indexing of the frame argument begins at 0.
