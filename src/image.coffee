@@ -27,16 +27,28 @@ class Image extends DataUnit
     # Define the function to interpret the image data
     switch bitpix
       when 8
-        @arrayType  = Uint8Array
-        @accessor   = => return @bzero + @bscale * @view.getUint8()
+        if @bscale % 1 is 0
+          @arrayType  = Uint8Array
+          @accessor   = => return @bzero + @bscale * @view.getUint8()
+        else
+          @arrayType  = Float32Array
+          @accessor   = => return @bzero + @bscale * @view.getUint8()
       when 16
-        @arrayType  = Int16Array
-        @accessor   = => return @bzero + @bscale * @view.getInt16()
+        if @bscale % 1 is 0
+          @arrayType  = Int16Array
+          @accessor   = => return @bzero + @bscale * @view.getInt16()
+        else
+          @arrayType  = Float32Array
+          @accessor   = => return @bzero + @bscale * @view.getInt16()
       when 32
-        @arrayType  = Int32Array
-        @accessor   = => return @bzero + @bscale * @view.getInt32()
+        if @bscale % 1 is 0
+          @arrayType  = Int32Array
+          @accessor   = => return @bzero + @bscale * @view.getUint32()
+        else
+          @arrayType  = Float32Array
+          @accessor   = => return @bzero + @bscale * @view.getUint32()
       when 64
-        @arrayType  = Int32Array
+        @arrayType  = if @bscale % 1 is 0 then Int32Array else Float32Array
         console.warn "Unusual behaviour with 64 bit integers."
         @accessor   = =>
           highByte  = Math.abs @view.getInt32()
@@ -76,8 +88,7 @@ class Image extends DataUnit
     @rowsRead = 0
     
     height = @height
-    while height--
-      @getRow()
+    @getRow() while height--
     
     @frame += 1
     return @data
@@ -86,13 +97,13 @@ class Image extends DataUnit
   # this defaults to the first and only frame.  Indexing of the frame argument begins at 0.
   seek: (frame = 0) ->
     if @naxis.length is 2
-      @totalRowsRead = 0
-      @frame    = 0
+      @totalRowsRead  = 0
+      @frame          = 0
     else
-      @totalRowsRead = @height * frame
-      @frame    = @height / @totalRowsRead - 1
+      @totalRowsRead  = @height * frame
+      @frame          = @height / @totalRowsRead - 1
   
   # Checks if the image is a data cube
-  isDataCube: -> return if @naxis.length > 2 then true else false
+  isDataCube: -> return if @naxis.length > 2 then true else false 
 
 @astro.FITS.Image = Image
