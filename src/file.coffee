@@ -6,110 +6,62 @@ class File
   @BLOCKLENGTH = 2880
   
   constructor: (buffer) ->
-    @init(buffer)
-  
-  # ##Class Methods
-
-  # Determine the number of characters following a header or data unit
-  @excessBytes: (length) -> return (File.BLOCKLENGTH - (length % File.BLOCKLENGTH)) % File.BLOCKLENGTH
-
-  @extendDataView: (view) ->
-    
-    # Add methods to native DataView object
-    DataView::getString = (length) ->
-      value = ''
-      while length--
-        c = @getUint8()
-        value += String.fromCharCode(if c > 127 then 65533 else c)
-      return value
-
-    DataView::getChar = -> return @getString(1)
-    
-    view.offset = 0
-    
-    getInt8     = view.getInt8      # unsigned long byteOffset
-    getUint8    = view.getUint8     # unsigned long byteOffset
-    getInt16    = view.getInt16     # unsigned long byteOffset, optional boolean littleEndian
-    getUint16   = view.getUint16    # unsigned long byteOffset, optional boolean littleEndian
-    getInt32    = view.getInt32     # unsigned long byteOffset, optional boolean littleEndian
-    getUint32   = view.getUint32    # unsigned long byteOffset, optional boolean littleEndian
-    getFloat32  = view.getFloat32   # unsigned long byteOffset, optional boolean littleEndian
-    getFloat64  = view.getFloat64   # unsigned long byteOffset, optional boolean littleEndian
-    
-    view.getInt8 = ->
-      value = getInt8.apply(@, [@offset])
-      @offset += 1
-      return value
-    
-    view.getUint8 = ->
-      value = getUint8.apply(@, [@offset])
-      @offset += 1
-      return value
-      
-    view.getInt16 = ->
-      value = getInt16.apply(@, [@offset, false])
-      @offset += 2
-      return value
-      
-    view.getUint16 = ->
-      value = getUint16.apply(@, [@offset, false])
-      @offset += 2
-      return value
-      
-    view.getInt32 = ->
-      value = getInt32.apply(@, [@offset, false])
-      @offset += 4
-      return value
-      
-    view.getUint32 = ->
-      value = getUint32.apply(@, [@offset, false])
-      @offset += 4
-      return value
-      
-    view.getFloat32 = ->
-      value = getFloat32.apply(@, [@offset, false])
-      @offset += 4
-      return value
-      
-    view.getFloat64 = ->
-      value = getFloat64.apply(@, [@offset, false])
-      @offset += 8
-      return value
-    
-    view.seek = (offset) -> @offset = offset
-    view.tell = -> return @offset
-
-  # ##Instance Methods
-  
-  # Initialize the object from an array buffer
-  init: (buffer) ->
+    @offset     = 0
     @length     = buffer.byteLength
     @view       = new DataView buffer
+    
     @hdus       = []
     @eof        = false
-
+    
+    # TODO: Remove need to extend DataView.
+    #       Place offset in DataUnit class
     File.extendDataView(@view)
     
+    # Loop until the end of file
     loop
       header  = @readHeader()
       data    = @readData(header)
       hdu = new HDU(header, data)
       @hdus.push hdu
       break if @eof
+  
+  # ##Class Methods
 
-  # Extracts a single header without interpreting each line (interpretation is slow for large headers)
+  # Determine the number of characters following a header or data unit
+  @excessBytes: (length) ->
+    return (File.BLOCKLENGTH - (length % File.BLOCKLENGTH)) % File.BLOCKLENGTH
+
+  @extendDataView: (view) ->
+    
+    # Add methods to native DataView object
+    DataView::getString = (offset, length) ->
+      value = ''
+      while length--
+        c = @getUint8(offset)
+        offset += 1
+        value += String.fromCharCode(if c > 127 then 65533 else c)
+      return value
+    
+    DataView::getChar = (offset) ->
+      return @getString(offset)
+  
+  # ##Instance Methods
+
+  # Extracts a single header without interpreting each line.
+  # Interpretation is slow for large headers.
   readHeader: ->
     whitespacePattern = /\s{80}/
     endPattern = /^END\s/
     
-    # Store the current byte offset and mark when the header END has been reached
-    beginOffset = @view.tell()
+    # Store the current byte offset and mark when the END keyword is reached
+    beginOffset = @offset
     done = false
     loop
       break if done
       
       # Grab a 2880 block
-      block = @view.getString(File.BLOCKLENGTH)
+      block = @view.getString(@offset, File.BLOCKLENGTH)
+      @offset += File.BLOCKLENGTH
       
       # Set a line counter
       i = 0
@@ -128,23 +80,16 @@ class File
         # Otherwise attempt to match END
         match = line.match(endPattern)
         if match
-          endOffset = @view.tell()
-          @view.seek(beginOffset)
+          endOffset = @offset
           
-          # Grab the entire chunk representing the header
-          # TODO: Another option would be to concatentate the header as we go.
-          #       Not sure if this is memory efficient when dealing with ~10000
-          #       line headers.
-          block = @view.getString(endOffset - beginOffset)
-          
-          # TODO: Send to Header object for interpretion of mandatory and reserved keywords
-          header = new Header()
-          header.init(block)
+          # Get entire block representing header
+          block = @view.getString(beginOffset, endOffset - beginOffset)
+          header = new Header(block)
           done = true
           @checkEOF()
           return header
         
-        # Otherwise grab next block
+        # Otherwise get next block
         break
 
   # Read a data unit and initialize an appropriate instance depending
@@ -155,29 +100,28 @@ class File
     return unless header.hasDataUnit()
     
     if header.isPrimary()
-      data = new Image(@view, header)
+      DU = Image
     else if header.isExtension()
       if header.extensionType is "BINTABLE"
         if header.contains("ZIMAGE")
-          data = new CompressedImage(@view, header)
+          DU = CompressedImage
         else
-          data = new BinaryTable(@view, header)
+          DU = BinaryTable
       else if header.extensionType is "TABLE"
-        data = new Table(@view, header)
+        DU = Table
       else if header.extensionType is "IMAGE"
-        data = new Image(@view, header)
-      
+        DU = Image
+    data = new DU(header, @view, @offset)
+    
     excess = File.excessBytes(data.length)
     
     # Forward to the next HDU
-    @view.seek(@view.tell() + data.length + excess)
+    @offset += data.length + excess
     @checkEOF()
     return data
 
-  checkEOF: -> @eof = true if @view.offset >= @length
-
-  # Count the number of HDUs
-  count: -> return @hdus.length
+  checkEOF: ->
+    @eof = true if @offset >= @length
   
   # ### API
   

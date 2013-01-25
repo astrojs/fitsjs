@@ -11,7 +11,7 @@ class Header extends Module
   @arrayPattern     = /([A-Za-z]+)(\d+)/
   @include HeaderVerify
   
-  constructor: ->
+  constructor: (block) ->
     @primary    = false
     @extension  = false
     
@@ -22,6 +22,8 @@ class Header extends Module
     # e.g. [index, value, comment]
     @cards      = {}
     @cardIndex  = 0
+    
+    @init(block)
     
   # Get the index value and comment for a key
   get: (key) ->
@@ -101,6 +103,8 @@ class Header extends Module
       when "HISTORY" then @setHistory(value)
       else
         @set(key, value, comment)
+        
+        # TODO: Remove for IE10 compatibility
         @.__defineGetter__(key, -> return @cards[key][1])
   
   # Initialize a header, interpretting only mandatory and reserved keywords

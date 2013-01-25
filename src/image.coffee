@@ -3,7 +3,7 @@
 class Image extends DataUnit
   @include ImageUtils
   
-  constructor: (view, header) ->
+  constructor: (header, view, offset) ->
     super
     naxis   = header["NAXIS"]
     bitpix  = header["BITPIX"]
@@ -17,7 +17,8 @@ class Image extends DataUnit
     @bzero  = header["BZERO"] or 0
     @bscale = header["BSCALE"] or 1
     
-    @rowByteSize = @width * Math.abs(bitpix) / 8
+    @bytes = Math.abs(bitpix) / 8
+    @rowByteSize = @width * @bytes
     @totalRowsRead = 0
     
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
@@ -29,52 +30,40 @@ class Image extends DataUnit
       when 8
         if @bscale % 1 is 0
           @arrayType  = Uint8Array
-          @accessor   = => return @bzero + @bscale * @view.getUint8()
+          @accessor   = => return @bzero + @bscale * @view.getUint8(@offset)
         else
           @arrayType  = Float32Array
-          @accessor   = => return @bzero + @bscale * @view.getUint8()
+          @accessor   = => return @bzero + @bscale * @view.getUint8(@offset)
       when 16
         if @bscale % 1 is 0
           @arrayType  = Int16Array
-          @accessor   = => return @bzero + @bscale * @view.getInt16()
+          @accessor   = => return @bzero + @bscale * @view.getInt16(@offset)
         else
           @arrayType  = Float32Array
-          @accessor   = => return @bzero + @bscale * @view.getInt16()
+          @accessor   = => return @bzero + @bscale * @view.getInt16(@offset)
       when 32
         if @bscale % 1 is 0
           @arrayType  = Int32Array
-          @accessor   = => return @bzero + @bscale * @view.getUint32()
+          @accessor   = => return @bzero + @bscale * @view.getUint32(@offset)
         else
           @arrayType  = Float32Array
-          @accessor   = => return @bzero + @bscale * @view.getUint32()
-      when 64
-        @arrayType  = if @bscale % 1 is 0 then Int32Array else Float32Array
-        console.warn "Unusual behaviour with 64 bit integers."
-        @accessor   = =>
-          highByte  = Math.abs @view.getInt32()
-          lowByte   = Math.abs @view.getInt32()
-          mod       = highByte % 10
-          factor    = if mod then -1 else 1
-          highByte  -= mod
-          value     = factor * ((highByte << 32) | lowByte)
-          return @bzero + @bscale * value
+          @accessor   = => return @bzero + @bscale * @view.getUint32(@offset)
       when -32
         @arrayType  = Float32Array
-        @accessor   = => return @bzero + @bscale * @view.getFloat32()
-      when -64
-        @arrayType  = Float64Array
-        @accessor   = => return @bzero + @bscale * @view.getFloat64()
+        @accessor   = => return @bzero + @bscale * @view.getFloat32(@offset)
       else
-        throw "Invalid BITPIX."
-
+        throw "Invalid BITPIX"
+  
+  incrementOffset: => @offset += @bytes
+  
   # Read a row of pixels from the array buffer.  The method initArray
   # must be called before requesting any rows.
   getRow: ->
-    @current = @begin + @totalRowsRead * @rowByteSize
-    @view.seek(@current)
+    @offset = @begin + @totalRowsRead * @rowByteSize
     
     for i in [0..@width - 1]
       @data[@width * @rowsRead + i] = @accessor()
+      @incrementOffset()
     
     @rowsRead += 1
     @totalRowsRead += 1
@@ -105,5 +94,6 @@ class Image extends DataUnit
   
   # Checks if the image is a data cube
   isDataCube: -> return if @naxis.length > 2 then true else false 
+
 
 @astro.FITS.Image = Image
