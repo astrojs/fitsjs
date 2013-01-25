@@ -1,22 +1,13 @@
 
-# File is the class that parses all the HDUs, initializes Header instances
-# and appropriate Data instances.
+# Parses all header-dataunits, initializes Header instances
+# and appropriate dataunit instances.
 class File
   @LINEWIDTH   = 80
   @BLOCKLENGTH = 2880
   
-  @getType: (obj) -> return Object.prototype.toString.call(obj).slice(8, -1).toLowerCase()
-  
   constructor: (buffer) ->
-    name = File.getType(buffer)
-    switch name
-      when 'arraybuffer'
-        @initFromBuffer(buffer)
-      when 'object'
-        @initFromObject(buffer)
-      else
-        throw 'fitsjs cannot initialize object'
-
+    @init(buffer)
+  
   # ##Class Methods
 
   # Determine the number of characters following a header or data unit
@@ -27,7 +18,7 @@ class File
     # Add methods to native DataView object
     DataView::getString = (length) ->
       value = ''
-      for i in [0..length - 1]
+      while length--
         c = @getUint8()
         value += String.fromCharCode(if c > 127 then 65533 else c)
       return value
@@ -91,7 +82,7 @@ class File
   # ##Instance Methods
   
   # Initialize the object from an array buffer
-  initFromBuffer: (buffer) ->
+  init: (buffer) ->
     @length     = buffer.byteLength
     @view       = new DataView buffer
     @hdus       = []
@@ -105,13 +96,6 @@ class File
       hdu = new HDU(header, data)
       @hdus.push hdu
       break if @eof
-  
-  # Initialize the object from a serialized instance
-  initFromObject: (buffer) ->
-    @length = buffer.length
-    @view   = null
-    @hdus   = buffer.hdus
-    @eof    = true
 
   # Extracts a single header without interpreting each line (interpretation is slow for large headers)
   readHeader: ->

@@ -20,7 +20,7 @@ describe "FITS CompressedImage", ->
       image.getFrame()
     
       # Check the values of the corner pixels ...
-      image.getExtremes()
+      image.getExtent()
       
       expect(image.min).toBeCloseTo(-2.981497, precision)
       expect(image.max).toBeCloseTo(1273.853638, precision)

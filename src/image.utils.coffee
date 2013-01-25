@@ -5,9 +5,10 @@ ImageUtils =
   initArray: (arrayType) -> @data = new arrayType(@width * @height)
   
   # Compute the minimum and maximum pixels
-  getExtremes: ->
+  getExtent: ->
     return [@min, @max] if @min? and @max?
     
+    # Set initial values for min/max
     index = @data.length
     while index--
       value = @data[index]
@@ -16,6 +17,7 @@ ImageUtils =
       [min, max] = [value, value]
       break
     
+    # Continue loop to find extent
     while index--
       value = @data[index]
       continue if isNaN(value)

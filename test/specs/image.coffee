@@ -140,7 +140,7 @@ describe "FITS Image", ->
       image.getFrame()
       
       # Get and check the extremes
-      image.getExtremes()
+      image.getExtent()
       
       expect(image.min).toEqual(2396)
       expect(image.max).toEqual(26203)
@@ -175,7 +175,7 @@ describe "FITS Image", ->
       image.getFrame()
       
       # Get and check the extremes
-      image.getExtremes()
+      image.getExtent()
       
       expect(image.min).toEqual(1298.0)
       expect(image.max).toEqual(13201.5)

@@ -22,9 +22,9 @@ class Image extends DataUnit
     
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
     @data   = undefined
-    @frame  = 0    # Only relevant for data cubes
+    @frame  = 0    # Needed for data cubes
     
-    # Define the function to interpret the image data
+    # Define the function that interprets the data
     switch bitpix
       when 8
         if @bscale % 1 is 0
