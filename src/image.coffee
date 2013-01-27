@@ -3,6 +3,7 @@
 class Image extends DataUnit
   @include ImageUtils
   
+  
   constructor: (header, view, offset) ->
     super
     naxis   = header["NAXIS"]

@@ -43,7 +43,7 @@ class File
       return value
     
     DataView::getChar = (offset) ->
-      return @getString(offset)
+      return @getString(offset, 1)
   
   # ##Instance Methods
 

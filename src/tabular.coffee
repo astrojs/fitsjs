@@ -32,8 +32,10 @@ class Tabular extends DataUnit
     M: (view) ->
       return [view.getFloat64(), view.getFloat64()]
 
-  constructor: (view, header) ->
+  constructor: (header, view, offset) ->
     super
+    
+    # TODO: Abstract some of these variables
     @rowByteSize  = header["NAXIS1"]
     @rows         = header["NAXIS2"]
     @cols         = header["TFIELDS"]
@@ -45,8 +47,7 @@ class Tabular extends DataUnit
 
   getRow: (row = null) =>
     @rowsRead = row if row?
-    @current = @begin + @rowsRead * @rowByteSize
-    @view.seek(@current)
+    @offset = @begin + @rowsRead * @rowByteSize
     row = {}
     for accessor, index in @accessors
       row[@columns[index]] = accessor()

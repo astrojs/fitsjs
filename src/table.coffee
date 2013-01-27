@@ -2,7 +2,6 @@
 # Class to read ASCII tables from FITS files.
 class Table extends Tabular
   @formPattern = /([AIFED])(\d+)\.*(\d+)*/
-  
   @dataAccessors =
     A: (value) -> return value.trim()
     I: (value) -> return parseInt(value)
@@ -10,8 +9,9 @@ class Table extends Tabular
     E: (value) -> return parseFloat(value)
     D: (value) -> return parseFloat(value)
   
-  constructor: (view, header) ->
+  constructor: (header, view, offset) ->
     super
+    
     for i in [1..@cols]
       form = header["TFORM#{i}"]
       match = form.match(Table.formPattern)
@@ -23,10 +23,11 @@ class Table extends Tabular
 
   getRow: (row = null) =>
     @rowsRead = row if row?
-    @current = @begin + @rowsRead * @rowByteSize
-    @view.seek(@current)
+    @offset = @begin + @rowsRead * @rowByteSize
     line = ""
-    line += @view.getChar() for i in [1..@rowByteSize]
+    for i in [1..@rowByteSize]
+      line += @view.getChar(@offset)
+      @offset += 1
     line = line.trim().split(/\s+/)
     
     row = {}
@@ -35,5 +36,6 @@ class Table extends Tabular
 
     @rowsRead += 1
     return row
+
 
 @astro.FITS.Table = Table
