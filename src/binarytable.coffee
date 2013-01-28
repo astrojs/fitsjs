@@ -2,63 +2,6 @@
 class BinaryTable extends Tabular
   @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
   @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
-  dataAccessors:
-    L: (view, offset) =>
-      x = view.getInt8(offset)
-      offset += 1
-      val = if x is 84 then true else false
-      return [val, offset]
-    X: (view, offset) =>
-      throw "Data type not yet implemented"
-    B: (view, offset) =>
-      val = view.getUint8(offset)
-      offset += 1
-      return [val, offset]
-    I: (view, offset) =>
-      val = view.getInt16(offset)
-      offset += 2
-      return [val, offset]
-    J: (view, offset) =>
-      val = view.getInt32(offset)
-      offset += 4
-      return [val, offset]
-    K: (view, offset) =>
-      highByte = Math.abs view.getInt32(offset)
-      offset += 4
-      lowByte = Math.abs view.getInt32(offset)
-      offset += 4
-      mod = highByte % 10
-      factor = if mod then -1 else 1
-      highByte -= mod
-      console.warn "Something funky happens here when dealing with 64 bit integers.  Be wary!!!"
-      val = factor * ((highByte << 32) | lowByte)
-      return [val, offset]
-    A: (view, offset) =>
-      val = view.getChar(offset)
-      offset += 1
-      return [val, offset]
-    E: (view, offset) =>
-      val = view.getFloat32(offset)
-      offset += 4
-      return [val, offset]
-    D: (view, offset) =>
-      val = view.getFloat64(offset)
-      offset += 8
-      return [val, offset]
-    C: (view, offset) =>
-      val1 = view.getFloat32(offset)
-      offset += 4
-      val2 = view.getFloat32(offset)
-      offset += 4
-      val = [val1, val2]
-      return [val, offset]
-    M: (view, offset) =>
-      val1 = view.getFloat64(offset)
-      offset += 8
-      val2 = view.getFloat64(offset)
-      offset += 8
-      val = [val1, val2]
-      return [val, offset]
   
   
   constructor: (header, view, offset) ->

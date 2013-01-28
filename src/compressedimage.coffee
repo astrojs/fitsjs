@@ -16,15 +16,16 @@ class CompressedImage extends Tabular
     4: Int16Array
     8: Int32Array
   
-  constructor: (view, header) ->
+  
+  constructor: (header, view, offset) ->
     super
     
     @length   += header["PCOUNT"]
     @zcmptype = header["ZCMPTYPE"]
     @zbitpix  = header["ZBITPIX"]
     @znaxis   = header["ZNAXIS"]
-    @zblank   = CompressedImage.setValue(header, "ZBLANK", undefined)
-    @blank    = CompressedImage.setValue(header, "BLANK", undefined)
+    @zblank   = @constructor.setValue(header, "ZBLANK", undefined)
+    @blank    = @constructor.setValue(header, "BLANK", undefined)
     
     @ztile = []
     for i in [1..@znaxis]
@@ -47,11 +48,11 @@ class CompressedImage extends Tabular
     # Set default parameters if not set in the header
     @setRiceDefaults() if @zcmptype is 'RICE_1'
     
-    @zmaskcmp = CompressedImage.setValue(header, "ZMASKCMP", undefined)
-    @zquantiz = CompressedImage.setValue(header, "ZQUANTIZ", "LINEAR_SCALING")
+    @zmaskcmp = @constructor.setValue(header, "ZMASKCMP", undefined)
+    @zquantiz = @constructor.setValue(header, "ZQUANTIZ", "LINEAR_SCALING")
     
-    @bzero  = CompressedImage.setValue(header, "BZERO", 0)
-    @bscale = CompressedImage.setValue(header, "BSCALE", 1)
+    @bzero  = @constructor.setValue(header, "BZERO", 0)
+    @bscale = @constructor.setValue(header, "BSCALE", 1)
     
     @defineColumnAccessors header
     @defineGetRow()
@@ -60,7 +61,7 @@ class CompressedImage extends Tabular
     @columnNames = {}
     for i in [1..@cols]
       value = header["TFORM#{i}"]
-      match = value.match(CompressedImage.arrayDescriptorPattern)
+      match = value.match(@constructor.arrayDescriptorPattern)
       ttype = header["TTYPE#{i}"].toUpperCase()
       @columnNames[ttype] = i - 1
       accessor = null
@@ -76,8 +77,8 @@ class CompressedImage extends Tabular
                 return new Float32Array(@ztile[0]) unless data?
                 
                 # TODO: Assuming Rice compression
-                pixels = new CompressedImage.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
-                CompressedImage.Rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
+                pixels = new @constructor.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
+                @constructor.Rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
                 return pixels
           when "UNCOMPRESSED_DATA"
             do (dataType) => accessor = @_accessor(dataType)
@@ -96,18 +97,18 @@ class CompressedImage extends Tabular
             # TODO: Check how NULL_PIXEL_MASK is stored. Might not need this as default.
             do (dataType) => accessor = @_accessor(dataType)
       else
-        match = value.match(CompressedImage.dataTypePattern)
+        match = value.match(@constructor.dataTypePattern)
         [length, dataType] = match[1..]
         length = if length? then parseInt(length) else 0
         if length in [0, 1]
           do (dataType) =>
-            accessor = => return CompressedImage.dataAccessors[dataType](@view)
+            accessor = => return @dataAccessors[dataType](@view, @offset)
         else
           do (length, dataType) =>
             accessor = =>
-              data = new CompressedImage.typedArray[dataType](length)
+              data = new @constructor.typedArray[dataType](length)
               for i in [0..length - 1]
-                data[i] = CompressedImage.dataAccessors[dataType](@view)
+                [data[i], @offset] = @dataAccessors[dataType](@view, @offset)
               return data
       @accessors.push(accessor)
 
@@ -154,22 +155,22 @@ class CompressedImage extends Tabular
     
     return @data
   
-  _accessor: (dataType) ->
-    [length, offset]  = [@view.getInt32(), @view.getInt32()]
+  _accessor: (dataType) =>
+    [length, offset]  = [@view.getInt32(@offset), @view.getInt32(@offset)]
     return null if length is 0
     
-    data = new CompressedImage.typedArray[dataType](length)
-    @current = @view.tell()
-    @view.seek(@begin + @tableLength + offset)
+    data = new @constructor.typedArray[dataType](length)
+    
+    tempOffset = @offset
+    @offset = @begin + @tableLength + offset
     for i in [0..length - 1]
-      data[i] = CompressedImage.dataAccessors[dataType](@view)
-    @view.seek(@current)
+      [data[i], @offset] = @dataAccessors[dataType](@view, @offset)
+    @offset = tempOffset
     
     return data
 
   _getRow: ->
-    @current = @begin + @totalRowsRead * @rowByteSize
-    @view.seek(@current)
+    @offset = @begin + @totalRowsRead * @rowByteSize
     row = []
     for accessor in @accessors
       row.push accessor()
