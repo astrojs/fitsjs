@@ -8,7 +8,7 @@ class HDU
   # ### API
   
   # Returns the value from the header of the user specifed key
-  getCard: (key) -> return @header[key]
+  getCard: (key) -> return @header.get(key)
 
 
 @astro.FITS.HDU = HDU

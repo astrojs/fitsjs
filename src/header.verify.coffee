@@ -30,7 +30,7 @@ HeaderVerify =
       key = "BITPIX"
       value = parseInt(arguments[0])
       @verifyOrder(key, 1)
-      throw "#{key} value #{value} is not permitted" unless value in [8, 16, 32, 64, -32, -64]
+      throw "#{key} value #{value} is not permitted" unless value in [8, 16, 32, -32]
       return value
       
     NAXIS: (args...) ->
@@ -51,7 +51,7 @@ HeaderVerify =
     PCOUNT: (args...) ->
       key = "PCOUNT"
       value = parseInt(arguments[0])
-      order = 1 + 1 + 1 + @["NAXIS"]
+      order = 1 + 1 + 1 + @get("NAXIS")
       @verifyOrder(key, order)
       
       if @isExtension()
@@ -64,7 +64,7 @@ HeaderVerify =
     GCOUNT: (args...) ->
       key = "GCOUNT"
       value = parseInt(arguments[0])
-      order = 1 + 1 + 1 + @["NAXIS"] + 1
+      order = 1 + 1 + 1 + @get("NAXIS") + 1
       @verifyOrder(key, order)
       
       if @isExtension()
@@ -73,11 +73,6 @@ HeaderVerify =
           throw "#{key} must be #{required} for the #{@extensionType} extensions" unless value is required
       
       return value
-    
-    # DATE: (args...) ->
-    #   key = "DATE"
-    #   value = new Date(arguments[0])
-    #   return value
     
     EXTEND: (args...) ->
       key = "EXTEND"
@@ -94,7 +89,7 @@ HeaderVerify =
     BLANK: (args...) ->
       key = "BLANK"
       value = arguments[0]
-      throw "#{key} is not to be used for BITPIX = #{@['BITPIX']}" unless @["BIXPIX"] > 0
+      throw "#{key} is not to be used for BITPIX = #{@get('BITPIX')}" unless @get("BIXPIX") > 0
       return parseInt(value)
     
     DATAMIN: (args...) ->
@@ -126,7 +121,7 @@ HeaderVerify =
       key = "TBCOL"
       value = arguments[0]
       index = arguments[2]
-      @verifyBetween(key, index, 0, @["TFIELDS"])
+      @verifyBetween(key, index, 0, @get("TFIELDS"))
       return value
     
     ZIMAGE: (args...) ->

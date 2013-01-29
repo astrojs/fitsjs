@@ -20,20 +20,20 @@ class CompressedImage extends Tabular
   constructor: (header, view, offset) ->
     super
     
-    @length   += header["PCOUNT"]
-    @zcmptype = header["ZCMPTYPE"]
-    @zbitpix  = header["ZBITPIX"]
-    @znaxis   = header["ZNAXIS"]
+    @length   += header.get("PCOUNT")
+    @zcmptype = header.get("ZCMPTYPE")
+    @zbitpix  = header.get("ZBITPIX")
+    @znaxis   = header.get("ZNAXIS")
     @zblank   = @constructor.setValue(header, "ZBLANK", undefined)
     @blank    = @constructor.setValue(header, "BLANK", undefined)
     
     @ztile = []
     for i in [1..@znaxis]
-      ztile = if header.contains("ZTILE#{i}") then header["ZTILE#{i}"] else if i is 1 then header["ZNAXIS1"] else 1
+      ztile = if header.contains("ZTILE#{i}") then header.get("ZTILE#{i}") else if i is 1 then header.get("ZNAXIS1") else 1
       @ztile.push ztile
     
-    @width  = header["ZNAXIS1"]
-    @height = header["ZNAXIS2"] or 1
+    @width  = header.get("ZNAXIS1")
+    @height = header.get("ZNAXIS2") or 1
     
     # Grab any algorithm specific parameters from header
     @algorithmParameters = {}
@@ -42,7 +42,7 @@ class CompressedImage extends Tabular
       key = "ZNAME#{i}"
       break unless header.contains(key)
       value = "ZVAL#{i}"
-      @algorithmParameters[header[key]] = header[value]
+      @algorithmParameters[header.get(key)] = header.get(value)
       i += 1
     
     # Set default parameters if not set in the header
@@ -54,15 +54,15 @@ class CompressedImage extends Tabular
     @bzero  = @constructor.setValue(header, "BZERO", 0)
     @bscale = @constructor.setValue(header, "BSCALE", 1)
     
-    @defineColumnAccessors header
+    @defineColumnAccessors(header)
     @defineGetRow()
     
   defineColumnAccessors: (header) ->
     @columnNames = {}
     for i in [1..@cols]
-      value = header["TFORM#{i}"]
+      value = header.get("TFORM#{i}")
       match = value.match(@constructor.arrayDescriptorPattern)
-      ttype = header["TTYPE#{i}"].toUpperCase()
+      ttype = header.get("TTYPE#{i}").toUpperCase()
       @columnNames[ttype] = i - 1
       accessor = null
       
@@ -78,7 +78,7 @@ class CompressedImage extends Tabular
                 
                 # Assuming Rice compression
                 pixels = new @constructor.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
-                @constructor.Rice(data, data.length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
+                @constructor.Rice(data, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
                 
                 return pixels
           when "UNCOMPRESSED_DATA"
@@ -126,7 +126,7 @@ class CompressedImage extends Tabular
     @algorithmParameters["BLOCKSIZE"] = 32 unless @algorithmParameters.hasOwnProperty("BLOCKSIZE")
     @algorithmParameters["BYTEPIX"] = 4 unless @algorithmParameters.hasOwnProperty("BYTEPIX")
   
-  @setValue: (header, key, defaultValue) -> return if header.contains(key) then header[key] else defaultValue
+  @setValue: (header, key, defaultValue) -> return if header.contains(key) then header.get(key) else defaultValue
   
   # TODO: Test this function.  Need example file with blanks.
   getRowHasBlanks: ->

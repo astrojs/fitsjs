@@ -6,14 +6,14 @@ class File
   BLOCKLENGTH: 2880
   
   constructor: (buffer) ->
-    @offset     = 0
-    @length     = buffer.byteLength
-    @view       = new DataView buffer
+    @offset = 0
+    @length = buffer.byteLength
+    @view   = new DataView buffer
     
-    @hdus       = []
-    @eof        = false
+    @hdus = []
+    @eof  = false
     
-    File.extendDataView(@view)
+    @constructor.extendDataView(@view)
     
     # Loop until the end of file
     loop

@@ -12,12 +12,11 @@ Decompress =
   
   # ### Rice
   # * array: Array of compressed bytes to be decompressed
-  # * arrayLen: Length of array
   # * blocksize: Number of pixels encoded in a block
   # * bytepix: Number of 8-bit bytes of the original integer pixel
   # * pixels: Output array containing the decompressed values
   # * nx: Length of pixels (ztile1)
-  Rice: (array, arrayLen, blocksize, bytepix, pixels, nx) ->
+  Rice: (array, blocksize, bytepix, pixels, nx) ->
     
     bbits = 1 << fsbits
     

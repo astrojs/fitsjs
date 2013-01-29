@@ -27,26 +27,7 @@ class Header extends Module
     
   # Get the index value and comment for a key
   get: (key) ->
-    if @contains(key) then return @cards[key] else console.warn("Header does not contain the key #{key}")
-
-  # Get the index for a specified key
-  getIndex: (key) ->
-    if @contains(key) then return @cards[key][0] else console.warn("Header does not contain the key #{key}")
-
-  # Get the comment for a specified key
-  getComment: (key) ->
-    if @contains(key)
-      if @cards[key][2]? then return @cards[key][2] else console.warn("#{key} does not contain a comment")
-    else
-      console.warn("Header does not contain the key #{key}")
-
-  # Get comments stored with the COMMENT keyword
-  getComments: ->
-    if @contains('COMMENT') then return @cards['COMMENT'] else console.warn("Header does not contain any COMMENT fields")
-
-  # Get history stored with the HISTORY keyword
-  getHistory: ->
-    if @contains('HISTORY') then return @cards['HISTORY'] else console.warn("Header does not contain any HISTORY fields")
+    if @contains(key) then return @cards[key][1] else null
 
   # Set a key with a passed value and optional comment
   set: (key, value, comment) ->
@@ -68,7 +49,7 @@ class Header extends Module
     @cards["HISTORY"].push(history)
 
   # Checks if the header contains a specified keyword
-  contains: (keyword) -> return @cards.hasOwnProperty(keyword)
+  contains: (key) -> return @cards.hasOwnProperty(key)
 
   # Read a card from the header
   readCard: (line) ->
@@ -103,9 +84,6 @@ class Header extends Module
       when "HISTORY" then @setHistory(value)
       else
         @set(key, value, comment)
-        
-        # TODO: Remove for IE10 compatibility
-        @.__defineGetter__(key, -> return @cards[key][1])
   
   # Initialize a header, interpretting only mandatory and reserved keywords
   # HACK: For now interpretting only the first 600 lines ...
@@ -121,7 +99,7 @@ class Header extends Module
       @readCard(line)
   
   # Tells if a data unit follows based on NAXIS
-  hasDataUnit: -> return if @["NAXIS"] is 0 then false else true
+  hasDataUnit: -> return if @get("NAXIS") is 0 then false else true
 
   # Check type of header
   isPrimary: -> return @primary

@@ -64,9 +64,9 @@ class Tabular extends DataUnit
     super
     
     # TODO: Abstract some of these variables
-    @rowByteSize  = header["NAXIS1"]
-    @rows         = header["NAXIS2"]
-    @cols         = header["TFIELDS"]
+    @rowByteSize  = header.get("NAXIS1")
+    @rows         = header.get("NAXIS2")
+    @cols         = header.get("TFIELDS")
     @length       = @tableLength = @rowByteSize * @rows
     @rowsRead     = 0
     
@@ -87,7 +87,7 @@ class Tabular extends DataUnit
     for i in [1..@cols]
       key = "TTYPE#{i}"
       return null unless header.contains(key)
-      columnNames.push header[key]
+      columnNames.push header.get(key)
     return columnNames
 
 

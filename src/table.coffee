@@ -1,8 +1,8 @@
 
 # Class to read ASCII tables from FITS files.
 class Table extends Tabular
-  @formPattern = /([AIFED])(\d+)\.*(\d+)*/
-  @dataAccessors =
+  formPattern: /([AIFED])(\d+)\.*(\d+)*/
+  dataAccessors:
     A: (value) -> return value.trim()
     I: (value) -> return parseInt(value)
     F: (value) -> return parseFloat(value)
@@ -13,12 +13,12 @@ class Table extends Tabular
     super
     
     for i in [1..@cols]
-      form = header["TFORM#{i}"]
-      match = form.match(Table.formPattern)
+      form = header.get("TFORM#{i}")
+      match = form.match(@formPattern)
       do =>
         [dataType, length, decimals] = match[1..]
         accessor = (value) =>
-          return Table.dataAccessors[dataType](value)
+          return @dataAccessors[dataType](value)
         @accessors.push(accessor)
 
   getRow: (row = null) =>

@@ -6,17 +6,17 @@ class Image extends DataUnit
   
   constructor: (header, view, offset) ->
     super
-    naxis   = header["NAXIS"]
-    bitpix  = header["BITPIX"]
+    naxis   = header.get("NAXIS")
+    bitpix  = header.get("BITPIX")
     
     @naxis = []
-    @naxis.push header["NAXIS#{i}"] for i in [1..naxis]
+    @naxis.push header.get("NAXIS#{i}") for i in [1..naxis]
     
-    @width  = header["NAXIS1"]
-    @height = header["NAXIS2"] or 1
+    @width  = header.get("NAXIS1")
+    @height = header.get("NAXIS2") or 1
     
-    @bzero  = header["BZERO"] or 0
-    @bscale = header["BSCALE"] or 1
+    @bzero  = header.get("BZERO") or 0
+    @bscale = header.get("BSCALE") or 1
     
     @bytes = Math.abs(bitpix) / 8
     @rowByteSize = @width * @bytes

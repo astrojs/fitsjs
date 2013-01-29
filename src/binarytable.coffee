@@ -1,7 +1,7 @@
 
 class BinaryTable extends Tabular
-  @dataTypePattern = /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
-  @arrayDescriptorPattern = /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
+  dataTypePattern: /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
+  arrayDescriptorPattern: /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
   
   
   constructor: (header, view, offset) ->
@@ -9,8 +9,8 @@ class BinaryTable extends Tabular
 
     for i in [1..@cols]
       keyword = "TFORM#{i}"
-      value = header[keyword]
-      match = value.match(@constructor.arrayDescriptorPattern)
+      value = header.get(keyword)
+      match = value.match(@arrayDescriptorPattern)
       if match?
         do =>
           dataType = match[1]
@@ -30,7 +30,7 @@ class BinaryTable extends Tabular
           
           @accessors.push(accessor)
       else
-        match = value.match(@constructor.dataTypePattern)
+        match = value.match(@dataTypePattern)
         [length, dataType] = match[1..]
         length = if length then parseInt(length) else 0
         if length in [0, 1]
