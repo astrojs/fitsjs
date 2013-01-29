@@ -18,7 +18,8 @@ describe "FITS CompressedImage", ->
       
       image = fits.getDataUnit()
       image.getFrame()
-    
+      
+      # TODO: Find out why script gets stuck on getExtent
       # Check the values of the corner pixels ...
       image.getExtent()
       

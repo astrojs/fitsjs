@@ -76,12 +76,14 @@ class CompressedImage extends Tabular
                 data = @_accessor(dataType)
                 return new Float32Array(@ztile[0]) unless data?
                 
-                # TODO: Assuming Rice compression
+                # Assuming Rice compression
                 pixels = new @constructor.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
-                @constructor.Rice(data, length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
+                @constructor.Rice(data, data.length, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
+                
                 return pixels
           when "UNCOMPRESSED_DATA"
-            do (dataType) => accessor = @_accessor(dataType)
+            do (dataType) =>
+              accessor = @_accessor(dataType)
           # TODO: Decompress using Gzip
           when "GZIP_COMPRESSED_DATA"
             do (dataType) =>
@@ -102,7 +104,9 @@ class CompressedImage extends Tabular
         length = if length? then parseInt(length) else 0
         if length in [0, 1]
           do (dataType) =>
-            accessor = => return @dataAccessors[dataType](@view, @offset)
+            accessor = =>
+              [data, @offset] = @dataAccessors[dataType](@view, @offset)
+              return data
         else
           do (length, dataType) =>
             accessor = =>
@@ -156,7 +160,10 @@ class CompressedImage extends Tabular
     return @data
   
   _accessor: (dataType) =>
-    [length, offset]  = [@view.getInt32(@offset), @view.getInt32(@offset)]
+    length = @view.getInt32(@offset)
+    @offset += 4
+    offset = @view.getInt32(@offset)
+    @offset += 4
     return null if length is 0
     
     data = new @constructor.typedArray[dataType](length)
