@@ -2,8 +2,8 @@
 # Parses all header-dataunits, initializes Header instances
 # and appropriate dataunit instances.
 class File
-  @LINEWIDTH   = 80
-  @BLOCKLENGTH = 2880
+  LINEWIDTH: 80
+  BLOCKLENGTH: 2880
   
   constructor: (buffer) ->
     @offset     = 0
@@ -13,8 +13,6 @@ class File
     @hdus       = []
     @eof        = false
     
-    # TODO: Remove need to extend DataView.
-    #       Place offset in DataUnit class
     File.extendDataView(@view)
     
     # Loop until the end of file
@@ -26,10 +24,6 @@ class File
       break if @eof
   
   # ##Class Methods
-
-  # Determine the number of characters following a header or data unit
-  @excessBytes: (length) ->
-    return (File.BLOCKLENGTH - (length % File.BLOCKLENGTH)) % File.BLOCKLENGTH
 
   @extendDataView: (view) ->
     
@@ -47,6 +41,10 @@ class File
   
   # ##Instance Methods
 
+  # Determine the number of characters following a header or data unit
+  excessBytes: (length) =>
+    return (@BLOCKLENGTH - (length % @BLOCKLENGTH)) % @BLOCKLENGTH
+
   # Extracts a single header without interpreting each line.
   # Interpretation is slow for large headers.
   readHeader: ->
@@ -60,15 +58,15 @@ class File
       break if done
       
       # Grab a 2880 block
-      block = @view.getString(@offset, File.BLOCKLENGTH)
-      @offset += File.BLOCKLENGTH
+      block = @view.getString(@offset, @BLOCKLENGTH)
+      @offset += @BLOCKLENGTH
       
       # Set a line counter
       i = 0
       loop
         # Search for the END keyword starting at the last line of the block
-        start = File.BLOCKLENGTH - File.LINEWIDTH * (i + 1)
-        end   = File.BLOCKLENGTH - File.LINEWIDTH * i
+        start = @BLOCKLENGTH - @LINEWIDTH * (i + 1)
+        end   = @BLOCKLENGTH - @LINEWIDTH * i
         line  = block.slice(start, end) # Is this expensive?
         
         # Search one line up if white space is matched
@@ -113,7 +111,7 @@ class File
         DU = Image
     data = new DU(header, @view, @offset)
     
-    excess = File.excessBytes(data.length)
+    excess = @excessBytes(data.length)
     
     # Forward to the next HDU
     @offset += data.length + excess
