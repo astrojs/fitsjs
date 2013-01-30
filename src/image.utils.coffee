@@ -1,9 +1,6 @@
 
 ImageUtils =
   
-  # Initializes a 1D array for storing image pixels for a single frame
-  initArray: (arrayType) -> @data = new arrayType(@width * @height)
-  
   # Compute the minimum and maximum pixels
   getExtent: ->
     return [@min, @max] if @min? and @max?
@@ -27,12 +24,11 @@ ImageUtils =
     [@min, @max] = [min, max]
     return [@min, @max]
 
-  # Get the value of a pixel.
-  # Note: Indexing of pixels starts at 0.
-  getPixel: (x, y) ->
-    return @data[y * @width + x]
-    # byteSize = @rowByteSize / @width
-    # @view.offset = @begin + (@frame - 1) * @height * @rowByteSize + y * @rowByteSize + x * byteSize
-    # return @accessor()
+  # Get the value of a pixel from the arraybuffer
+  getPixel: (x, y, z) ->
+    z = z or 0
+    @offset = @begin + ((y + @height * z) * @width + x) * @bytes
+    return @accessor()
+
 
 @astro.FITS.ImageUtils = ImageUtils

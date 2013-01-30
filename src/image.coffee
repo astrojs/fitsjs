@@ -19,11 +19,8 @@ class Image extends DataUnit
     @bscale = header.get("BSCALE") or 1
     
     @bytes = Math.abs(bitpix) / 8
-    @rowByteSize = @width * @bytes
-    @totalRowsRead = 0
     
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
-    @data   = undefined
     @frame  = 0    # Needed for data cubes
     
     # Define the function that interprets the data
@@ -55,46 +52,28 @@ class Image extends DataUnit
       else
         throw "Invalid BITPIX"
   
-  incrementOffset: => @offset += @bytes
-  
-  # Read a row of pixels from the array buffer.  The method initArray
-  # must be called before requesting any rows.
-  getRow: ->
-    @offset = @begin + @totalRowsRead * @rowByteSize
-    
-    for i in [0..@width - 1]
-      @data[@width * @rowsRead + i] = @accessor()
-      @incrementOffset()
-    
-    @rowsRead += 1
-    @totalRowsRead += 1
-  
-  # Read the entire frame of the image.  If the image is a data cube, it reads
-  # a slice of the data.
   getFrame: (@frame = @frame) ->
-    @initArray(@arrayType) unless @data?
+    length = @width * @height
     
-    @totalRowsRead = @width * @frame
-    @rowsRead = 0
+    # Initialize appropriate typed array
+    arr = new @arrayType(length)
     
-    height = @height
-    @getRow() while height--
+    # Update the offset
+    @offset = @begin + @frame * arr.byteLength
     
-    @frame += 1
-    return @data
-
-  # Moves the pointer that is used to read the array buffer to a specified frame.  For 2D images
-  # this defaults to the first and only frame.  Indexing of the frame argument begins at 0.
-  seek: (frame = 0) ->
-    if @naxis.length is 2
-      @totalRowsRead  = 0
-      @frame          = 0
-    else
-      @totalRowsRead  = @height * frame
-      @frame          = @height / @totalRowsRead - 1
+    # Read each pixel from the buffer
+    for index in [0..length - 1]
+      arr[index] = @accessor()
+      @offset += @bytes
+    
+    # Increment frame number when handling data cubes
+    @frame += 1 if @isDataCube()
+    
+    return arr
   
   # Checks if the image is a data cube
-  isDataCube: -> return if @naxis.length > 2 then true else false 
+  isDataCube: ->
+    return if @naxis.length > 2 then true else false 
 
 
 @astro.FITS.Image = Image

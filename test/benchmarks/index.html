@@ -1,0 +1,54 @@
+<html>
+<head>
+  <title>Benchmark &ndash; astrojs::fitsjs</title>
+  <script type="text/javascript" src="lib/benchmark.js"></script>
+  <script type="text/javascript" src="/module.js"></script>
+  
+  <script type="text/javascript">
+  // Setup
+  // Create an array buffer with random numbers
+  var length = 50000;
+  var byteSize = 4;
+  var ab = new ArrayBuffer(length * byteSize);
+  var view = new DataView(ab);
+  
+  for (var i = 0; i < length; i += 1) {
+    view.setFloat32(i * byteSize, Math.random());
+  }
+  
+  // Create two arrays for comparison
+  var arr1 = new Float32Array(length);
+  var arr2 = new Float32Array(length);
+  
+  // Create benchmarks
+  var suite = new Benchmark.Suite;
+  suite.add("for loop", function() {
+    // Initialize array
+    for (var i = 0; i < length; i += 1) {
+      arr1[i] = view.getFloat32(i * byteSize);
+    }
+    
+  })
+  .add("while loop", function() {
+    // Initialize array
+    var arr = new Float32Array(length);
+    nPixels = length
+    while (nPixels--) {
+      arr2[nPixels] = view.getFloat32(nPixels * byteSize);
+    }
+      
+  })
+  .on('cycle', function(event) {
+    console.log(String(event.target));
+  })
+  .on('complete', function() {
+    console.log('Fastest is ' + this.filter('fastest').pluck('name'));
+  })
+  .run({async: false, minSamples: 400});
+  </script>
+
+</head>
+
+<body>
+</body>
+</html>
