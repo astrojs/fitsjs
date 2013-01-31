@@ -15,7 +15,7 @@ describe "FITS", ->
     
     runs ->
       expect(fits.hdus.length).toEqual(2)
-      expect(fits.eof).toBeTruthy()
+      expect(fits.isEOF()).toBeTruthy()
       expect(fits.hdus[0].data.constructor.name).toBe("Image")
       expect(fits.hdus[1].data.constructor.name).toBe("Table")
 
@@ -32,7 +32,7 @@ describe "FITS", ->
     
     runs ->
       expect(fits.hdus.length).toEqual(2)
-      expect(fits.eof).toBeTruthy()
+      expect(fits.isEOF()).toBeTruthy()
       expect(fits.hdus[0].data).toBeUndefined()
       expect(fits.hdus[1].data.constructor.name).toBe("CompressedImage")
 
@@ -49,7 +49,7 @@ describe "FITS", ->
     
     runs ->
       expect(fits.hdus.length).toEqual(2)
-      expect(fits.eof).toBeTruthy()
+      expect(fits.isEOF()).toBeTruthy()
       expect(fits.hdus[0].data).toBeUndefined()
       expect(fits.hdus[1].data.constructor.name).toBe("BinaryTable")
   

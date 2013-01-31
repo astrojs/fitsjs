@@ -11,7 +11,6 @@ class File
     @view   = new DataView buffer
     
     @hdus = []
-    @eof  = false
     
     @constructor.extendDataView(@view)
     
@@ -21,7 +20,8 @@ class File
       data    = @readData(header)
       hdu = new HDU(header, data)
       @hdus.push hdu
-      break if @eof
+      
+      break if @isEOF()
   
   # ##Class Methods
 
@@ -48,46 +48,39 @@ class File
   # Extracts a single header without interpreting each line.
   # Interpretation is slow for large headers.
   readHeader: ->
-    whitespacePattern = /\s{80}/
     endPattern = /^END\s/
     
     # Store the current byte offset and mark when the END keyword is reached
     beginOffset = @offset
-    done = false
     loop
-      break if done
       
       # Grab a 2880 block
       block = @view.getString(@offset, @BLOCKLENGTH)
       @offset += @BLOCKLENGTH
       
       # Set a line counter
-      i = 0
+      i = 1
       loop
         # Search for the END keyword starting at the last line of the block
-        start = @BLOCKLENGTH - @LINEWIDTH * (i + 1)
-        end   = @BLOCKLENGTH - @LINEWIDTH * i
-        line  = block.slice(start, end) # Is this expensive?
+        begin = @BLOCKLENGTH - @LINEWIDTH * i
+        end   = begin + @LINEWIDTH
+        line  = block.slice(begin, end)
         
         # Search one line up if white space is matched
-        match = line.match(whitespacePattern)
+        match = /\s{80}/.test(line)
         if match
           i += 1
           continue
         
         # Otherwise attempt to match END
-        match = line.match(endPattern)
+        match = /^END\s/.test(line)
         if match
           endOffset = @offset
           
           # Get entire block representing header
           block = @view.getString(beginOffset, endOffset - beginOffset)
-          header = new Header(block)
-          done = true
-          @checkEOF()
-          return header
+          return new Header(block)
         
-        # Otherwise get next block
         break
 
   # Read a data unit and initialize an appropriate instance depending
@@ -115,32 +108,31 @@ class File
     
     # Forward to the next HDU
     @offset += data.length + excess
-    @checkEOF()
     return data
 
-  checkEOF: ->
-    @eof = true if @offset >= @length
+  isEOF: =>
+    return if @offset is @length then true else false
   
   # ### API
   
   # Returns the first HDU containing a data unit.  An optional argument may be passed to retreive 
   # a specific HDU
-  getHDU: (index = undefined) ->
+  getHDU: (index) ->
     return @hdus[index] if index? and @hdus[index]?
     for hdu in @hdus
       return hdu if hdu.hasData()
   
   # Returns the header associated with the first HDU containing a data unit.  An optional argument
   # may be passed to point to a specific HDU.
-  getHeader: (index = undefined) -> return @getHDU(index).header
+  getHeader: (index) -> return @getHDU(index).header
   
   # Returns the data object associated with the first HDU containing a data unit.  This method does not read from the array buffer
   # An optional argument may be passed to point to a specific HDU.
-  getDataUnit: (index = undefined) -> return @getHDU(index).data
+  getDataUnit: (index) -> return @getHDU(index).data
 
   # Returns the data associated with the first HDU containing a data unit.  An optional argument
   # may be passed to point to a specific HDU.
-  getData: (index = undefined) -> return @getHDU(index).data.getFrame()
+  getData: (index) -> return @getHDU(index).data.getFrame()
 
 
 @astro.FITS.File = File
