@@ -2,7 +2,7 @@
 # Header parses and stores the FITS header.  Verification is done for reserved
 # keywords (e.g. SIMPLE, BITPIX, etc).
 
-# TODO: Storage of COMMENT and HISTORY fields needs improvement
+
 class Header extends Module
   @include HeaderVerify
   
@@ -28,11 +28,15 @@ class Header extends Module
     
   # Get the value for a key
   get: (key) ->
-    if @contains(key) then return @cards[key][1] else null
-
+    if @contains(key) then return @cards[key].value else null
+  
   # Set value to key with optional comment
   set: (key, value, comment) ->
-    @cards[key] = if comment then [@cardIndex, value, comment] else [@cardIndex, value]
+    comment = comment or ''
+    @cards[key] =
+      index: @cardIndex
+      value: value
+      comment: comment
     @cardIndex += 1
   
   # Checks if the header contains a specified keyword
