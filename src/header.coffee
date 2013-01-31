@@ -4,12 +4,11 @@
 
 # TODO: Storage of COMMENT and HISTORY fields needs improvement
 class Header extends Module
-
-  @keywordPattern   = /^([A-Z0-9_-]+)\s*=\s*(.*)/
-  @nonStringPattern = /([^\/]*)\s*\/*(.*)/
-  @stringPattern    = /'(.*)'\s*\/*(.*)/
-  @arrayPattern     = /([A-Za-z]+)(\d+)/
   @include HeaderVerify
+  
+  arrayPattern: /(\D+)(\d+)/
+  maxLines: 600 # Parsing header stops after maxLines
+  
   
   constructor: (block) ->
     @primary    = false
@@ -17,92 +16,98 @@ class Header extends Module
     
     # Add verification methods to instance
     @verifyCard = {}
-    @verifyCard[name] = @proxy(method) for name, method of @Functions
+    @verifyCard[name] = @proxy(method) for name, method of @VerifyFns
     
     # e.g. [index, value, comment]
     @cards      = {}
+    @cards["COMMENT"] = []
+    @cards["HISTORY"] = []
     @cardIndex  = 0
     
-    @init(block)
+    @readBlock(block)
     
-  # Get the index value and comment for a key
+  # Get the value for a key
   get: (key) ->
     if @contains(key) then return @cards[key][1] else null
 
-  # Set a key with a passed value and optional comment
+  # Set value to key with optional comment
   set: (key, value, comment) ->
     @cards[key] = if comment then [@cardIndex, value, comment] else [@cardIndex, value]
     @cardIndex += 1
-
-  # Set comment from the COMMENT keyword
-  setComment: (comment) ->
-    unless @contains("COMMENT")
-      @cards["COMMENT"] = []
-      @cardIndex += 1
-    @cards["COMMENT"].push(comment)
-
-  # Set history from the HISTORY keyword
-  setHistory: (history) ->
-    unless @contains("HISTORY")
-      @cards["HISTORY"] = []
-      @cardIndex += 1
-    @cards["HISTORY"].push(history)
-
+  
   # Checks if the header contains a specified keyword
-  contains: (key) -> return @cards.hasOwnProperty(key)
-
-  # Read a card from the header
-  readCard: (line) ->
-    match = line.match(Header.keywordPattern)
-    return unless match?
+  contains: (key) ->
+    return @cards.hasOwnProperty(key)
+  
+  readLine: (l) ->
     
-    [key, value] = match[1..]
-    if key in ["COMMENT", "HISTORY"]
-      match[1] = value.trim()
-    else if value[0] is "'"
-      match = value.match(Header.stringPattern)
-      match[1] = match[1].trim()
+    # Check bytes 1 to 8 for key or whitespace
+    key = l[0..7].trim()
+    blank = key is ''
+    return if blank
+    
+    # Get indicator and value
+    indicator = l[8..9]
+    value = l[10..]
+    
+    # Check the indicator
+    unless indicator is "= "
+      # Key will be either COMMENT, HISTORY or END
+      # all else is outside the standard.
+      if key in ['COMMENT', 'HISTORY']
+        @cards[key].push(value.trim())
+      return
+    
+    # Check the value
+    [value, comment] = value.split(' /')
+    value = value.trim()
+    
+    # Values can be a string pattern starting with single quote
+    # a boolean pattern (T or F), or a numeric
+    firstByte = value[0]
+    if firstByte is "'"
+      # String data type
+      value = value.slice(1, -1).trim()
     else
-      match = value.match(Header.nonStringPattern)
-      match[1] = if match[1][0] in ["T", "F"] then match[1].trim() else parseFloat(match[1])
-    match[2] = match[2].trim()
-    [value, comment] = match[1..]
+      # Boolean or numeric
+      unless value in ['T', 'F']
+        value = parseFloat(value)
     
-    # Verification
-    keyToVerify = key
-    [array, index] = [false, undefined]
-    match = key.match(Header.arrayPattern)
-    if match?
-      keyToVerify = match[1]
-      [array, index] = [true, match[2]]
+    value = @validate(key, value)
     
-    if @verifyCard.hasOwnProperty(keyToVerify)
-      value = @verifyCard[keyToVerify](value, array, index)
+    @set(key, value, comment)
   
-    switch key
-      when "COMMENT" then @setComment(value)
-      when "HISTORY" then @setHistory(value)
-      else
-        @set(key, value, comment)
+  validate: (key, value) ->
+    index   = null
+    baseKey = key
+    isArray = @arrayPattern.test(key)
+    
+    if isArray
+      match = @arrayPattern.exec(key)
+      [baseKey, index] = match[1..]
+    
+    if baseKey of @verifyCard
+      value = @verifyCard[baseKey](value, isArray, index)
+    
+    return value
   
-  # Initialize a header, interpretting only mandatory and reserved keywords
-  # HACK: For now interpretting only the first 600 lines ...
-  init: (block) =>
+  readBlock: (block) =>
     lineWidth = 80
     
-    numLines = block.length / lineWidth
-    maxNumLines = 600 # Arbitrary number
-    numLines = if numLines < maxNumLines then numLines else maxNumLines
+    nLines = block.length / lineWidth
+    nLines = if nLines < @maxLines then nLines else @maxLines
     
-    for i in [0..numLines - 1]
+    for i in [0..nLines - 1]
       line = block.slice(i * lineWidth, (i + 1) * lineWidth)
-      @readCard(line)
+      @readLine(line)
   
   # Tells if a data unit follows based on NAXIS
-  hasDataUnit: -> return if @get("NAXIS") is 0 then false else true
-
+  hasDataUnit: ->
+    return if @get("NAXIS") is 0 then false else true
+  
   # Check type of header
   isPrimary: -> return @primary
   isExtension: -> return @extension
+
 
 @astro.FITS.Header = Header

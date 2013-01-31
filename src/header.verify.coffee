@@ -12,7 +12,7 @@ HeaderVerify =
   verifyBoolean: (value) ->
     return if value is "T" then true else false
 
-  Functions:
+  VerifyFns:
     SIMPLE: (args...) ->
       value = arguments[0]
       @primary = true
@@ -166,5 +166,6 @@ HeaderVerify =
     ZGCOUNT: (args...) ->
       key = "ZGCOUNT"
       return parseInt(arguments[0])
+
 
 @astro.FITS.HeaderVerify = HeaderVerify
