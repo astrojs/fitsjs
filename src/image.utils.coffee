@@ -24,11 +24,14 @@ ImageUtils =
     [@min, @max] = [min, max]
     return [@min, @max]
 
-  # Get the value of a pixel from the arraybuffer
-  getPixel: (x, y, z) ->
-    z = z or 0
-    @offset = @begin + ((y + @height * z) * @width + x) * @bytes
-    return @accessor()
+  # # Get the value of a pixel from the arraybuffer
+  # getPixel: (x, y, z) ->
+  #   z = z or 0
+  #   @offset = @begin + ((y + @height * z) * @width + x) * @bytes
+  #   return @accessor()
+  
+  getPixel: (arr, x, y) ->
+    return arr[y * @width + x]
 
 
 @astro.FITS.ImageUtils = ImageUtils

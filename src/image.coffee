@@ -2,12 +2,17 @@
 # Image represents a standard image stored in the data unit of a FITS file
 class Image extends DataUnit
   @include ImageUtils
+  swapEndian:
+    8: (value) -> return value
+    16: (value) -> return (value << 8) | (value >> 8)
+    32: (value) -> return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
   
   
   constructor: (header, view, offset) ->
     super
+    
     naxis   = header.get("NAXIS")
-    bitpix  = header.get("BITPIX")
+    @bitpix = header.get("BITPIX")
     
     @naxis = []
     @naxis.push header.get("NAXIS#{i}") for i in [1..naxis]
@@ -18,55 +23,50 @@ class Image extends DataUnit
     @bzero  = header.get("BZERO") or 0
     @bscale = header.get("BSCALE") or 1
     
-    @bytes = Math.abs(bitpix) / 8
-    
-    @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(bitpix) / 8
+    @bytes  = Math.abs(@bitpix) / 8
+    @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(@bitpix) / 8
     @frame  = 0    # Needed for data cubes
-    
-    # Define the function that interprets the data
-    switch bitpix
-      when 8
-        if @bscale % 1 is 0
-          @arrayType  = Uint8Array
-          @accessor   = => return @bzero + @bscale * @view.getUint8(@offset)
-        else
-          @arrayType  = Float32Array
-          @accessor   = => return @bzero + @bscale * @view.getUint8(@offset)
-      when 16
-        if @bscale % 1 is 0
-          @arrayType  = Int16Array
-          @accessor   = => return @bzero + @bscale * @view.getInt16(@offset)
-        else
-          @arrayType  = Float32Array
-          @accessor   = => return @bzero + @bscale * @view.getInt16(@offset)
-      when 32
-        if @bscale % 1 is 0
-          @arrayType  = Int32Array
-          @accessor   = => return @bzero + @bscale * @view.getUint32(@offset)
-        else
-          @arrayType  = Float32Array
-          @accessor   = => return @bzero + @bscale * @view.getUint32(@offset)
-      when -32
-        @arrayType  = Float32Array
-        @accessor   = => return @bzero + @bscale * @view.getFloat32(@offset)
-      else
-        throw "Invalid BITPIX"
   
   getFrame: (@frame = @frame) ->
-    length = @width * @height
+    # Reference the buffer
+    buffer = @view.buffer
     
-    # Initialize appropriate typed array
-    arr = new @arrayType(length)
+    # Get bytes representing this dataunit
+    nPixels = i = @width * @height
+    start = @offset + (@frame * nPixels * @bytes)
     
-    # Update the offset
-    @offset = @begin + @frame * arr.byteLength
+    chunk = buffer.slice(start, start + nPixels * @bytes)
     
-    # Read each pixel from the buffer
-    for index in [0..length - 1]
-      arr[index] = @accessor()
-      @offset += @bytes
+    bitpix = Math.abs(@bitpix)
+    if @bitpix > 0
+      switch @bitpix
+        when 8
+          arr = new Uint8Array(chunk)
+          arr = new Uint16Array(arr)
+        when 16
+          arr = new Uint16Array(chunk)
+        when 32
+          arr = new Int32Array(chunk)
+      
+      while nPixels--
+        value = arr[nPixels]
+        value = @swapEndian[bitpix](value)
+        arr[nPixels] = @bzero + @bscale * value + 0.5
+      
+    else
+      arr = new Uint32Array(chunk)
+      
+      while i--
+        value = arr[i]
+        arr[i] = @swapEndian[bitpix](value)
+      
+      # Initialize a Float32 array using the same buffer
+      arr = new Float32Array(chunk)
+      
+      # Apply BZERO and BSCALE
+      while nPixels--
+        arr[nPixels] = @bzero + @bscale * arr[nPixels]
     
-    # Increment frame number when handling data cubes
     @frame += 1 if @isDataCube()
     
     return arr

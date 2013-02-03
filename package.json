@@ -1,6 +1,6 @@
 {
   "name": "fits",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "author": "Amit Kapadia <amit@zooniverse.org>",
   "description": "Library for reading the astronomical file format",
   "repository": {

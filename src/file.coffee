@@ -20,7 +20,6 @@ class File
       data    = @readData(header)
       hdu = new HDU(header, data)
       @hdus.push hdu
-      
       break if @isEOF()
   
   # ##Class Methods
@@ -53,7 +52,6 @@ class File
     # Store the current byte offset and mark when the END keyword is reached
     beginOffset = @offset
     loop
-      
       # Grab a 2880 block
       block = @view.getString(@offset, @BLOCKLENGTH)
       @offset += @BLOCKLENGTH
@@ -108,6 +106,7 @@ class File
     
     # Forward to the next HDU
     @offset += data.length + excess
+    
     return data
 
   isEOF: =>
