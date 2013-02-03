@@ -172,3 +172,4 @@ describe "FITS Image", ->
       expect(image.getPixel(arr, 42, 68)).toBeCloseTo(-0.103573, precision)
       expect(image.getPixel(arr, 92, 24)).toBeCloseTo(0.0360738, precision)
       
+      

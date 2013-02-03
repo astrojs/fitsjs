@@ -5,27 +5,18 @@ class CompressedImage extends Tabular
   @include ImageUtils
   @extend Decompress
   
-  @typedArray =
-    B: Uint8Array
-    I: Int16Array
-    J: Int32Array
-    E: Float32Array
-    D: Float64Array
-    1: Uint8Array
-    2: Uint8Array
-    4: Int16Array
-    8: Int32Array
-  
   
   constructor: (header, view, offset) ->
     super
+    
+    @tableLength = @length
     
     @length   += header.get("PCOUNT")
     @zcmptype = header.get("ZCMPTYPE")
     @zbitpix  = header.get("ZBITPIX")
     @znaxis   = header.get("ZNAXIS")
-    @zblank   = @constructor.setValue(header, "ZBLANK", undefined)
-    @blank    = @constructor.setValue(header, "BLANK", undefined)
+    @zblank   = @getValue(header, "ZBLANK", undefined)
+    @blank    = @getValue(header, "BLANK", undefined)
     
     @ztile = []
     for i in [1..@znaxis]
@@ -35,24 +26,24 @@ class CompressedImage extends Tabular
     @width  = header.get("ZNAXIS1")
     @height = header.get("ZNAXIS2") or 1
     
-    # Grab any algorithm specific parameters from header
-    @algorithmParameters = {}
+    # Get algorithm specific parameters
+    @params = {}
     i = 1
     loop
       key = "ZNAME#{i}"
       break unless header.contains(key)
       value = "ZVAL#{i}"
-      @algorithmParameters[header.get(key)] = header.get(value)
+      @params[header.get(key)] = header.get(value)
       i += 1
     
-    # Set default parameters if not set in the header
+    # Set default parameters unless already set
     @setRiceDefaults() if @zcmptype is 'RICE_1'
     
-    @zmaskcmp = @constructor.setValue(header, "ZMASKCMP", undefined)
-    @zquantiz = @constructor.setValue(header, "ZQUANTIZ", "LINEAR_SCALING")
+    @zmaskcmp = @getValue(header, "ZMASKCMP", undefined)
+    @zquantiz = @getValue(header, "ZQUANTIZ", "LINEAR_SCALING")
     
-    @bzero  = @constructor.setValue(header, "BZERO", 0)
-    @bscale = @constructor.setValue(header, "BSCALE", 1)
+    @bzero  = @getValue(header, "BZERO", 0)
+    @bscale = @getValue(header, "BSCALE", 1)
     
     @defineColumnAccessors(header)
     @defineGetRow()
@@ -77,8 +68,8 @@ class CompressedImage extends Tabular
                 return new Float32Array(@ztile[0]) unless data?
                 
                 # Assuming Rice compression
-                pixels = new @constructor.typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
-                @constructor.Rice(data, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0])
+                pixels = new @typedArray[@params["BYTEPIX"]](@ztile[0])
+                @constructor.Rice(data, @params["BLOCKSIZE"], @params["BYTEPIX"], pixels, @ztile[0])
                 
                 return pixels
           when "UNCOMPRESSED_DATA"
@@ -110,7 +101,7 @@ class CompressedImage extends Tabular
         else
           do (length, dataType) =>
             accessor = =>
-              data = new @constructor.typedArray[dataType](length)
+              data = new @typedArray[dataType](length)
               for i in [0..length - 1]
                 [data[i], @offset] = @dataAccessors[dataType](@view, @offset)
               return data
@@ -123,10 +114,10 @@ class CompressedImage extends Tabular
     @getRow = if hasBlanks then @getRowHasBlanks else @getRowNoBlanks
   
   setRiceDefaults: ->
-    @algorithmParameters["BLOCKSIZE"] = 32 unless @algorithmParameters.hasOwnProperty("BLOCKSIZE")
-    @algorithmParameters["BYTEPIX"] = 4 unless @algorithmParameters.hasOwnProperty("BYTEPIX")
+    @params["BLOCKSIZE"] = 32 unless @params.hasOwnProperty("BLOCKSIZE")
+    @params["BYTEPIX"] = 4 unless @params.hasOwnProperty("BYTEPIX")
   
-  @setValue: (header, key, defaultValue) -> return if header.contains(key) then header.get(key) else defaultValue
+  getValue: (header, key, defaultValue) -> return if header.contains(key) then header.get(key) else defaultValue
   
   # TODO: Test this function.  Need example file with blanks.
   getRowHasBlanks: ->
@@ -166,7 +157,7 @@ class CompressedImage extends Tabular
     @offset += 4
     return null if length is 0
     
-    data = new @constructor.typedArray[dataType](length)
+    data = new @typedArray[dataType](length)
     
     tempOffset = @offset
     @offset = @begin + @tableLength + offset

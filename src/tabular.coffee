@@ -1,6 +1,18 @@
 
 # Abstract class for tabular FITS extensions (e.g. TABLE, BINTABLE)
 class Tabular extends DataUnit
+  typedArray:
+    B: Uint8Array
+    I: Uint16Array
+    J: Int32Array
+    E: Float32Array
+    D: Float64Array
+    1: Uint8Array
+    2: Uint8Array
+    4: Uint16Array
+    8: Int32Array
+  
+  # TODO: Remove X and A accessor functions
   dataAccessors:
     L: (view, offset) =>
       x = view.getInt8(offset)
@@ -29,7 +41,7 @@ class Tabular extends DataUnit
       mod = highByte % 10
       factor = if mod then -1 else 1
       highByte -= mod
-      console.warn "Something funky happens here when dealing with 64 bit integers.  Be wary!!!"
+      console.warn "Precision for 64 bit integers may be incorrect."
       val = factor * ((highByte << 32) | lowByte)
       return [val, offset]
     A: (view, offset) =>
@@ -63,11 +75,10 @@ class Tabular extends DataUnit
   constructor: (header, view, offset) ->
     super
     
-    # TODO: Abstract some of these variables
     @rowByteSize  = header.get("NAXIS1")
     @rows         = header.get("NAXIS2")
     @cols         = header.get("TFIELDS")
-    @length       = @tableLength = @rowByteSize * @rows
+    @length       = @rowByteSize * @rows
     @rowsRead     = 0
     
     @columns      = @getColumnNames(header)

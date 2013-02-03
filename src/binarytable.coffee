@@ -1,83 +1,96 @@
 
 class BinaryTable extends Tabular
-  dataTypePattern: /(\d*)([L|X|B|I|J|K|A|E|D|C|M])/
-  arrayDescriptorPattern: /[0,1]*P([L|X|B|I|J|K|A|E|D|C|M])\((\d*)\)/
   
   
   constructor: (header, view, offset) ->
     super
-
+    @setAccessors(header)
+  
+  toBits: (byte) ->
+    arr = []
+    i = 128
+    while i >= 1
+      arr.push (if byte & i then 1 else 0)
+      i /= 2
+    return arr
+  
+  setAccessors: (header) ->
     for i in [1..@cols]
-      keyword = "TFORM#{i}"
-      value = header.get(keyword)
-      match = value.match(@arrayDescriptorPattern)
-      if match?
-        do =>
-          dataType = match[1]
+      key = "TFORM#{i}"
+      value = header.get(key)
+      
+      # Last character specifies the data type
+      descriptor = value.slice(-1)
+      
+      # first character specifies the count
+      count = if value[0] is descriptor then 1 else parseInt(value.slice(0, -1))
+      
+      if descriptor in ['P', 'Q']
+        # Handle array descriptors
+        do (descriptor, count) =>
+          # TODO: Test this function, need FITS file with array descriptor
           accessor = =>
-            length    = @view.getInt32(@offset)
-            @offset   += 4
-            offset    = @view.getInt32(@offset)
-            @offset   += 4
-            tempOffset = @offset
-            @offset = @begin + @tableLength + offset
-            data = []
-            for i in [1..length]
-              [val, @offset] = @dataAccessors[dataType](@view, @offset)
-              data.push val
-            @offset = tempOffset
-            return data
-          
+            # Get length and offset of the heap
+            length  = @view.getInt32(@offset)
+            @offset += 4
+            offset  = @view.getInt32(@offset)
+            @offset += 4
+            
+            heapOffset = @begin + @tableLength + offset
+            
+            # Read from the buffer
+            chunk = @view.buffer.slice(heapOffset, heapOffset + length)
+            return new @typedArray(chunk)
           @accessors.push(accessor)
       else
-        match = value.match(@dataTypePattern)
-        [length, dataType] = match[1..]
-        length = if length then parseInt(length) else 0
-        if length in [0, 1]
-          do (dataType) =>
+        if count is 1
+          # Handle single element
+          do (descriptor, count) =>
             accessor = =>
-              [val, @offset] = @dataAccessors[dataType](@view, @offset)
-              return val
+              [value, @offset] = @dataAccessors[descriptor](@view, @offset)
+              return value
             @accessors.push(accessor)
         else
-          do (dataType, length) =>
-            # Handling bit arrays
-            if dataType is 'X'
-              numBytes = Math.log(length) / Math.log(2)
+          # Handle bit arrays
+          if descriptor is 'X'
+            do (descriptor, count) =>
+              nBytes = Math.log(count) / Math.log(2)
               accessor = =>
-                byte2bits = (byte) ->
-                  bitarray = []
-                  i = 128
-                  while i >= 1
-                    bitarray.push (if byte & i then 1 else 0)
-                    i /= 2
-                  return bitarray
-                
+                # Read from the buffer
+                chunk = @view.buffer.slice(@offset, @offset + nBytes)
+                bytes = new Uint8Array(chunk)
+              
+                # Get bit representation
+                bits = []
+                for byte in bytes
+                  arr = @toBits(byte)
+                  bits = bits.concat(arr)
+              
+                # Increment the offset
+                @offset += nBytes
+              
+                return bits[0..count - 1]
+              @accessors.push(accessor)
+        
+          # Handle character arrays
+          else if descriptor is 'A'
+            do (descriptor, count) =>
+              accessor = =>
+                str = @view.getString(@offset, count)
+                @offset += count
+                return str.trim()
+              @accessors.push(accessor)
+        
+          # Handle all other data types
+          else
+            do (descriptor, count) =>
+              accessor = =>
                 data = []
-                for i in [1..numBytes]
-                  byte = @view.getUint8(@offset)
-                  @offset += 1
-                  bitarray = byte2bits(byte)
-                  for bit in bitarray
-                    data.push bit
-                return data[0..length - 1]
-            
-            # Handle character arrays
-            else if dataType is 'A'
-              accessor = =>
-                data = ''
-                for i in [1..length]
-                  [val, @offset] = @dataAccessors[dataType](@view, @offset)
-                  data += val
-                return data.trim()
-            else
-              accessor = =>
-                data = []
-                for i in [1..length]
-                  [val, @offset] = @dataAccessors[dataType](@view, @offset)
-                  data.push val
+                while count--
+                  [value, @offset] = @dataAccessors[descriptor](@view, @offset)
+                  data.push(value)
                 return data
-            @accessors.push(accessor)
+              @accessors.push(accessor)
 
 
 @astro.FITS.BinaryTable = BinaryTable
