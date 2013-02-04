@@ -1,9 +1,16 @@
 
 class BinaryTable extends Tabular
+  swapEndian:
+    B: (value) -> return value
+    I: (value) -> return (value << 8) | (value >> 8)
+    J: (value) -> return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
   
   
   constructor: (header, view, offset) ->
     super
+    
+    @tableLength = @length
+    @columnNames = {}
     @setAccessors(header)
   
   toBits: (byte) ->
@@ -14,34 +21,72 @@ class BinaryTable extends Tabular
       i /= 2
     return arr
   
+  getFromHeap: (descriptor) ->
+    # Get length and offset of the heap
+    length  = @view.getInt32(@offset)
+    @offset += 4
+    offset  = @view.getInt32(@offset)
+    @offset += 4
+    
+    heapOffset = @begin + @tableLength + offset
+    
+    # Read from the buffer
+    chunk = @view.buffer.slice(heapOffset, heapOffset + length)
+    arr = new @typedArray[descriptor](chunk)
+    
+    # Swap endian
+    i = arr.length
+    while i--
+      arr[i] = @swapEndian[descriptor](arr[i])
+    
+    return arr
+  
   setAccessors: (header) ->
+    pattern = /(\d*)([P|Q]*)([L|X|B|I|J|K|A|E|D|C|M]{1})/
+    
     for i in [1..@cols]
-      key = "TFORM#{i}"
-      value = header.get(key)
+      form  = header.get("TFORM#{i}")
+      type  = header.get("TTYPE#{i}")
+      match = pattern.exec(form)
       
-      # Last character specifies the data type
-      descriptor = value.slice(-1)
+      count       = parseInt(match[1]) or 1
+      isArray     = match[2]
+      descriptor  = match[3]
       
-      # first character specifies the count
-      count = if value[0] is descriptor then 1 else parseInt(value.slice(0, -1))
+      @columnNames[type] = i - 1
       
-      if descriptor in ['P', 'Q']
+      if isArray
         # Handle array descriptors
-        do (descriptor, count) =>
-          # TODO: Test this function, need FITS file with array descriptor
-          accessor = =>
-            # Get length and offset of the heap
-            length  = @view.getInt32(@offset)
-            @offset += 4
-            offset  = @view.getInt32(@offset)
-            @offset += 4
-            
-            heapOffset = @begin + @tableLength + offset
-            
-            # Read from the buffer
-            chunk = @view.buffer.slice(heapOffset, heapOffset + length)
-            return new @typedArray(chunk)
-          @accessors.push(accessor)
+        switch type
+          when "COMPRESSED_DATA"
+            do (descriptor, count) =>
+              accessor = =>
+                arr = @getFromHeap(descriptor)
+                
+                # Assuming Rice compression
+                pixels = new @typedArray[@params["BYTEPIX"]](@ztile[0])
+                @constructor.Rice(arr, @params["BLOCKSIZE"], @params["BYTEPIX"], pixels, @ztile[0])
+                
+                return pixels
+              @accessors.push(accessor)
+          when "GZIP_COMPRESSED_DATA"
+            # TODO: Implement GZIP
+            do (descriptor, count) =>
+              accessor = =>
+                # arr = @getFromHeap(descriptor)
+                
+                # Temporarily padding with NaNs until GZIP is implemented
+                arr = new Float32Array(@width)
+                i = arr.length
+                while i--
+                  arr[i] = NaN
+                return arr
+              @accessors.push('accessor')
+          else
+            do (descriptor, count) =>
+              accessor = =>
+                return @getFromHeap(descriptor)
+              @accessors.push('accessor')
       else
         if count is 1
           # Handle single element
@@ -85,6 +130,15 @@ class BinaryTable extends Tabular
           else
             do (descriptor, count) =>
               accessor = =>
+                # TypedArray = @typedArray[descriptor]
+                # 
+                # # Read from the buffer
+                # length = count * TypedArray.BYTES_PER_ELEMENT
+                # chunk = @view.buffer.slice(@offset, @offset + length)
+                # @offset += length
+                # 
+                # return new TypedArray(chunk)
+                
                 data = []
                 while count--
                   [value, @offset] = @dataAccessors[descriptor](@view, @offset)

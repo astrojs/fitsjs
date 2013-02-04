@@ -17,25 +17,22 @@ describe "FITS CompressedImage", ->
     runs ->
       
       image = fits.getDataUnit()
-      image.getFrame()
-      
-      # TODO: Find out why script gets stuck on getExtent
-      # Check the values of the corner pixels ...
+      arr = image.getFrame()
       image.getExtent()
       
       expect(image.min).toBeCloseTo(-2.981497, precision)
       expect(image.max).toBeCloseTo(1273.853638, precision)
       
-      expect(image.getPixel(0, 0)).toBeCloseTo(0.173962, precision)
-      expect(image.getPixel(400, 0)).toBeCloseTo(0.347923, precision)
-      expect(image.getPixel(400, 400)).toBeCloseTo(0.344889, precision)
-      expect(image.getPixel(0, 400)).toBeCloseTo(1.20711267, precision)
+      expect(image.getPixel(arr, 0, 0)).toBeCloseTo(0.173962, precision)
+      expect(image.getPixel(arr, 400, 0)).toBeCloseTo(0.347923, precision)
+      expect(image.getPixel(arr, 400, 400)).toBeCloseTo(0.344889, precision)
+      expect(image.getPixel(arr, 0, 400)).toBeCloseTo(1.20711267, precision)
       
       # ... and a few other random pixels
-      expect(image.getPixel(33, 205)).toBeCloseTo(0.975486, precision)
-      expect(image.getPixel(44, 149)).toBeCloseTo(-0.774174, precision)
-      expect(image.getPixel(237, 377)).toBeCloseTo(-0.668716, precision)
-      expect(image.getPixel(393, 27)).toBeCloseTo(0.490127, precision)
+      expect(image.getPixel(arr, 33, 205)).toBeCloseTo(0.975486, precision)
+      expect(image.getPixel(arr, 44, 149)).toBeCloseTo(-0.774174, precision)
+      expect(image.getPixel(arr, 237, 377)).toBeCloseTo(-0.668716, precision)
+      expect(image.getPixel(arr, 393, 27)).toBeCloseTo(0.490127, precision)
       
   # it 'can decompress gziped data', ->
   #   

@@ -1,6 +1,6 @@
 {
   "name": "fits",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "author": "Amit Kapadia <amit@zooniverse.org>",
   "description": "Library for reading the astronomical file format",
   "repository": {
@@ -25,7 +25,7 @@
     "table",
     "binarytable",
     "decompress",
-    "compressedimage",
+    "compressed-image",
     "hdu",
     "file"
   ]
