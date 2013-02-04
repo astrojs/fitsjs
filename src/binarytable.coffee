@@ -1,9 +1,5 @@
 
 class BinaryTable extends Tabular
-  swapEndian:
-    B: (value) -> return value
-    I: (value) -> return (value << 8) | (value >> 8)
-    J: (value) -> return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
   
   
   constructor: (header, view, offset) ->

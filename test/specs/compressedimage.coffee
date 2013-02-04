@@ -18,7 +18,7 @@ describe "FITS CompressedImage", ->
       
       image = fits.getDataUnit()
       arr = image.getFrame()
-      image.getExtent()
+      image.getExtent(arr)
       
       expect(image.min).toBeCloseTo(-2.981497, precision)
       expect(image.max).toBeCloseTo(1273.853638, precision)

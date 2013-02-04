@@ -2,13 +2,13 @@
 ImageUtils =
   
   # Compute the minimum and maximum pixels
-  getExtent: ->
+  getExtent: (arr) ->
     return [@min, @max] if @min? and @max?
     
     # Set initial values for min/max
-    index = @data.length
+    index = arr.length
     while index--
-      value = @data[index]
+      value = arr[index]
       continue if isNaN(value)
       
       [min, max] = [value, value]
@@ -16,7 +16,7 @@ ImageUtils =
     
     # Continue loop to find extent
     while index--
-      value = @data[index]
+      value = arr[index]
       continue if isNaN(value)
       min = value if value < min
       max = value if value > max

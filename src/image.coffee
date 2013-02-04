@@ -2,10 +2,6 @@
 # Image represents a standard image stored in the data unit of a FITS file
 class Image extends DataUnit
   @include ImageUtils
-  swapEndian:
-    8: (value) -> return value
-    16: (value) -> return (value << 8) | (value >> 8)
-    32: (value) -> return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
   
   
   constructor: (header, view, offset) ->

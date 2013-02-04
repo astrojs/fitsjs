@@ -42,54 +42,40 @@ class CompressedImage extends BinaryTable
     @bscale = @getValue(header, "BSCALE", 1)
     
     @setAccessors(header)
-    @defineGetRow()
-  
+    @defGetRow()
+    
   getValue: (header, key, defaultValue) ->
     return if header.contains(key) then header.get(key) else defaultValue
-  
-  setRiceDefaults: ->
-    @params["BLOCKSIZE"] = 32 unless @params.hasOwnProperty("BLOCKSIZE")
-    @params["BYTEPIX"] = 4 unless @params.hasOwnProperty("BYTEPIX")
-  
-  defineGetRow: ->
-    @totalRowsRead = 0
     
+  setRiceDefaults: ->
+    @params["BLOCKSIZE"] = 32 unless "BLOCKSIZE" of @params
+    @params["BYTEPIX"] = 4 unless "BYTEPIX" of @params
+    
+  defGetRow: ->
     hasBlanks = @zblank? or @blank? or @columnNames.hasOwnProperty("ZBLANK")
     @getRow = if hasBlanks then @getRowHasBlanks else @getRowNoBlanks
-  
+    
   # TODO: Test this function.  Need example file with blanks.
-  getRowHasBlanks: ->
-    [data, blank, scale, zero] = @_getRow()
+  getRowHasBlanks: (arr) ->
+    [data, blank, scale, zero] = @getTableRow()
     
+    offset = @rowsRead * @width
     for value, index in data
-      location = @totalRowsRead * @width + index
-      @data[location] = if value is blank then NaN else (zero + scale * value)
-    
+      i = offset + index
+      arr[i] = if value is blank then NaN else (zero + scale * value)
     @rowsRead += 1
-    @totalRowsRead += 1
-  
-  getRowNoBlanks: ->
-    [data, blank, scale, zero] = @_getRow()
+    
+  getRowNoBlanks: (arr) ->
+    [data, blank, scale, zero] = @getTableRow()
+    
+    offset = @rowsRead * @width
     for value, index in data
-      location = @totalRowsRead * @width + index
-      @data[location] = zero + scale * value
-    
+      i = offset + index
+      arr[i] = zero + scale * value
     @rowsRead += 1
-    @totalRowsRead += 1
-  
-  getFrame: ->
-    @data = new Float32Array(@width * @height)
     
-    @totalRowsRead = 0
-    @rowsRead = 0
-    height = @height
-    while height--
-      @getRow()
-    
-    return @data
-    
-  _getRow: ->
-    @offset = @begin + @totalRowsRead * @rowByteSize
+  getTableRow: ->
+    @offset = @begin + @rowsRead * @rowByteSize
     row = []
     for accessor in @accessors
       row.push accessor()
@@ -99,6 +85,16 @@ class CompressedImage extends BinaryTable
     scale = row[@columnNames["ZSCALE"]] or @bscale
     zero  = row[@columnNames["ZZERO"]] or @bzero
     return [data, blank, scale, zero]
+    
+  getFrame: ->
+    arr = new Float32Array(@width * @height)
+    
+    @rowsRead = 0
+    height = @height
+    while height--
+      @getRow(arr)
+    
+    return arr
 
 
 @astro.FITS.CompressedImage = CompressedImage
