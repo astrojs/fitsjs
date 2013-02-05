@@ -7,8 +7,6 @@ class CompressedImage extends BinaryTable
   constructor: (header, view, offset) ->
     super
     
-    @counter = 0
-    
     @length   += header.get("PCOUNT")
     @zcmptype = header.get("ZCMPTYPE")
     @zbitpix  = header.get("ZBITPIX")
@@ -86,7 +84,6 @@ class CompressedImage extends BinaryTable
     blank = row[@columnNames["ZBLANK"]] or @zblank
     scale = row[@columnNames["ZSCALE"]] or @bscale
     zero  = row[@columnNames["ZZERO"]] or @bzero
-    
     return [data, blank, scale, zero]
     
   getFrame: ->
