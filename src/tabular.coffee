@@ -8,19 +8,16 @@ class Tabular extends DataUnit
     E: Float32Array
     D: Float64Array
     1: Uint8Array
-    2: Uint8Array
-    4: Uint16Array
-    8: Int32Array
+    2: Uint16Array
+    4: Int32Array
   
-  # TODO: Remove X and A accessor functions
+  # NOTE: Accessor functions for bit array is better implemented in binary table class
   dataAccessors:
     L: (view, offset) =>
       x = view.getInt8(offset)
       offset += 1
       val = if x is 84 then true else false
       return [val, offset]
-    X: (view, offset) =>
-      throw "Data type not yet implemented"
     B: (view, offset) =>
       val = view.getUint8(offset)
       offset += 1
@@ -45,9 +42,9 @@ class Tabular extends DataUnit
       val = factor * ((highByte << 32) | lowByte)
       return [val, offset]
     A: (view, offset) =>
-      val = view.getChar(offset)
-      offset += 1
-      return [val, offset]
+          val = view.getChar(offset)
+          offset += 1
+          return [val, offset]
     E: (view, offset) =>
       val = view.getFloat32(offset)
       offset += 4
