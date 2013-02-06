@@ -9,7 +9,6 @@ class File
     @constructor.extendDataView(@view)
     @hdus = []
     @offset = 0
-    @callback = callback
     
     if typeof arg is 'string'
       # Get the file using XHR
@@ -17,12 +16,12 @@ class File
       xhr.open('GET', arg)
       xhr.responseType = 'arraybuffer'
       xhr.onload = =>
-        @initBuffer(xhr.response)
+        @initBuffer(xhr.response, callback)
       xhr.send()
     else
       @initBuffer(arg)
   
-  initBuffer: (buffer) ->
+  initBuffer: (buffer, callback) ->
     @length = buffer.byteLength
     @view   = new DataView buffer
     # Loop until the end of file
@@ -32,7 +31,7 @@ class File
       hdu = new HDU(header, data)
       @hdus.push hdu
       break if @isEOF()
-    @callback.call(@) if @callback?
+    callback.call(@) if callback?
   
   # ##Class Methods
 
