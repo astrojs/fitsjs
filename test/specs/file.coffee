@@ -66,3 +66,16 @@ describe "FITS", ->
     
     runs ->
       console.log fits
+  
+  it 'can initialize with a url', ->
+    
+    # Should be on the same domain as site, or handle CORS requests
+    location = 'data/m101.fits'
+    fits = new FITS.File(location, ->
+      expect(fits.hdus.length).toEqual(2)
+      expect(fits.isEOF()).toBeTruthy()
+      expect(fits.hdus[0].data.constructor.name).toBe("Image")
+      expect(fits.hdus[1].data.constructor.name).toBe("Table")
+    )
+
+    

@@ -5,15 +5,26 @@ class File
   LINEWIDTH: 80
   BLOCKLENGTH: 2880
   
-  constructor: (buffer) ->
+  constructor: (arg, callback) ->
+    @constructor.extendDataView(@view)
+    @hdus = []
     @offset = 0
+    @callback = callback
+    
+    if typeof arg is 'string'
+      # Get the file using XHR
+      xhr = new XMLHttpRequest()
+      xhr.open('GET', arg)
+      xhr.responseType = 'arraybuffer'
+      xhr.onload = =>
+        @initBuffer(xhr.response)
+      xhr.send()
+    else
+      @initBuffer(arg)
+  
+  initBuffer: (buffer) ->
     @length = buffer.byteLength
     @view   = new DataView buffer
-    
-    @hdus = []
-    
-    @constructor.extendDataView(@view)
-    
     # Loop until the end of file
     loop
       header  = @readHeader()
@@ -21,6 +32,7 @@ class File
       hdu = new HDU(header, data)
       @hdus.push hdu
       break if @isEOF()
+    @callback.call(@) if @callback?
   
   # ##Class Methods
 
