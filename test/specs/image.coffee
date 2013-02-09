@@ -94,6 +94,28 @@ describe "FITS Image", ->
       expect(image.getPixel(arr, 760, 800)).toEqual(4426)
       expect(image.getPixel(arr, 672, 284)).toEqual(6007)
 
+  it 'can read a frame by spawning a web worker', ->
+    precision = 6
+    fits = arr = null
+    ready = false
+    location = 'data/m101.fits'
+    fits = new FITS.File(location, ->
+      
+      @getDataUnit().getFrameAsync(undefined, (array) ->
+        ready = true
+        arr = array
+      )
+    )
+    waitsFor -> return ready
+    
+    runs ->
+      image = fits.getDataUnit()
+      expect(image.getPixel(arr, 0, 0)).toEqual(3852)
+      expect(image.getPixel(arr, 500, 500)).toEqual(13492)
+      expect(image.getPixel(arr, 270, 400)).toEqual(7067)
+      expect(image.getPixel(arr, 760, 800)).toEqual(4426)
+      expect(image.getPixel(arr, 672, 284)).toEqual(6007)
+
   it 'can read a FITS data cube', ->
     precision = 6
     fits = null
