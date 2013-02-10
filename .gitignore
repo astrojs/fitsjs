@@ -1,6 +1,5 @@
 .DS_Store
 doc/
-src/
 lib/
 test/
 *.fits

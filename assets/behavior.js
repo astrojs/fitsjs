@@ -13,7 +13,7 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
           "commentsOnly": true,
           "name": "Markdown"
         },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/README.md",
+        "sourcePath": "/Users/akapadia/astrojs/fitsjs/README.md",
         "projectPath": "README.md",
         "targetPath": "index",
         "firstHeader": {
@@ -77,14 +77,6 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
                 "slug": "references"
               },
               "depth": 2
-            }, {
-              "type": "heading",
-              "data": {
-                "level": 2,
-                "title": "Notes",
-                "slug": "notes"
-              },
-              "depth": 2
             }
           ]
         },
@@ -143,86 +135,111 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
             "slug": "references"
           },
           "depth": 2
-        }, {
-          "type": "heading",
-          "data": {
-            "level": 2,
-            "title": "Notes",
-            "slug": "notes"
-          },
-          "depth": 2
         }
       ]
     }, {
-      "type": "file",
+      "type": "folder",
       "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/binarytable.coffee",
-        "projectPath": "src/binarytable.coffee",
-        "targetPath": "binarytable",
-        "title": "binarytable"
+        "path": "src",
+        "title": "src"
       },
       "depth": 1,
-      "outline": []
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/compressedimage.coffee",
-        "projectPath": "src/compressedimage.coffee",
-        "targetPath": "compressedimage",
-        "title": "compressedimage"
-      },
-      "depth": 1,
-      "outline": []
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/dataunit.coffee",
-        "projectPath": "src/dataunit.coffee",
-        "targetPath": "dataunit",
-        "title": "dataunit"
-      },
-      "depth": 1,
-      "outline": []
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/decompress.coffee",
-        "projectPath": "src/decompress.coffee",
-        "targetPath": "decompress",
-        "firstHeader": {
-          "type": "heading",
+      "children": [
+        {
+          "type": "file",
           "data": {
-            "level": 1,
-            "title": "Decompress",
-            "slug": "decompress",
-            "isFileHeader": true
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/binarytable.coffee",
+            "projectPath": "src/binarytable.coffee",
+            "targetPath": "src/binarytable",
+            "title": "binarytable"
           },
-          "depth": 1,
-          "children": [
+          "depth": 2,
+          "outline": [
+            {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "Read from the buffer",
+                "slug": "read-from-the-buffer"
+              },
+              "depth": 1
+            }
+          ]
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/compressed-image.coffee",
+            "projectPath": "src/compressed-image.coffee",
+            "targetPath": "src/compressed-image",
+            "title": "compressed-image"
+          },
+          "depth": 2,
+          "outline": []
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/dataunit.coffee",
+            "projectPath": "src/dataunit.coffee",
+            "targetPath": "src/dataunit",
+            "title": "dataunit"
+          },
+          "depth": 2,
+          "outline": []
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/decompress.coffee",
+            "projectPath": "src/decompress.coffee",
+            "targetPath": "src/decompress",
+            "firstHeader": {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "Decompress",
+                "slug": "decompress",
+                "isFileHeader": true
+              },
+              "depth": 1,
+              "children": [
+                {
+                  "type": "heading",
+                  "data": {
+                    "level": 3,
+                    "title": "Rice",
+                    "slug": "rice"
+                  },
+                  "depth": 3
+                }
+              ]
+            },
+            "title": "Decompress"
+          },
+          "depth": 2,
+          "outline": [
             {
               "type": "heading",
               "data": {
@@ -233,54 +250,83 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
               "depth": 3
             }
           ]
-        },
-        "title": "Decompress"
-      },
-      "depth": 1,
-      "outline": [
-        {
-          "type": "heading",
-          "data": {
-            "level": 3,
-            "title": "Rice",
-            "slug": "rice"
-          },
-          "depth": 3
-        }
-      ]
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/file.coffee",
-        "projectPath": "src/file.coffee",
-        "targetPath": "file",
-        "title": "file"
-      },
-      "depth": 1,
-      "outline": [
-        {
-          "type": "heading",
-          "data": {
-            "level": 2,
-            "title": "Class Methods",
-            "slug": "class-methods"
-          },
-          "depth": 2
         }, {
-          "type": "heading",
+          "type": "file",
           "data": {
-            "level": 2,
-            "title": "Instance Methods",
-            "slug": "instance-methods"
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/file.coffee",
+            "projectPath": "src/file.coffee",
+            "targetPath": "src/file",
+            "title": "file"
           },
           "depth": 2,
-          "children": [
+          "outline": [
+            {
+              "type": "heading",
+              "data": {
+                "level": 2,
+                "title": "Class Methods",
+                "slug": "class-methods"
+              },
+              "depth": 2
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 2,
+                "title": "Instance Methods",
+                "slug": "instance-methods"
+              },
+              "depth": 2,
+              "children": [
+                {
+                  "type": "heading",
+                  "data": {
+                    "level": 3,
+                    "title": "API",
+                    "slug": "api"
+                  },
+                  "depth": 3
+                }
+              ]
+            }
+          ]
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/fits.coffee",
+            "projectPath": "src/fits.coffee",
+            "targetPath": "src/fits",
+            "title": "fits"
+          },
+          "depth": 2,
+          "outline": []
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/hdu.coffee",
+            "projectPath": "src/hdu.coffee",
+            "targetPath": "src/hdu",
+            "title": "hdu"
+          },
+          "depth": 2,
+          "outline": [
             {
               "type": "heading",
               "data": {
@@ -291,162 +337,130 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
               "depth": 3
             }
           ]
-        }
-      ]
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/fits.coffee",
-        "projectPath": "src/fits.coffee",
-        "targetPath": "fits",
-        "title": "fits"
-      },
-      "depth": 1,
-      "outline": []
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/hdu.coffee",
-        "projectPath": "src/hdu.coffee",
-        "targetPath": "hdu",
-        "title": "hdu"
-      },
-      "depth": 1,
-      "outline": [
-        {
-          "type": "heading",
+        }, {
+          "type": "file",
           "data": {
-            "level": 3,
-            "title": "API",
-            "slug": "api"
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/header.coffee",
+            "projectPath": "src/header.coffee",
+            "targetPath": "src/header",
+            "title": "header"
           },
-          "depth": 3
+          "depth": 2,
+          "outline": []
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/header.verify.coffee",
+            "projectPath": "src/header.verify.coffee",
+            "targetPath": "src/header.verify",
+            "title": "header.verify"
+          },
+          "depth": 2,
+          "outline": []
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/image.coffee",
+            "projectPath": "src/image.coffee",
+            "targetPath": "src/image",
+            "title": "image"
+          },
+          "depth": 2,
+          "outline": []
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/image.utils.coffee",
+            "projectPath": "src/image.utils.coffee",
+            "targetPath": "src/image.utils",
+            "title": "image.utils"
+          },
+          "depth": 2,
+          "outline": [
+            {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "Get the value of a pixel from the arraybuffer",
+                "slug": "get-the-value-of-a-pixel-from-the-arraybuffer"
+              },
+              "depth": 1
+            }
+          ]
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/module.coffee",
+            "projectPath": "src/module.coffee",
+            "targetPath": "src/module",
+            "title": "module"
+          },
+          "depth": 2,
+          "outline": []
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/table.coffee",
+            "projectPath": "src/table.coffee",
+            "targetPath": "src/table",
+            "title": "table"
+          },
+          "depth": 2,
+          "outline": []
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/tabular.coffee",
+            "projectPath": "src/tabular.coffee",
+            "targetPath": "src/tabular",
+            "title": "tabular"
+          },
+          "depth": 2,
+          "outline": []
         }
       ]
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/header.coffee",
-        "projectPath": "src/header.coffee",
-        "targetPath": "header",
-        "title": "header"
-      },
-      "depth": 1,
-      "outline": []
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/header.verify.coffee",
-        "projectPath": "src/header.verify.coffee",
-        "targetPath": "header.verify",
-        "title": "header.verify"
-      },
-      "depth": 1,
-      "outline": []
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/image.coffee",
-        "projectPath": "src/image.coffee",
-        "targetPath": "image",
-        "title": "image"
-      },
-      "depth": 1,
-      "outline": []
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/image.utils.coffee",
-        "projectPath": "src/image.utils.coffee",
-        "targetPath": "image.utils",
-        "title": "image.utils"
-      },
-      "depth": 1,
-      "outline": []
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/module.coffee",
-        "projectPath": "src/module.coffee",
-        "targetPath": "module",
-        "title": "module"
-      },
-      "depth": 1,
-      "outline": []
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/table.coffee",
-        "projectPath": "src/table.coffee",
-        "targetPath": "table",
-        "title": "table"
-      },
-      "depth": 1,
-      "outline": []
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".coffee"],
-          "pygmentsLexer": "coffee-script",
-          "singleLineComment": ["#"],
-          "name": "CoffeeScript"
-        },
-        "sourcePath": "/Users/akapadia/Projects/fitsjs/src/tabular.coffee",
-        "projectPath": "src/tabular.coffee",
-        "targetPath": "tabular",
-        "title": "tabular"
-      },
-      "depth": 1,
-      "outline": []
     }
   ];
 

@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="en"><head><title>src/binarytable</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="src/binarytable"><meta name="groc-project-path" content="src/binarytable.coffee"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/binarytable.coffee</div></div><div id="document"><div class="segment"><div class="code"><div class="wrapper"><span class="k">class</span> <span class="nx">BinaryTable</span> <span class="k">extends</span> <span class="nx">Tabular</span>
+  
+  
+  <span class="nv">constructor: </span><span class="nf">(header, view, offset) -&gt;</span>
+    <span class="k">super</span>
+    
+    <span class="vi">@tableLength = </span><span class="nx">@length</span>
+    <span class="vi">@columnNames = </span><span class="p">{}</span>
+    <span class="nx">@setAccessors</span><span class="p">(</span><span class="nx">header</span><span class="p">)</span>
+  
+  <span class="nv">toBits: </span><span class="nf">(byte) -&gt;</span>
+    <span class="nv">arr = </span><span class="p">[]</span>
+    <span class="nv">i = </span><span class="mi">128</span>
+    <span class="k">while</span> <span class="nx">i</span> <span class="o">&gt;=</span> <span class="mi">1</span>
+      <span class="nx">arr</span><span class="p">.</span><span class="nx">push</span> <span class="p">(</span><span class="k">if</span> <span class="nx">byte</span> <span class="o">&amp;</span> <span class="nx">i</span> <span class="k">then</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="nx">i</span> <span class="err">/= 2</span>
+    <span class="k">return</span> <span class="nx">arr</span>
+  
+  <span class="nv">getFromHeap: </span><span class="nf">(descriptor) -&gt;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get length and offset of the heap</p></div></div><div class="code"><div class="wrapper">    <span class="nv">length  = </span><span class="nx">@view</span><span class="p">.</span><span class="nx">getInt32</span><span class="p">(</span><span class="nx">@offset</span><span class="p">)</span>
+    <span class="nx">@offset</span> <span class="o">+=</span> <span class="mi">4</span>
+    <span class="nv">offset  = </span><span class="nx">@view</span><span class="p">.</span><span class="nx">getInt32</span><span class="p">(</span><span class="nx">@offset</span><span class="p">)</span>
+    <span class="nx">@offset</span> <span class="o">+=</span> <span class="mi">4</span>
+    
+    <span class="nv">heapOffset = </span><span class="nx">@begin</span> <span class="o">+</span> <span class="nx">@tableLength</span> <span class="o">+</span> <span class="nx">offset</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Read from the buffer</p></div></div><div class="code"><div class="wrapper">    <span class="nv">chunk = </span><span class="nx">@view</span><span class="p">.</span><span class="nx">buffer</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">heapOffset</span><span class="p">,</span> <span class="nx">heapOffset</span> <span class="o">+</span> <span class="nx">length</span><span class="p">)</span>
+    <span class="nv">arr = </span><span class="k">new</span> <span class="nx">@typedArray</span><span class="p">[</span><span class="nx">descriptor</span><span class="p">](</span><span class="nx">chunk</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Swap endian</p></div></div><div class="code"><div class="wrapper">    <span class="nv">i = </span><span class="nx">arr</span><span class="p">.</span><span class="nx">length</span>
+    <span class="k">while</span> <span class="nx">i</span><span class="o">--</span>
+      <span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@swapEndian</span><span class="p">[</span><span class="nx">descriptor</span><span class="p">](</span><span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="nx">arr</span>
+  
+  <span class="nv">setAccessors: </span><span class="nf">(header) -&gt;</span>
+    <span class="nv">pattern = </span><span class="sr">/(\d*)([P|Q]*)([L|X|B|I|J|K|A|E|D|C|M]{1})/</span>
+    
+    <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">@cols</span><span class="p">]</span>
+      <span class="nv">form  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;TFORM#{i}&quot;</span><span class="p">)</span>
+      <span class="nv">type  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;TTYPE#{i}&quot;</span><span class="p">)</span>
+      <span class="nv">match = </span><span class="nx">pattern</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">form</span><span class="p">)</span>
+      
+      <span class="nv">count       = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">match</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">or</span> <span class="mi">1</span>
+      <span class="nv">isArray     = </span><span class="nx">match</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="nv">descriptor  = </span><span class="nx">match</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+      
+      <span class="nx">@columnNames</span><span class="p">[</span><span class="nx">type</span><span class="p">]</span> <span class="o">=</span> <span class="nx">i</span> <span class="o">-</span> <span class="mi">1</span>
+      
+      <span class="k">if</span> <span class="nx">isArray</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Handle array descriptors</p></div></div><div class="code"><div class="wrapper">        <span class="k">switch</span> <span class="nx">type</span>
+          <span class="k">when</span> <span class="s2">&quot;COMPRESSED_DATA&quot;</span>
+            <span class="nx">do</span> <span class="p">(</span><span class="nx">descriptor</span><span class="p">,</span> <span class="nx">count</span><span class="p">)</span> <span class="o">=&gt;</span>
+              <span class="nv">accessor = </span><span class="o">=&gt;</span>
+                <span class="nv">arr = </span><span class="nx">@getFromHeap</span><span class="p">(</span><span class="nx">descriptor</span><span class="p">)</span>
+                </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Assuming Rice compression</p></div></div><div class="code"><div class="wrapper">                <span class="nv">pixels = </span><span class="k">new</span> <span class="nx">@typedArray</span><span class="p">[</span><span class="nx">@params</span><span class="p">[</span><span class="s2">&quot;BYTEPIX&quot;</span><span class="p">]](</span><span class="nx">@ztile</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="nx">@constructor</span><span class="p">.</span><span class="nx">Rice</span><span class="p">(</span><span class="nx">arr</span><span class="p">,</span> <span class="nx">@params</span><span class="p">[</span><span class="s2">&quot;BLOCKSIZE&quot;</span><span class="p">],</span> <span class="nx">@params</span><span class="p">[</span><span class="s2">&quot;BYTEPIX&quot;</span><span class="p">],</span> <span class="nx">pixels</span><span class="p">,</span> <span class="nx">@ztile</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                
+                <span class="k">return</span> <span class="nx">pixels</span>
+              <span class="nx">@accessors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">accessor</span><span class="p">)</span>
+          <span class="k">when</span> <span class="s2">&quot;GZIP_COMPRESSED_DATA&quot;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>TODO: Implement GZIP</p></div></div><div class="code"><div class="wrapper">            <span class="nx">do</span> <span class="p">(</span><span class="nx">descriptor</span><span class="p">,</span> <span class="nx">count</span><span class="p">)</span> <span class="o">=&gt;</span>
+              <span class="nv">accessor = </span><span class="o">=&gt;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>arr = @getFromHeap(descriptor)</p></div></div><div class="code"><div class="wrapper">                </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Temporarily padding with NaNs until GZIP is implemented</p></div></div><div class="code"><div class="wrapper">                <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Float32Array</span><span class="p">(</span><span class="nx">@width</span><span class="p">)</span>
+                <span class="nv">i = </span><span class="nx">arr</span><span class="p">.</span><span class="nx">length</span>
+                <span class="k">while</span> <span class="nx">i</span><span class="o">--</span>
+                  <span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">NaN</span>
+                <span class="k">return</span> <span class="nx">arr</span>
+              <span class="nx">@accessors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s1">&#39;accessor&#39;</span><span class="p">)</span>
+          <span class="k">else</span>
+            <span class="nx">do</span> <span class="p">(</span><span class="nx">descriptor</span><span class="p">,</span> <span class="nx">count</span><span class="p">)</span> <span class="o">=&gt;</span>
+              <span class="nv">accessor = </span><span class="o">=&gt;</span>
+                <span class="k">return</span> <span class="nx">@getFromHeap</span><span class="p">(</span><span class="nx">descriptor</span><span class="p">)</span>
+              <span class="nx">@accessors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s1">&#39;accessor&#39;</span><span class="p">)</span>
+      <span class="k">else</span>
+        <span class="k">if</span> <span class="nx">count</span> <span class="o">is</span> <span class="mi">1</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Handle single element</p></div></div><div class="code"><div class="wrapper">          <span class="nx">do</span> <span class="p">(</span><span class="nx">descriptor</span><span class="p">,</span> <span class="nx">count</span><span class="p">)</span> <span class="o">=&gt;</span>
+            <span class="nv">accessor = </span><span class="o">=&gt;</span>
+              <span class="p">[</span><span class="nx">value</span><span class="p">,</span> <span class="nx">@offset</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@dataAccessors</span><span class="p">[</span><span class="nx">descriptor</span><span class="p">](</span><span class="nx">@view</span><span class="p">,</span> <span class="nx">@offset</span><span class="p">)</span>
+              <span class="k">return</span> <span class="nx">value</span>
+            <span class="nx">@accessors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">accessor</span><span class="p">)</span>
+        <span class="k">else</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Handle bit arrays</p></div></div><div class="code"><div class="wrapper">          <span class="k">if</span> <span class="nx">descriptor</span> <span class="o">is</span> <span class="s1">&#39;X&#39;</span>
+            <span class="nx">do</span> <span class="p">(</span><span class="nx">descriptor</span><span class="p">,</span> <span class="nx">count</span><span class="p">)</span> <span class="o">=&gt;</span>
+              <span class="nv">nBytes = </span><span class="nb">Math</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">count</span><span class="p">)</span> <span class="o">/</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+              <span class="nv">accessor = </span><span class="o">=&gt;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Read from the buffer</p></div></div><div class="code"><div class="wrapper">                <span class="nv">chunk = </span><span class="nx">@view</span><span class="p">.</span><span class="nx">buffer</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">@offset</span><span class="p">,</span> <span class="nx">@offset</span> <span class="o">+</span> <span class="nx">nBytes</span><span class="p">)</span>
+                <span class="nv">bytes = </span><span class="k">new</span> <span class="nx">Uint8Array</span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span>
+              </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get bit representation</p></div></div><div class="code"><div class="wrapper">                <span class="nv">bits = </span><span class="p">[]</span>
+                <span class="k">for</span> <span class="nx">byte</span> <span class="k">in</span> <span class="nx">bytes</span>
+                  <span class="nv">arr = </span><span class="nx">@toBits</span><span class="p">(</span><span class="nx">byte</span><span class="p">)</span>
+                  <span class="nv">bits = </span><span class="nx">bits</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="nx">arr</span><span class="p">)</span>
+              </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Increment the offset</p></div></div><div class="code"><div class="wrapper">                <span class="nx">@offset</span> <span class="o">+=</span> <span class="nx">nBytes</span>
+              
+                <span class="k">return</span> <span class="nx">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">..</span><span class="nx">count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+              <span class="nx">@accessors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">accessor</span><span class="p">)</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Handle character arrays</p></div></div><div class="code"><div class="wrapper">          <span class="k">else</span> <span class="k">if</span> <span class="nx">descriptor</span> <span class="o">is</span> <span class="s1">&#39;A&#39;</span>
+            <span class="nx">do</span> <span class="p">(</span><span class="nx">descriptor</span><span class="p">,</span> <span class="nx">count</span><span class="p">)</span> <span class="o">=&gt;</span>
+              <span class="nv">accessor = </span><span class="o">=&gt;</span>
+                <span class="nv">str = </span><span class="nx">@view</span><span class="p">.</span><span class="nx">getString</span><span class="p">(</span><span class="nx">@offset</span><span class="p">,</span> <span class="nx">count</span><span class="p">)</span>
+                <span class="nx">@offset</span> <span class="o">+=</span> <span class="nx">count</span>
+                <span class="k">return</span> <span class="nx">str</span><span class="p">.</span><span class="nx">trim</span><span class="p">()</span>
+              <span class="nx">@accessors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">accessor</span><span class="p">)</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Handle all other data types</p></div></div><div class="code"><div class="wrapper">          <span class="k">else</span>
+            <span class="nx">do</span> <span class="p">(</span><span class="nx">descriptor</span><span class="p">,</span> <span class="nx">count</span><span class="p">)</span> <span class="o">=&gt;</span>
+              <span class="nv">accessor = </span><span class="o">=&gt;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>TypedArray = @typedArray[descriptor]</p>
+
+<h1 id="read-from-the-buffer">Read from the buffer</h1>
+
+<p>length = count * TypedArray.BYTES<em>PER</em>ELEMENT
+chunk = @view.buffer.slice(@offset, @offset + length)
+@offset += length</p>
+
+<p>return new TypedArray(chunk)</p></div></div><div class="code"><div class="wrapper">                
+                <span class="nv">data = </span><span class="p">[]</span>
+                <span class="k">while</span> <span class="nx">count</span><span class="o">--</span>
+                  <span class="p">[</span><span class="nx">value</span><span class="p">,</span> <span class="nx">@offset</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@dataAccessors</span><span class="p">[</span><span class="nx">descriptor</span><span class="p">](</span><span class="nx">@view</span><span class="p">,</span> <span class="nx">@offset</span><span class="p">)</span>
+                  <span class="nx">data</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nx">data</span>
+              <span class="nx">@accessors</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">accessor</span><span class="p">)</span>
+
+
+<span class="vi">@astro.FITS.BinaryTable = </span><span class="nx">BinaryTable</span></div></div></div></div></body></html>

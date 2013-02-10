@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="en"><head><title>src/image</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="src/image"><meta name="groc-project-path" content="src/image.coffee"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/image.coffee</div></div><div id="document"><div class="segment"></div><div class="segment"><div class="comments"><div class="wrapper"><p>Image represents a standard image stored in the data unit of a FITS file</p></div></div><div class="code"><div class="wrapper"><span class="k">class</span> <span class="nx">Image</span> <span class="k">extends</span> <span class="nx">DataUnit</span>
+  <span class="nx">@include</span> <span class="nx">ImageUtils</span>
+  
+  
+  <span class="nv">constructor: </span><span class="nf">(header, view, offset) -&gt;</span>
+    <span class="k">super</span>
+    
+    <span class="nv">naxis   = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;NAXIS&quot;</span><span class="p">)</span>
+    <span class="vi">@bitpix = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;BITPIX&quot;</span><span class="p">)</span>
+    
+    <span class="vi">@naxis = </span><span class="p">[]</span>
+    <span class="nx">@naxis</span><span class="p">.</span><span class="nx">push</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;NAXIS#{i}&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">naxis</span><span class="p">]</span>
+    
+    <span class="vi">@width  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;NAXIS1&quot;</span><span class="p">)</span>
+    <span class="vi">@height = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;NAXIS2&quot;</span><span class="p">)</span> <span class="o">or</span> <span class="mi">1</span>
+    
+    <span class="vi">@bzero  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;BZERO&quot;</span><span class="p">)</span> <span class="o">or</span> <span class="mi">0</span>
+    <span class="vi">@bscale = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;BSCALE&quot;</span><span class="p">)</span> <span class="o">or</span> <span class="mi">1</span>
+    
+    <span class="vi">@bytes  = </span><span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span><span class="p">(</span><span class="nx">@bitpix</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span>
+    <span class="vi">@length = </span><span class="nx">@naxis</span><span class="p">.</span><span class="nx">reduce</span><span class="p">(</span> <span class="nf">(a, b) -&gt;</span> <span class="nx">a</span> <span class="o">*</span> <span class="nx">b</span><span class="p">)</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span><span class="p">(</span><span class="nx">@bitpix</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span>
+    <span class="vi">@frame  = </span><span class="mi">0</span>    <span class="c1"># Needed for data cubes</span>
+  
+  <span class="nv">getFrameAsync: </span><span class="nf">(@frame = @frame, callback) -&gt;</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Define the function to be executed on the worker thread</p></div></div><div class="code"><div class="wrapper">    <span class="nv">onmessage = </span><span class="nf">(e) -&gt;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Cache variables</p></div></div><div class="code"><div class="wrapper">      <span class="nv">data    = </span><span class="nx">e</span><span class="p">.</span><span class="nx">data</span>
+      <span class="nv">bitpix  = </span><span class="nx">data</span><span class="p">.</span><span class="nx">bitpix</span>
+      <span class="nv">width   = </span><span class="nx">data</span><span class="p">.</span><span class="nx">width</span>
+      <span class="nv">height  = </span><span class="nx">data</span><span class="p">.</span><span class="nx">height</span>
+      <span class="nv">bzero   = </span><span class="nx">data</span><span class="p">.</span><span class="nx">bzero</span>
+      <span class="nv">bscale  = </span><span class="nx">data</span><span class="p">.</span><span class="nx">bscale</span>
+      <span class="nv">chunk   = </span><span class="nx">data</span><span class="p">.</span><span class="nx">chunk</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set counters</p></div></div><div class="code"><div class="wrapper">      <span class="nv">nPixels = i = </span><span class="nx">width</span> <span class="o">*</span> <span class="nx">height</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Define swap endian functions (must be defined in worker since functions not passable to worker)</p></div></div><div class="code"><div class="wrapper">      <span class="k">switch</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span><span class="p">(</span><span class="nx">bitpix</span><span class="p">)</span>
+        <span class="k">when</span> <span class="mi">16</span>
+          <span class="nv">swapEndian = </span><span class="nf">(value) -&gt;</span>
+            <span class="k">return</span> <span class="p">(</span><span class="nx">value</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="nx">value</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span>
+        <span class="k">when</span> <span class="mi">32</span>
+          <span class="nv">swapEndian = </span><span class="nf">(value) -&gt;</span>
+            <span class="k">return</span> <span class="p">((</span><span class="nx">value</span> <span class="o">&amp;</span> <span class="mh">0xFF</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">24</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="nx">value</span> <span class="o">&amp;</span> <span class="mh">0xFF00</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="nx">value</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xFF00</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="nx">value</span> <span class="o">&gt;&gt;</span> <span class="mi">24</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xFF</span><span class="p">)</span>
+        <span class="k">else</span>
+          <span class="nv">swapEndian = </span><span class="nf">(value) -&gt;</span> <span class="k">return</span> <span class="nx">value</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Determine appropriate typed array</p></div></div><div class="code"><div class="wrapper">      <span class="k">if</span> <span class="nx">bitpix</span> <span class="o">&gt;</span> <span class="mi">0</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Data type is integer</p></div></div><div class="code"><div class="wrapper">        <span class="k">switch</span> <span class="nx">bitpix</span>
+          <span class="k">when</span> <span class="mi">8</span>
+            <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Uint8Array</span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span>
+            <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Uint16Array</span><span class="p">(</span><span class="nx">arr</span><span class="p">)</span>
+          <span class="k">when</span> <span class="mi">16</span>
+            <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Uint16Array</span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span>
+          <span class="k">when</span> <span class="mi">32</span>
+            <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Int32Array</span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Swap endian and apply BZERO and BSCALE</p></div></div><div class="code"><div class="wrapper">        <span class="k">while</span> <span class="nx">nPixels</span><span class="o">--</span>
+          <span class="nv">value = </span><span class="nx">arr</span><span class="p">[</span><span class="nx">nPixels</span><span class="p">]</span>
+          <span class="nv">value = </span><span class="nx">swapEndian</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+          <span class="nx">arr</span><span class="p">[</span><span class="nx">nPixels</span><span class="p">]</span> <span class="o">=</span> <span class="nx">bzero</span> <span class="o">+</span> <span class="nx">bscale</span> <span class="o">*</span> <span class="nx">value</span> <span class="o">+</span> <span class="mf">0.5</span>
+      <span class="k">else</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Data type is float</p></div></div><div class="code"><div class="wrapper">        <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Uint32Array</span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="nx">i</span><span class="o">--</span>
+          <span class="nv">value = </span><span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span>
+          <span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">swapEndian</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Initialize a Float32 array using the same buffer</p></div></div><div class="code"><div class="wrapper">        <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Float32Array</span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Apply BZERO and BSCALE</p></div></div><div class="code"><div class="wrapper">        <span class="k">while</span> <span class="nx">nPixels</span><span class="o">--</span>
+          <span class="nx">arr</span><span class="p">[</span><span class="nx">nPixels</span><span class="p">]</span> <span class="o">=</span> <span class="nx">bzero</span> <span class="o">+</span> <span class="nx">bscale</span> <span class="o">*</span> <span class="nx">arr</span><span class="p">[</span><span class="nx">nPixels</span><span class="p">]</span>
+      
+      <span class="nx">postMessage</span><span class="p">(</span><span class="nx">arr</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Some tricks to format function for worker</p></div></div><div class="code"><div class="wrapper">    <span class="nv">fn = </span><span class="nx">onmessage</span><span class="p">.</span><span class="nx">toString</span><span class="p">().</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">).</span><span class="nx">reverse</span><span class="p">().</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">).</span><span class="nx">replace</span><span class="p">(</span><span class="s1">&#39; nruter&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="nv">fn = </span><span class="nx">fn</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">).</span><span class="nx">reverse</span><span class="p">().</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="nv">fn = </span><span class="s2">&quot;onmessage = #{fn}&quot;</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Construct blob for an inline worker</p></div></div><div class="code"><div class="wrapper">    <span class="nv">blob = </span><span class="k">new</span> <span class="nx">Blob</span><span class="p">([</span><span class="nx">fn</span><span class="p">],</span> <span class="p">{</span><span class="nv">type: </span><span class="s2">&quot;application/javascript&quot;</span><span class="p">})</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Prefix for Safari</p></div></div><div class="code"><div class="wrapper">    <span class="nv">URL = </span><span class="nx">URL</span> <span class="o">or</span> <span class="nx">webkitURL</span>
+    <span class="nv">blobUrl = </span><span class="nx">URL</span><span class="p">.</span><span class="nx">createObjectURL</span><span class="p">(</span><span class="nx">blob</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Define worker</p></div></div><div class="code"><div class="wrapper">    <span class="nv">worker = </span><span class="k">new</span> <span class="nx">Worker</span><span class="p">(</span><span class="nx">blobUrl</span><span class="p">)</span>
+    <span class="nv">worker.onmessage = </span><span class="nf">(e) -&gt;</span>
+      <span class="nv">arr = </span><span class="nx">e</span><span class="p">.</span><span class="nx">data</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Execute callback</p></div></div><div class="code"><div class="wrapper">      <span class="nx">callback</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="err">@</span><span class="p">,</span> <span class="nx">arr</span><span class="p">)</span> <span class="k">if</span> <span class="nx">callback</span><span class="o">?</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Clean up blob url</p></div></div><div class="code"><div class="wrapper">      <span class="nx">URL</span><span class="p">.</span><span class="nx">revokeObjectURL</span><span class="p">(</span><span class="nx">blobUrl</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get bytes representing this dataunit</p></div></div><div class="code"><div class="wrapper">    <span class="nv">nPixels = </span><span class="nx">@width</span> <span class="o">*</span> <span class="nx">@height</span>
+    <span class="nv">start   = </span><span class="nx">@offset</span> <span class="o">+</span> <span class="p">(</span><span class="nx">@frame</span> <span class="o">*</span> <span class="nx">nPixels</span> <span class="o">*</span> <span class="nx">@bytes</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Define object to be passed to worker</p></div></div><div class="code"><div class="wrapper">    <span class="nv">data = </span><span class="p">{}</span>
+    <span class="nv">data.bitpix = </span><span class="nx">@bitpix</span>
+    <span class="nv">data.width  = </span><span class="nx">@width</span>
+    <span class="nv">data.height = </span><span class="nx">@height</span>
+    <span class="nv">data.bzero  = </span><span class="nx">@bzero</span>
+    <span class="nv">data.bscale = </span><span class="nx">@bscale</span>
+    <span class="nv">data.chunk  = </span><span class="nx">@view</span><span class="p">.</span><span class="nx">buffer</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">start</span><span class="p">,</span> <span class="nx">start</span> <span class="o">+</span> <span class="nx">nPixels</span> <span class="o">*</span> <span class="nx">@bytes</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Pass chunk to worker</p></div></div><div class="code"><div class="wrapper">    <span class="nx">worker</span><span class="p">.</span><span class="nx">postMessage</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span>
+  
+  <span class="nv">getFrame: </span><span class="nf">(@frame = @frame) -&gt;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Reference the buffer</p></div></div><div class="code"><div class="wrapper">    <span class="nv">buffer = </span><span class="nx">@view</span><span class="p">.</span><span class="nx">buffer</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get bytes representing this dataunit</p></div></div><div class="code"><div class="wrapper">    <span class="nv">nPixels = i = </span><span class="nx">@width</span> <span class="o">*</span> <span class="nx">@height</span>
+    <span class="nv">start = </span><span class="nx">@offset</span> <span class="o">+</span> <span class="p">(</span><span class="nx">@frame</span> <span class="o">*</span> <span class="nx">nPixels</span> <span class="o">*</span> <span class="nx">@bytes</span><span class="p">)</span>
+    
+    <span class="nv">chunk = </span><span class="nx">buffer</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">start</span><span class="p">,</span> <span class="nx">start</span> <span class="o">+</span> <span class="nx">nPixels</span> <span class="o">*</span> <span class="nx">@bytes</span><span class="p">)</span>
+    
+    <span class="nv">bitpix = </span><span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span><span class="p">(</span><span class="nx">@bitpix</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">@bitpix</span> <span class="o">&gt;</span> <span class="mi">0</span>
+      <span class="k">switch</span> <span class="nx">@bitpix</span>
+        <span class="k">when</span> <span class="mi">8</span>
+          <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Uint8Array</span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span>
+          <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Uint16Array</span><span class="p">(</span><span class="nx">arr</span><span class="p">)</span>
+        <span class="k">when</span> <span class="mi">16</span>
+          <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Uint16Array</span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span>
+        <span class="k">when</span> <span class="mi">32</span>
+          <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Int32Array</span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span>
+      
+      <span class="k">while</span> <span class="nx">nPixels</span><span class="o">--</span>
+        <span class="nv">value = </span><span class="nx">arr</span><span class="p">[</span><span class="nx">nPixels</span><span class="p">]</span>
+        <span class="nv">value = </span><span class="nx">@swapEndian</span><span class="p">[</span><span class="nx">bitpix</span><span class="p">](</span><span class="nx">value</span><span class="p">)</span>
+        <span class="nx">arr</span><span class="p">[</span><span class="nx">nPixels</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@bzero</span> <span class="o">+</span> <span class="nx">@bscale</span> <span class="o">*</span> <span class="nx">value</span> <span class="o">+</span> <span class="mf">0.5</span>
+      
+    <span class="k">else</span>
+      <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Uint32Array</span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span>
+      
+      <span class="k">while</span> <span class="nx">i</span><span class="o">--</span>
+        <span class="nv">value = </span><span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span>
+        <span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@swapEndian</span><span class="p">[</span><span class="nx">bitpix</span><span class="p">](</span><span class="nx">value</span><span class="p">)</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Initialize a Float32 array using the same buffer</p></div></div><div class="code"><div class="wrapper">      <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Float32Array</span><span class="p">(</span><span class="nx">chunk</span><span class="p">)</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Apply BZERO and BSCALE</p></div></div><div class="code"><div class="wrapper">      <span class="k">while</span> <span class="nx">nPixels</span><span class="o">--</span>
+        <span class="nx">arr</span><span class="p">[</span><span class="nx">nPixels</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@bzero</span> <span class="o">+</span> <span class="nx">@bscale</span> <span class="o">*</span> <span class="nx">arr</span><span class="p">[</span><span class="nx">nPixels</span><span class="p">]</span>
+    
+    <span class="nx">@frame</span> <span class="o">+=</span> <span class="mi">1</span> <span class="k">if</span> <span class="nx">@isDataCube</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="nx">arr</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Checks if the image is a data cube</p></div></div><div class="code"><div class="wrapper">  <span class="nv">isDataCube: </span><span class="o">-&gt;</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="nx">@naxis</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">then</span> <span class="kc">true</span> <span class="k">else</span> <span class="kc">false</span> 
+
+
+<span class="vi">@astro.FITS.Image = </span><span class="nx">Image</span></div></div></div></div></body></html>

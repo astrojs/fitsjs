@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><title>decompress</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="decompress"><meta name="groc-project-path" content="src/decompress.coffee"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/decompress.coffee</div></div><div id="document"><div class="segment"><div class="comments"><div class="wrapper"><h1 id="decompress">Decompress</h1></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Module will contain various decompression algorithms used in compressing FITS images.  Currently only
+<!DOCTYPE html><html lang="en"><head><title>src/decompress</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="src/decompress"><meta name="groc-project-path" content="src/decompress.coffee"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/decompress.coffee</div></div><div id="document"><div class="segment"><div class="comments"><div class="wrapper"><h1 id="decompress">Decompress</h1></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Module will contain various decompression algorithms used in compressing FITS images.  Currently only
 the Rice decompression algorithm is implemented.  The four adopted algorithms are:</p></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><ul>
 <li>Rice</li>
 <li>Gzip</li>
@@ -9,12 +9,11 @@ the Rice decompression algorithm is implemented.  The four adopted algorithms ar
 
 <ul>
 <li>array: Array of compressed bytes to be decompressed</li>
-<li>arrayLen: Length of array</li>
 <li>blocksize: Number of pixels encoded in a block</li>
 <li>bytepix: Number of 8-bit bytes of the original integer pixel</li>
 <li>pixels: Output array containing the decompressed values</li>
 <li>nx: Length of pixels (ztile1)</li>
-</ul></div></div><div class="code"><div class="wrapper">  <span class="nv">Rice: </span><span class="nf">(array, arrayLen, blocksize, bytepix, pixels, nx) -&gt;</span>
+</ul></div></div><div class="code"><div class="wrapper">  <span class="nv">Rice: </span><span class="nf">(array, blocksize, bytepix, pixels, nx) -&gt;</span>
     
     <span class="nv">bbits = </span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="nx">fsbits</span>
     
