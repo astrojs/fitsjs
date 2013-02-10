@@ -1,9 +1,9 @@
 fitsjs
 ======
 
-A standalone JavaScript library for reading the astronomical file format – FITS.  This library is built for modern browsers supporting the DataView object.  These include at least Chrome 9, Firefox 15, and Safari 6.
+A standalone JavaScript library for reading the astronomical file format – FITS.  This library is built for modern browsers supporting the DataView API.  These include at least Chrome 9, Firefox 15, and Safari 6.
 
-To use the library copy `lib/fits.js` to your project and include it using a script tag.  After including the library, the FITS object is exposed under the `astro` namespace.
+To use the library copy `lib/fits.js` to your project and include it with a script tag.  The FITS object is exposed under the `astro` namespace.
 
     <script src="fits.js" type="text/javascript" charset="utf-8">
     </script>
@@ -12,16 +12,16 @@ To use the library copy `lib/fits.js` to your project and include it using a scr
       var FITS = astro.FITS;
     </script>
 
-This library may be used to read various forms of the FITS format.  This implementation is under active development.  In its current state it supports the following:
+This library may be used to read various forms of the FITS format.  This implementation is under active development.  Currently it supports:
 
-* Reading of multiple header data units
-* Reading of FITS images
-* Reading of data cubes
-* Reading of binary tables
-* Reading of ASCII Tables
-* Decompressing images using the Rice algorithm
+* Reading multiple header data units
+* Reading images
+* Reading data cubes
+* Reading binary tables
+* Reading ASCII Tables
+* Reading Rice compressed images
 
-If you incorporate this library in your project, please let me know.  I would like to maintain a list of users :)
+Please let me know if you incorporate this library in your project, and please share your application with the rest of the astronomy community.
 
 API
 ---
@@ -52,80 +52,56 @@ Returns the value from the header of the user specified key.
 ### FITS.Header
 
     hdr.get(key)
-Returns the index, value, and comment of the key.
-
-    hdr[key]
 Returns the value of the key.
-
-    hdr.getIndex(key)
-Returns the index of the key.
-
-    hdr.getComment(key)
-Returns the comment associated with the key.
-
-    hdr.getComments(key)
-Returns the value of all COMMENT fields.
-
-    hdr.getHistory(key)
-Returns the value of all HISTORY fields.
-
-    hdr.set(key, value, comment)
-Sets the value and comment for a key.  Note: This function is used internally, and not yet suited for use outside of the library.
-
-    hdr.setComment(comment)
-Sets a comment associated with the COMMENT key.  Note: This function is used internally, and not yet suited for use outside of the library.
-
-    hdr.setHistory(history)
-Sets a history associated with the HISTORY key.  Note: This function is used internally, and not yet suited for use outside of the library.
 
     hdr.contains(key)
 Checks if a key is contained in the header instance.
 
-    hdr.readCard(line)
-Parses a string representing a single key, adding it to the instance.
-
     hdr.hasDataUnit()
 Checks if the header has an associated data unit.
 
-*More to come ...*
 
 Examples
 --------
-    <script src="fits.js" type="text/javascript" charset="utf-8">
-    </script>
+    <script src="fits.js" type="text/javascript" charset="utf-8"></script>
     
     <script type="text/javascript">
       var FITS = astro.FITS;
       
-      // Get an array buffer of the FITS file using XHR
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', "[/path/to/fits/file]");
-      
-      // Set the response type to arraybuffer
-      xhr.responseType = 'arraybuffer';
-      
-      // Define the onload function
-      xhr.onload = function(e) {
-          
-          // Initialize the FITS.File object using
-          // the array buffer returned from the XHR
-          var fits = new FITS.File(xhr.response);
-          
-          // Grab the first HDU with a data unit
-          var hdu = fits.getHDU();
-          
-          // Read a card from the header
-          var bitpix = hdu.getCard("BITPIX");
-          
-          // or we can read the card from the Header object
-          var bitpix = hdu.header["BITPIX"]
-          
-          // Grab the data object
-          var data = hdu.data
+      // Define a callback function for when the FITS file is received
+      fn = function() {
+        
+        // Get the first header-dataunit containing a dataunit
+        var hdu = this.getHDU();
+        
+        // Get the first header
+        var header = this.getHeader();
+        
+        // or we can do
+        var header = hdu.header;
+        
+        // Read a card from the header
+        var bitpix = header.get('BITPIX');
+        
+        // Get the dataunit object
+        var dataunit = hdu.data;
+        
+        // or we can do
+        var dataunit = this.getDataUnit();
+        
+        // Do some wicked client side processing ...
       }
       
-      // BAM! Send off the request
-      xhr.send();
+      // Set path to FITS file
+      var url = "/some/FITS/file/on/your/server.fits";
+      
+      // Initialize a new FITS File object
+      var fits = new FITS.File(url, fn);
+      
+      // Alternatively, the FITS.File object may be initialized with a buffer
+      // using the HTML5 File API or an XML HTTP request.  In this case, no callback function
+      // is required.
+      var fits = new FITS.File(buffer);
       
     </script>
 
@@ -139,22 +115,3 @@ Pence, W. D., L. Chiappetti, C. G. Page, R. a. Shaw, and E. Stobie. 2010. Defini
 Ponz, J.D., Thompson, R.W., Muñoz, J.R. The FITS Image Extension.
 
 White, Richard L, Perry Greenfield, William Pence, Nasa Gsfc, Doug Tody, and Rob Seaman. 2011. Tiled Image Convention for Storing Compressed Images in FITS Binary Tables: 1-17.
-
-
-Notes
------
-Currently rendering data as WebGL textures requires the use of Uint8 arrays or Float32 arrays.  Declare the data type:
-
-    var dataType = gl.UNSIGNED_BYTE;  # for Uint8 (BITPIX = 8)
-    var dataType = gl.FLOAT;          # for Uint16, Float32 (BITPIX 16, 32, -32)
-    
-    # Set parameters and data to texture
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, width, height, 0, gl.LUMINANCE, dataType, pixels);
-
-Documentation at [Khronos](http://www.khronos.org/registry/webgl/specs/latest/#5.14.8) states the following are supported formats, however they do not appear to render when used as textures.
-
-  * gl.UNSIGNED_BYTE (Uint8Array)
-  * gl.UNSIGNED_SHORT_5_6_5 (Uint16Array)
-  * gl.UNSIGNED_SHORT_4_4_4_4 (Uint16Array)
-  * gl.UNSIGNED_SHORT_5_5_5_1 (Uint16Array)
-  * gl.FLOAT (Float32Array)
