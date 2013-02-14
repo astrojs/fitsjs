@@ -31,7 +31,7 @@ class File
       hdu = new HDU(header, data)
       @hdus.push hdu
       break if @isEOF()
-    callback.call(@) if callback?
+    callback.call(@, @) if callback?
   
   # ##Class Methods
 

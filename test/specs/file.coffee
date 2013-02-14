@@ -71,11 +71,11 @@ describe "FITS", ->
     
     # Should be on the same domain as site, or handle CORS requests
     location = 'data/m101.fits'
-    fits = new FITS.File(location, ->
-      expect(fits.hdus.length).toEqual(2)
-      expect(fits.isEOF()).toBeTruthy()
-      expect(fits.hdus[0].data.constructor.name).toBe("Image")
-      expect(fits.hdus[1].data.constructor.name).toBe("Table")
+    new FITS.File(location, (f) ->
+      expect(f.hdus.length).toEqual(2)
+      expect(f.isEOF()).toBeTruthy()
+      expect(f.hdus[0].data.constructor.name).toBe("Image")
+      expect(f.hdus[1].data.constructor.name).toBe("Table")
     )
 
     

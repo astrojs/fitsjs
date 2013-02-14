@@ -99,9 +99,8 @@ describe "FITS Image", ->
     fits = arr = null
     ready = false
     location = 'data/m101.fits'
-    fits = new FITS.File(location, ->
-      
-      @getDataUnit().getFrameAsync(undefined, (array) ->
+    fits = new FITS.File(location, (f) ->
+      f.getDataUnit().getFrameAsync(undefined, (array) ->
         ready = true
         arr = array
       )
