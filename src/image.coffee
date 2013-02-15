@@ -98,11 +98,11 @@ class Image extends DataUnit
     
     # Define worker
     worker = new Worker(blobUrl)
-    worker.onmessage = (e) ->
+    worker.onmessage = (e) =>
       arr = e.data
       
       # Execute callback
-      callback.call(@, arr) if callback?
+      callback.call(@, arr, @width, @height) if callback?
       
       # Clean up blob url
       URL.revokeObjectURL(blobUrl)

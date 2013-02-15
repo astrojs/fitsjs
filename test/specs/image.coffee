@@ -100,7 +100,7 @@ describe "FITS Image", ->
     ready = false
     location = 'data/m101.fits'
     fits = new FITS.File(location, (f) ->
-      f.getDataUnit().getFrameAsync(undefined, (array) ->
+      f.getDataUnit().getFrameAsync(undefined, (array, width, height) ->
         ready = true
         arr = array
       )
