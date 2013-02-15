@@ -34,6 +34,27 @@ describe "FITS CompressedImage", ->
       expect(image.getPixel(arr, 237, 377)).toBeCloseTo(-0.668716, precision)
       expect(image.getPixel(arr, 393, 27)).toBeCloseTo(0.490127, precision)
   
+  it 'can read a frame by spawning a web worker', ->
+    precision = 6
+    fits = arr = null
+    ready = false
+    location = 'data/CFHTLS_03_g_sci.fits.fz'
+    fits = new FITS.File(location, (f) ->
+      f.getDataUnit().getFrameAsync(undefined, (array) ->
+        ready = true
+        arr = array
+      )
+    )
+    waitsFor -> return ready
+
+    runs ->
+      image = fits.getDataUnit()
+      # expect(image.getPixel(arr, 0, 0)).toEqual(3852)
+      # expect(image.getPixel(arr, 500, 500)).toEqual(13492)
+      # expect(image.getPixel(arr, 270, 400)).toEqual(7067)
+      # expect(image.getPixel(arr, 760, 800)).toEqual(4426)
+      # expect(image.getPixel(arr, 672, 284)).toEqual(6007)
+  
   it 'can apply subtractive dithering on a compressed FITS image', ->
     # Actually turns out subtractive dithering is not used on this file ...
     precision = 6

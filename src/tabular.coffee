@@ -80,6 +80,7 @@ class Tabular extends DataUnit
     
     @columns      = @getColumnNames(header)
     @accessors    = []
+    @header       = header  # Hopefully this reference is temporary
 
   getRow: (row = null) =>
     @rowsRead = row if row?

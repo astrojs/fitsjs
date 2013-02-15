@@ -26,6 +26,7 @@
     "binarytable",
     "decompress",
     "compressed-image",
+    "compressed-image-async",
     "hdu",
     "file"
   ]
