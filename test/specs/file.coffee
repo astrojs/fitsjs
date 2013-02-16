@@ -77,5 +77,18 @@ describe "FITS", ->
       expect(f.hdus[0].data.constructor.name).toBe("Image")
       expect(f.hdus[1].data.constructor.name).toBe("Table")
     )
-
+  
+  it 'can write file back for download', ->
+    
+    url = 'data/m101.fits'
+    fits = new FITS.File(url, (f) ->
+      
+      # File is ready, add value to header
+      header = fits.getHeader()
+      header.set('AUTHOR', 'Amit Kapadia', 'some comment')
+      
+      fits.save()
+    )
+    
+    
     

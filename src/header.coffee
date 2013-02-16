@@ -19,7 +19,8 @@ class Header extends Module
     @verifyCard[name] = @proxy(method) for name, method of @VerifyFns
     
     # e.g. [index, value, comment]
-    @cards      = {}
+    @cards = {}
+    @keys = []
     @cards["COMMENT"] = []
     @cards["HISTORY"] = []
     @cardIndex  = 0
@@ -37,6 +38,7 @@ class Header extends Module
       index: @cardIndex
       value: value
       comment: comment
+    @keys.push key
     @cardIndex += 1
   
   # Checks if the header contains a specified keyword
@@ -65,6 +67,7 @@ class Header extends Module
     # Check the value
     [value, comment] = value.split(' /')
     value = value.trim()
+    comment = comment.trim()
     
     # Values can be a string pattern starting with single quote
     # a boolean pattern (T or F), or a numeric

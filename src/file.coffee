@@ -5,6 +5,7 @@ class File
   LINEWIDTH: 80
   BLOCKLENGTH: 2880
   
+  
   constructor: (arg, callback) ->
     @constructor.extendDataView(@view)
     @hdus = []
@@ -139,10 +140,59 @@ class File
   # Returns the data object associated with the first HDU containing a data unit.  This method does not read from the array buffer
   # An optional argument may be passed to point to a specific HDU.
   getDataUnit: (index) -> return @getHDU(index).data
-
+  
   # Returns the data associated with the first HDU containing a data unit.  An optional argument
   # may be passed to point to a specific HDU.
   getData: (index) -> return @getHDU(index).data.getFrame()
-
+  
+  # Write the file back for easy download
+  save: ->
+    # Handle one HDU for now
+    hdu = @getHDU()
+    header = hdu.header
+    dataunit = hdu.data
+    
+    # Reconstruct header
+    keys = header.keys
+    cards = header.cards
+    block = ''
+    for key in keys
+      values = cards[key]
+      value = values.value
+      comment = values.comment
+      
+      # Format key to take 8 spaces
+      key = "#{key}       ".slice(0, 8)
+      
+      # Format value
+      type = typeof value
+      switch type
+        when 'boolean'
+          value = if value then 'T' else 'F'
+        when 'string'
+          value = "'#{value}'"
+      
+      line = "#{key}= #{value} / #{comment}"
+      lineWidth = @LINEWIDTH
+      while lineWidth--
+        line += ' '
+      block += line.slice(0, @LINEWIDTH)
+    
+    # Pad the excess bytes
+    excess = @excessBytes(block.length)
+    while excess--
+      block += ' '
+    
+    # Copy header to array buffer
+    length = block.length
+    buffer = new ArrayBuffer(length)
+    view = new DataView(buffer)
+    for i in [0..length - 1]
+      code = block.charCodeAt(i)
+      view.setUint8(i, code)
+    
+    # Check with typed array
+    arr = new Uint8Array(buffer)
+    console.log arr
 
 @astro.FITS.File = File
