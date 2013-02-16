@@ -23,7 +23,7 @@ class Image extends DataUnit
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(@bitpix) / 8
     @frame  = 0    # Needed for data cubes
   
-  getFrameAsync: (@frame = @frame, callback) ->
+  getFrameAsync: (@frame = @frame, callback, params = undefined) ->
     
     # Define the function to be executed on the worker thread
     onmessage = (e) ->
@@ -102,7 +102,7 @@ class Image extends DataUnit
       arr = e.data
       
       # Execute callback
-      callback.call(@, arr, @width, @height) if callback?
+      callback.call(@, arr, params) if callback?
       
       # Clean up blob url
       URL.revokeObjectURL(blobUrl)
