@@ -5,7 +5,7 @@ class File
   LINEWIDTH: 80
   BLOCKLENGTH: 2880
   
-  constructor: (arg, callback) ->
+  constructor: (arg, callback, opts = undefined) ->
     @constructor.extendDataView(@view)
     @hdus = []
     @offset = 0
@@ -16,12 +16,12 @@ class File
       xhr.open('GET', arg)
       xhr.responseType = 'arraybuffer'
       xhr.onload = =>
-        @initBuffer(xhr.response, callback)
+        @initBuffer(xhr.response, callback, opts)
       xhr.send()
     else
       @initBuffer(arg)
   
-  initBuffer: (buffer, callback) ->
+  initBuffer: (buffer, callback, opts) ->
     @length = buffer.byteLength
     @view   = new DataView buffer
     # Loop until the end of file
@@ -31,7 +31,7 @@ class File
       hdu = new HDU(header, data)
       @hdus.push hdu
       break if @isEOF()
-    callback.call(@, @) if callback?
+    callback.call(@, @, opts) if callback?
   
   # ##Class Methods
 

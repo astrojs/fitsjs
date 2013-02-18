@@ -99,17 +99,23 @@ describe "FITS Image", ->
     fits = arr = null
     ready = false
     location = 'data/m101.fits'
-    fits = new FITS.File(location, (f) ->
+    opts =
+      message: 'this is a sample message to pass to the callback'
+    
+    fits = new FITS.File(location, (f, options) ->
+      console.log options
       dataunit = fits.getDataUnit()
       opt =
         width: dataunit.width
         height: dataunit.height
+      
       f.getDataUnit().getFrameAsync(undefined, (array) ->
-        console.log opt
+        console.log "opt = ", opt
         ready = true
         arr = array
       , opt
       )
+    , opts
     )
     waitsFor -> return ready
     
