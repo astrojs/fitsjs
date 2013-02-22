@@ -104,8 +104,9 @@ class Image extends DataUnit
       # Execute callback
       callback.call(@, arr, params) if callback?
       
-      # Clean up blob url
+      # Clean up blob url and worker
       URL.revokeObjectURL(blobUrl)
+      worker.terminate()
     
     # Get bytes representing this dataunit
     nPixels = @width * @height
