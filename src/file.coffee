@@ -52,7 +52,7 @@ class File
   # ##Instance Methods
 
   # Determine the number of characters following a header or data unit
-  excessBytes: (length) =>
+  excessBytes: (length) ->
     return (@BLOCKLENGTH - (length % @BLOCKLENGTH)) % @BLOCKLENGTH
 
   # Extracts a single header without interpreting each line.
@@ -120,7 +120,7 @@ class File
     
     return data
 
-  isEOF: =>
+  isEOF: ->
     return if @offset is @length then true else false
   
   # ### API

@@ -10,6 +10,56 @@
 
 Decompress =
   
+  RiceSetup:
+    # Set up for bytepix = 1
+    1: (array) ->
+      pointer = 0
+      fsbits = 3
+      fsmax = 6
+      
+      lastpix = array[pointer]
+      pointer += 1
+      
+      return [fsbits, fsmax, lastpix, pointer]
+      
+    # Set up for bytepix = 2
+    2: (array) ->
+      pointer = 0
+      fsbits = 4
+      fsmax = 14
+      
+      lastpix = 0
+      bytevalue = array[pointer]
+      pointer += 1
+      lastpix = lastpix | (bytevalue << 8)
+      bytevalue = array[pointer]
+      pointer += 1
+      lastpix = lastpix | bytevalue
+      
+      return [fsbits, fsmax, lastpix, pointer]
+    
+    # Set up for bytepix = 4
+    4: (array) ->
+      pointer = 0
+      fsbits = 5
+      fsmax = 25
+      
+      lastpix = 0
+      bytevalue = array[pointer]
+      pointer += 1
+      lastpix = lastpix | (bytevalue << 24)
+      bytevalue = array[pointer]
+      pointer += 1
+      lastpix = lastpix | (bytevalue << 16)
+      bytevalue = array[pointer]
+      pointer += 1
+      lastpix = lastpix | (bytevalue << 8)
+      bytevalue = array[pointer]
+      pointer += 1
+      lastpix = lastpix | bytevalue
+      
+      return [fsbits, fsmax, lastpix, pointer]
+  
   # ### Rice
   # * array: Array of compressed bytes to be decompressed
   # * blocksize: Number of pixels encoded in a block
@@ -20,7 +70,7 @@ Decompress =
     
     bbits = 1 << fsbits
     
-    [fsbits, fsmax, lastpix, pointer] = @RiceSetup[bytepix](array)
+    [fsbits, fsmax, lastpix, pointer] = Decompress.RiceSetup[bytepix](array)
     
     nonzeroCount = new Uint8Array(256)
     nzero = 8
@@ -106,61 +156,6 @@ Decompress =
           i++
 
     return pixels
-
-  RiceSetup:
-    
-    # Set up for bytepix = 1
-    1: (array) ->
-      pointer = 0
-      fsbits = 3
-      fsmax = 6
-      
-      lastpix = array[pointer]
-      pointer += 1
-      
-      return [fsbits, fsmax, lastpix, pointer]
-      
-    # Set up for bytepix = 2
-    2: (array) ->
-      pointer = 0
-      fsbits = 4
-      fsmax = 14
-      
-      lastpix = 0
-      bytevalue = array[pointer]
-      pointer += 1
-      lastpix = lastpix | (bytevalue << 8)
-      bytevalue = array[pointer]
-      pointer += 1
-      lastpix = lastpix | bytevalue
-      
-      return [fsbits, fsmax, lastpix, pointer]
-    
-    # Set up for bytepix = 4
-    4: (array) ->
-      pointer = 0
-      fsbits = 5
-      fsmax = 25
-
-      lastpix = 0
-      bytevalue = array[pointer]
-      pointer += 1
-      lastpix = lastpix | (bytevalue << 24)
-      bytevalue = array[pointer]
-      pointer += 1
-      lastpix = lastpix | (bytevalue << 16)
-      bytevalue = array[pointer]
-      pointer += 1
-      lastpix = lastpix | (bytevalue << 8)
-      bytevalue = array[pointer]
-      pointer += 1
-      lastpix = lastpix | bytevalue
-
-      return [fsbits, fsmax, lastpix, pointer]
-        
-  gzip: (array) -> throw "Not yet implemented"
-  plio: (array, length) -> throw "Not yet implemented"
-  hcompress: (array, length) -> throw "Not yet implemented"
 
 
 @astro.FITS.Decompress = Decompress

@@ -7,7 +7,19 @@ class BinaryTable extends Tabular
     
     @tableLength = @length
     @columnNames = {}
-    @setAccessors(header)
+    tblCols = @getTableColumns(header)
+    @setAccessors(tblCols, view)
+  
+  getTableColumns: (header) ->
+    parameters = []
+    for i in [1..@cols]
+      obj = {}
+      form = header.get("TFORM#{i}")
+      type = header.get("TTYPE#{i}")
+      obj[form] = type
+      parameters.push obj
+      @columnNames[type] = i - 1
+    return parameters
   
   toBits: (byte) ->
     arr = []
@@ -37,19 +49,17 @@ class BinaryTable extends Tabular
     
     return arr
   
-  setAccessors: (header) ->
+  setAccessors: (tblCols, view) ->
     pattern = /(\d*)([P|Q]*)([L|X|B|I|J|K|A|E|D|C|M]{1})/
     
-    for i in [1..@cols]
-      form  = header.get("TFORM#{i}")
-      type  = header.get("TTYPE#{i}")
+    for column, i in tblCols
+      form = Object.keys(column)[0]
+      type = column[form]
       match = pattern.exec(form)
       
       count       = parseInt(match[1]) or 1
       isArray     = match[2]
       descriptor  = match[3]
-      
-      @columnNames[type] = i - 1
       
       if isArray
         # Handle array descriptors
@@ -61,7 +71,7 @@ class BinaryTable extends Tabular
                 
                 # Assuming Rice compression
                 pixels = new @typedArray[@params["BYTEPIX"]](@ztile[0])
-                @constructor.Rice(arr, @params["BLOCKSIZE"], @params["BYTEPIX"], pixels, @ztile[0])
+                astro.FITS.Decompress.Rice(arr, @params["BLOCKSIZE"], @params["BYTEPIX"], pixels, @ztile[0])
                 
                 return pixels
               @accessors.push(accessor)
@@ -88,7 +98,7 @@ class BinaryTable extends Tabular
           # Handle single element
           do (descriptor, count) =>
             accessor = =>
-              [value, @offset] = @dataAccessors[descriptor](@view, @offset)
+              [value, @offset] = @dataAccessors[descriptor](view, @offset)
               return value
             @accessors.push(accessor)
         else
@@ -98,7 +108,7 @@ class BinaryTable extends Tabular
               nBytes = Math.log(count) / Math.log(2)
               accessor = =>
                 # Read from the buffer
-                chunk = @view.buffer.slice(@offset, @offset + nBytes)
+                chunk = view.buffer.slice(@offset, @offset + nBytes)
                 bytes = new Uint8Array(chunk)
               
                 # Get bit representation
@@ -117,7 +127,7 @@ class BinaryTable extends Tabular
           else if descriptor is 'A'
             do (descriptor, count) =>
               accessor = =>
-                str = @view.getString(@offset, count)
+                str = view.getString(@offset, count)
                 @offset += count
                 return str.trim()
               @accessors.push(accessor)
@@ -130,14 +140,14 @@ class BinaryTable extends Tabular
                 # 
                 # # Read from the buffer
                 # length = count * TypedArray.BYTES_PER_ELEMENT
-                # chunk = @view.buffer.slice(@offset, @offset + length)
+                # chunk = view.buffer.slice(@offset, @offset + length)
                 # @offset += length
                 # 
                 # return new TypedArray(chunk)
                 
                 data = []
                 while count--
-                  [value, @offset] = @dataAccessors[descriptor](@view, @offset)
+                  [value, @offset] = @dataAccessors[descriptor](view, @offset)
                   data.push(value)
                 return data
               @accessors.push(accessor)

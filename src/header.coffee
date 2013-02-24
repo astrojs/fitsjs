@@ -95,7 +95,7 @@ class Header extends Module
     
     return value
   
-  readBlock: (block) =>
+  readBlock: (block) ->
     lineWidth = 80
     
     nLines = block.length / lineWidth

@@ -1,7 +1,6 @@
 
 class CompressedImage extends BinaryTable
   @include ImageUtils
-  @extend Decompress
   
   
   constructor: (header, view, offset) ->
@@ -41,7 +40,8 @@ class CompressedImage extends BinaryTable
     @bzero  = @getValue(header, "BZERO", 0)
     @bscale = @getValue(header, "BSCALE", 1)
     
-    @setAccessors(header)
+    @tableColumns = @getTableColumns(header)
+    @setAccessors(@tableColumns, view)
     @defGetRow()
     
   getValue: (header, key, defaultValue) ->
@@ -84,6 +84,7 @@ class CompressedImage extends BinaryTable
     blank = row[@columnNames["ZBLANK"]] or @zblank
     scale = row[@columnNames["ZSCALE"]] or @bscale
     zero  = row[@columnNames["ZZERO"]] or @bzero
+    
     return [data, blank, scale, zero]
     
   getFrame: ->
