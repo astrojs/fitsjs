@@ -45,7 +45,7 @@ class BinaryTable extends Tabular
     # Swap endian
     i = arr.length
     while i--
-      arr[i] = @swapEndian[descriptor](arr[i])
+      arr[i] = @constructor.swapEndian[descriptor](arr[i])
     
     return arr
   

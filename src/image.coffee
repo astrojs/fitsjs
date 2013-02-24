@@ -126,46 +126,58 @@ class Image extends DataUnit
     # Pass object to worker
     worker.postMessage(data)
   
-  getFrame: (@frame = @frame) ->
-    # Reference the buffer
-    buffer = @view.buffer
+  # Shared method for Image class and also for Web Worker.  Cannot reference any instance variables
+  @_getFrame: (buffer, width, height, offset, frame, bytes, bitpix, bzero, bscale) ->
     
     # Get bytes representing this dataunit
-    nPixels = i = @width * @height
-    start = @offset + (@frame * nPixels * @bytes)
+    nPixels = i = width * height
+    start = offset + (frame * nPixels * bytes)
     
-    chunk = buffer.slice(start, start + nPixels * @bytes)
+    chunk = buffer.slice(start, start + nPixels * bytes)
     
-    bitpix = Math.abs(@bitpix)
-    if @bitpix > 0
-      switch @bitpix
+    dataType = Math.abs(bitpix)
+    if bitpix > 0
+      switch bitpix
         when 8
           arr = new Uint8Array(chunk)
           arr = new Uint16Array(arr)
+          swapEndian = (value) ->
+            return value
         when 16
           arr = new Uint16Array(chunk)
+          swapEndian = (value) ->
+            return (value << 8) | (value >> 8)
         when 32
           arr = new Int32Array(chunk)
+          swapEndian = (value) ->
+            return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
       
       while nPixels--
         value = arr[nPixels]
-        value = @swapEndian[bitpix](value)
-        arr[nPixels] = @bzero + @bscale * value + 0.5
+        value = swapEndian(value)
+        arr[nPixels] = bzero + bscale * value + 0.5
       
     else
       arr = new Uint32Array(chunk)
       
+      swapEndian = (value) ->
+        return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
+      
       while i--
         value = arr[i]
-        arr[i] = @swapEndian[bitpix](value)
+        arr[i] = swapEndian(value)
       
       # Initialize a Float32 array using the same buffer
       arr = new Float32Array(chunk)
       
       # Apply BZERO and BSCALE
       while nPixels--
-        arr[nPixels] = @bzero + @bscale * arr[nPixels]
-    
+        arr[nPixels] = bzero + bscale * arr[nPixels]
+      
+    return arr
+  
+  getFrame: (@frame = @frame) ->
+    arr = @constructor._getFrame(@view.buffer, @width, @height, @offset, @frame, @bytes, @bitpix, @bzero, @bscale)
     @frame += 1 if @isDataCube()
     
     return arr
