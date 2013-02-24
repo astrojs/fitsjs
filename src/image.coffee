@@ -84,7 +84,7 @@ class Image extends DataUnit
       
       postMessage(arr)
     
-    # Some tricks to format function for worker
+    # Trick to format function for worker
     fn = onmessage.toString().split('').reverse().join('').replace(' nruter', '')
     fn = fn.split('').reverse().join('')
     fn = "onmessage = #{fn}"
@@ -96,9 +96,11 @@ class Image extends DataUnit
     URL = URL or webkitURL
     blobUrl = URL.createObjectURL(blob)
     
-    # Define worker
+    # Initialize worker
     worker = new Worker(blobUrl)
-    worker.onmessage = (e) =>
+    
+    # Define function for when worker job is complete
+    worker.onmessage = (e) ->
       arr = e.data
       
       # Execute callback
@@ -121,7 +123,7 @@ class Image extends DataUnit
     data.bscale = @bscale
     data.chunk  = @view.buffer.slice(start, start + nPixels * @bytes)
     
-    # Pass chunk to worker
+    # Pass object to worker
     worker.postMessage(data)
   
   getFrame: (@frame = @frame) ->

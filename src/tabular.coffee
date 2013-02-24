@@ -13,24 +13,24 @@ class Tabular extends DataUnit
   
   # NOTE: Accessor functions for bit array is better implemented in binary table class
   dataAccessors:
-    L: (view, offset) =>
+    L: (view, offset) ->
       x = view.getInt8(offset)
       offset += 1
       val = if x is 84 then true else false
       return [val, offset]
-    B: (view, offset) =>
+    B: (view, offset) ->
       val = view.getUint8(offset)
       offset += 1
       return [val, offset]
-    I: (view, offset) =>
+    I: (view, offset) ->
       val = view.getInt16(offset)
       offset += 2
       return [val, offset]
-    J: (view, offset) =>
+    J: (view, offset) ->
       val = view.getInt32(offset)
       offset += 4
       return [val, offset]
-    K: (view, offset) =>
+    K: (view, offset) ->
       highByte = Math.abs view.getInt32(offset)
       offset += 4
       lowByte = Math.abs view.getInt32(offset)
@@ -41,26 +41,26 @@ class Tabular extends DataUnit
       console.warn "Precision for 64 bit integers may be incorrect."
       val = factor * ((highByte << 32) | lowByte)
       return [val, offset]
-    A: (view, offset) =>
+    A: (view, offset) ->
           val = view.getChar(offset)
           offset += 1
           return [val, offset]
-    E: (view, offset) =>
+    E: (view, offset) ->
       val = view.getFloat32(offset)
       offset += 4
       return [val, offset]
-    D: (view, offset) =>
+    D: (view, offset) ->
       val = view.getFloat64(offset)
       offset += 8
       return [val, offset]
-    C: (view, offset) =>
+    C: (view, offset) ->
       val1 = view.getFloat32(offset)
       offset += 4
       val2 = view.getFloat32(offset)
       offset += 4
       val = [val1, val2]
       return [val, offset]
-    M: (view, offset) =>
+    M: (view, offset) ->
       val1 = view.getFloat64(offset)
       offset += 8
       val2 = view.getFloat64(offset)
@@ -80,8 +80,9 @@ class Tabular extends DataUnit
     
     @columns      = @getColumnNames(header)
     @accessors    = []
-
-  getRow: (row = null) =>
+    @header       = header  # Hopefully this reference is temporary
+    
+  getRow: (row = null) ->
     @rowsRead = row if row?
     @offset = @begin + @rowsRead * @rowByteSize
     row = {}
@@ -89,7 +90,7 @@ class Tabular extends DataUnit
       row[@columns[index]] = accessor()
     @rowsRead += 1
     return row
-
+    
   getColumnNames: (header) ->
     columnNames = []
     for i in [1..@cols]
