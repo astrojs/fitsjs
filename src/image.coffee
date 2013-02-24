@@ -23,109 +23,6 @@ class Image extends DataUnit
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(@bitpix) / 8
     @frame  = 0    # Needed for data cubes
   
-  getFrameAsync: (@frame = @frame, callback, params = undefined) ->
-    
-    # Define the function to be executed on the worker thread
-    onmessage = (e) ->
-      # Cache variables
-      data    = e.data
-      bitpix  = data.bitpix
-      width   = data.width
-      height  = data.height
-      bzero   = data.bzero
-      bscale  = data.bscale
-      chunk   = data.chunk
-      
-      # Set counters
-      nPixels = i = width * height
-      
-      # Define swap endian functions (must be defined in worker since functions not passable to worker)
-      switch Math.abs(bitpix)
-        when 16
-          swapEndian = (value) ->
-            return (value << 8) | (value >> 8)
-        when 32
-          swapEndian = (value) ->
-            return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
-        else
-          swapEndian = (value) -> return value
-      
-      # Determine appropriate typed array
-      if bitpix > 0
-        # Data type is integer
-        switch bitpix
-          when 8
-            arr = new Uint8Array(chunk)
-            arr = new Uint16Array(arr)
-          when 16
-            arr = new Uint16Array(chunk)
-          when 32
-            arr = new Int32Array(chunk)
-        
-        # Swap endian and apply BZERO and BSCALE
-        while nPixels--
-          value = arr[nPixels]
-          value = swapEndian(value)
-          arr[nPixels] = bzero + bscale * value + 0.5
-      else
-        # Data type is float
-        arr = new Uint32Array(chunk)
-
-        while i--
-          value = arr[i]
-          arr[i] = swapEndian(value)
-
-        # Initialize a Float32 array using the same buffer
-        arr = new Float32Array(chunk)
-
-        # Apply BZERO and BSCALE
-        while nPixels--
-          arr[nPixels] = bzero + bscale * arr[nPixels]
-      
-      postMessage(arr)
-    
-    # Trick to format function for worker
-    fn = onmessage.toString().split('').reverse().join('').replace(' nruter', '')
-    fn = fn.split('').reverse().join('')
-    fn = "onmessage = #{fn}"
-    
-    # Construct blob for an inline worker
-    blob = new Blob([fn], {type: "application/javascript"})
-    
-    # Prefix for Safari
-    URL = URL or webkitURL
-    blobUrl = URL.createObjectURL(blob)
-    
-    # Initialize worker
-    worker = new Worker(blobUrl)
-    
-    # Define function for when worker job is complete
-    worker.onmessage = (e) ->
-      arr = e.data
-      
-      # Execute callback
-      callback.call(@, arr, params) if callback?
-      
-      # Clean up blob url and worker
-      URL.revokeObjectURL(blobUrl)
-      worker.terminate()
-    
-    # Get bytes representing this dataunit
-    nPixels = @width * @height
-    start   = @offset + (@frame * nPixels * @bytes)
-    
-    # Define object to be passed to worker
-    data = {}
-    data.bitpix = @bitpix
-    data.width  = @width
-    data.height = @height
-    data.bzero  = @bzero
-    data.bscale = @bscale
-    data.chunk  = @view.buffer.slice(start, start + nPixels * @bytes)
-    
-    # Pass object to worker
-    worker.postMessage(data)
-  
   # Shared method for Image class and also for Web Worker.  Cannot reference any instance variables
   @_getFrame: (buffer, width, height, offset, frame, bytes, bitpix, bzero, bscale) ->
     
@@ -151,30 +48,102 @@ class Image extends DataUnit
           arr = new Int32Array(chunk)
           swapEndian = (value) ->
             return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
-      
+            
       while nPixels--
         value = arr[nPixels]
         value = swapEndian(value)
         arr[nPixels] = bzero + bscale * value + 0.5
-      
+        
     else
       arr = new Uint32Array(chunk)
       
       swapEndian = (value) ->
         return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
-      
+        
       while i--
         value = arr[i]
         arr[i] = swapEndian(value)
-      
+        
       # Initialize a Float32 array using the same buffer
       arr = new Float32Array(chunk)
       
       # Apply BZERO and BSCALE
       while nPixels--
         arr[nPixels] = bzero + bscale * arr[nPixels]
-      
+        
     return arr
+  
+  getFrameAsync: (@frame = @frame, callback, params = undefined) ->
+    
+    # Define the function to be executed on the worker thread
+    onmessage = (e) ->
+      # Cache variables
+      data    = e.data
+      buffer  = data.buffer
+      width   = data.width
+      height  = data.height
+      offset  = data.offset
+      frame   = data.frame
+      bytes   = data.bytes
+      bitpix  = data.bitpix
+      bzero   = data.bzero
+      bscale  = data.bscale
+      url     = data.url
+      
+      importScripts(url)
+      
+      arr = _getFrame(buffer, width, height, offset, frame, bytes, bitpix, bzero, bscale)
+      postMessage(arr)
+    
+    # Trick to format function for worker
+    fn1 = onmessage.toString().split('').reverse().join('').replace(' nruter', '')
+    fn1 = fn1.split('').reverse().join('')
+    fn1 = "onmessage = #{fn1}"
+    
+    # Functions passed to worker via url cannot be anonymous
+    fn2 = @constructor._getFrame.toString()
+    fn2 = fn2.replace('function', 'function _getFrame')
+    
+    # Construct blob for an inline worker and getFrame function
+    mime = "application/javascript"
+    blobOnMessage = new Blob([fn1], {type: mime})
+    blobGetFrame = new Blob([fn2], {type: mime})
+    
+    # Prefix for Safari
+    URL = URL or webkitURL  # TODO: Breaks Firefox
+    urlOnMessage = URL.createObjectURL(blobOnMessage)
+    urlGetFrame = URL.createObjectURL(blobGetFrame)
+    
+    # Initialize worker
+    worker = new Worker(urlOnMessage)
+    
+    # Define function for when worker job is complete
+    worker.onmessage = (e) ->
+      arr = e.data
+      
+      # Execute callback
+      callback.call(@, arr, params) if callback?
+      
+      # Clean up urls and worker
+      URL.revokeObjectURL(urlOnMessage)
+      URL.revokeObjectURL(urlGetFrame)
+      worker.terminate()
+    
+    # Define object to be passed to worker
+    msg = {}
+    msg.buffer  = @view.buffer
+    msg.width   = @width
+    msg.height  = @height
+    msg.offset  = @offset
+    msg.frame   = @frame
+    msg.bytes   = @bytes
+    msg.bitpix  = @bitpix
+    msg.bzero   = @bzero
+    msg.bscale  = @bscale
+    msg.url     = urlGetFrame
+    
+    # Pass object to worker
+    worker.postMessage(msg)
   
   getFrame: (@frame = @frame) ->
     arr = @constructor._getFrame(@view.buffer, @width, @height, @offset, @frame, @bytes, @bitpix, @bzero, @bscale)
