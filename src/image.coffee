@@ -73,7 +73,7 @@ class Image extends DataUnit
         
     return arr
   
-  getFrameAsync: (@frame = @frame, callback, params = undefined) ->
+  getFrameAsync: (@frame = @frame, callback, opts = undefined) ->
     
     # Define the function to be executed on the worker thread
     onmessage = (e) ->
@@ -122,7 +122,7 @@ class Image extends DataUnit
       arr = e.data
       
       # Execute callback
-      callback.call(@, arr, params) if callback?
+      callback.call(@, arr, opts) if callback?
       
       # Clean up urls and worker
       URL.revokeObjectURL(urlOnMessage)

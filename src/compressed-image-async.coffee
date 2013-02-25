@@ -2,7 +2,7 @@
 # An extension to the CompressedImage class adding getFrameAsync
 CompressedImage = @astro.FITS.CompressedImage
 
-CompressedImage::getFrameAsync = (@frame = @frame, callback) ->
+CompressedImage::getFrameAsync = (@frame = @frame, callback, opts = undefined) ->
   
   # Define the function to be executed on the worker thread
   onmessage = (e) ->
@@ -373,7 +373,7 @@ CompressedImage::getFrameAsync = (@frame = @frame, callback) ->
     arr = e.data.arr
     
     # Execute callback
-    callback.call(@, arr) if callback?
+    callback.call(@, arr, opts) if callback?
     
     # Clean up blob urls and worker
     URL.revokeObjectURL(urlOnMessage)
