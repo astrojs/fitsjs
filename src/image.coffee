@@ -110,7 +110,7 @@ class Image extends DataUnit
     blobGetFrame = new Blob([fn2], {type: mime})
     
     # Prefix for Safari
-    URL = URL or webkitURL  # TODO: Breaks Firefox
+    URL = window.URL or window.webkitURL or window.MozURLProperty
     urlOnMessage = URL.createObjectURL(blobOnMessage)
     urlGetFrame = URL.createObjectURL(blobGetFrame)
     

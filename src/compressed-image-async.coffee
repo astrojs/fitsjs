@@ -361,7 +361,7 @@ CompressedImage::getFrameAsync = (@frame = @frame, callback) ->
   blobRice = new Blob([fn2], {type: mime})
   
   # Prefix for Safari
-  URL = URL or webkitURL
+  URL = window.URL or window.webkitURL or window.MozURLProperty
   urlOnMessage = URL.createObjectURL(blobOnMessage)
   urlRice = URL.createObjectURL(blobRice)
   
