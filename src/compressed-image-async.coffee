@@ -227,12 +227,12 @@ CompressedImage::getFrameAsync = (@frame = @frame, callback, opts = undefined) -
                   while i--
                     arr[i] = NaN
                   return arr
-                accessors.push('accessor')
+                accessors.push(accessor)
             else
               do (descriptor, count) =>
                 accessor = =>
                   return getFromHeap(descriptor)
-                accessors.push('accessor')
+                accessors.push(accessor)
         else
           if count is 1
             # Handle single element
