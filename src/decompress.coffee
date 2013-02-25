@@ -66,11 +66,10 @@ Decompress =
   # * bytepix: Number of 8-bit bytes of the original integer pixel
   # * pixels: Output array containing the decompressed values
   # * nx: Length of pixels (ztile1)
-  Rice: (array, blocksize, bytepix, pixels, nx) ->
-    
+  Rice: (array, blocksize, bytepix, pixels, nx, setup) ->
     bbits = 1 << fsbits
     
-    [fsbits, fsmax, lastpix, pointer] = Decompress.RiceSetup[bytepix](array)
+    [fsbits, fsmax, lastpix, pointer] = setup[bytepix](array)
     
     nonzeroCount = new Uint8Array(256)
     nzero = 8

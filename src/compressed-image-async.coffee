@@ -22,6 +22,7 @@ CompressedImage::getFrameAsync = (@frame = @frame, callback) ->
     blank         = data.blank
     bitpix        = data.bitpix
     buffer        = data.buffer
+    urlRice       = data.urlRice
     
     dataAccessors =
       L: (view, offset) ->
@@ -129,98 +130,7 @@ CompressedImage::getFrameAsync = (@frame = @frame, callback) ->
 
         return [fsbits, fsmax, lastpix, pointer]
     
-    
-    Rice = (array, blocksize, bytepix, pixels, nx) ->
-
-      bbits = 1 << fsbits
-
-      [fsbits, fsmax, lastpix, pointer] = RiceSetup[bytepix](array)
-
-      nonzeroCount = new Uint8Array(256)
-      nzero = 8
-      [k, i] = [128, 255]
-      while i >= 0
-        while i >= k
-          nonzeroCount[i] = nzero
-          i -= 1
-        k = k / 2
-        nzero -= 1
-      nonzeroCount[0] = 0
-
-      # Bit buffer
-      b = array[pointer]
-      pointer += 1
-
-      # Number of bits remaining in b
-      nbits = 8
-
-      i = 0
-      while i < nx
-
-        nbits -= fsbits
-        while nbits < 0
-          b = (b << 8) | (array[pointer])
-          pointer += 1
-          nbits += 8
-        fs = (b >> nbits) - 1
-        b &= (1 << nbits) - 1
-        imax = i + blocksize
-        imax = nx if imax > nx
-
-        if fs < 0
-          while i < imax
-            array[i] = lastpix
-            i++
-        else if fs is fsmax
-          while i < imax
-            k = bbits - nbits
-            diff = b << k
-            k -= 8
-            while k >= 0
-              b = array[pointer]
-              pointer += 1
-              diff |= b << k
-              k -= 8
-            if nbits > 0
-              b = array[pointer]
-              pointer += 1
-              diff |= b >> (-k)
-              b &= (1 << nbits) - 1
-            else
-              b = 0
-            if (diff & 1) is 0
-              diff = diff >> 1
-            else
-              diff = ~(diff >> 1)
-            array[i] = diff + lastpix
-            lastpix = array[i]
-            i++
-        else
-          while i < imax
-            while b is 0
-              nbits += 8
-              b = array[pointer]
-              pointer += 1
-            nzero = nbits - nonzeroCount[b]
-            nbits -= nzero + 1
-            b ^= 1 << nbits
-            nbits -= fs
-            while nbits < 0
-              b = (b << 8) | (array[pointer])
-              pointer += 1
-              nbits += 8
-            diff = (nzero << fs) | (b >> nbits)
-            b &= (1 << nbits) - 1
-            if (diff & 1) is 0
-              diff = diff >> 1
-            else
-              diff = ~(diff >> 1)
-            pixels[i] = diff + lastpix
-            lastpix = pixels[i]
-            i++
-
-      return pixels
-    
+    importScripts(urlRice)
     
     # Define object of typed array constructors
     typedArray =
@@ -301,7 +211,7 @@ CompressedImage::getFrameAsync = (@frame = @frame, callback) ->
                   
                   # Bring in Rice using technique at
                   # http://stackoverflow.com/questions/11909934/how-to-pass-functions-to-javascript-web-worker
-                  Rice(arr, params["BLOCKSIZE"], params["BYTEPIX"], pixels, ztile[0])
+                  Rice(arr, params["BLOCKSIZE"], params["BYTEPIX"], pixels, ztile[0], RiceSetup)
                   
                   return pixels
                 accessors.push(accessor)
@@ -436,23 +346,27 @@ CompressedImage::getFrameAsync = (@frame = @frame, callback) ->
     postMessage(data)
   
   # Trick to format function for worker
-  fn = onmessage.toString().split('').reverse().join('').replace(' nruter', '')
-  fn = fn.split('').reverse().join('')
-  fn = "onmessage = #{fn}"
+  fn1 = onmessage.toString().split('').reverse().join('').replace(' nruter', '')
+  fn1 = fn1.split('').reverse().join('')
+  fn1 = "onmessage = #{fn1}"
+  
+  # Functions passed to worker via url cannot be anonymous
+  fn2 = @constructor.Rice.toString()
+  fn2 = fn2.replace('function', 'function Rice')
+  fn2 = fn2.replace('Decompress.', '')
+  
+  # Construct blob for an inline worker and Rice algorithm
+  mime = "application/javascript"
+  blobOnMessage = new Blob([fn1], {type: mime})
+  blobRice = new Blob([fn2], {type: mime})
   
   # Prefix for Safari
   URL = URL or webkitURL
-  
-  # Construct blob for Rice algorithm
-  algoBlob = new Blob([astro.FITS.Decompress], {type: "application/javascript"})
-  algoBlobUrl = URL.createObjectURL(algoBlob)
-  
-  # Construct blob for an inline worker
-  blob = new Blob([fn], {type: "application/javascript"})
-  blobUrl = URL.createObjectURL(blob)
+  urlOnMessage = URL.createObjectURL(blobOnMessage)
+  urlRice = URL.createObjectURL(blobRice)
   
   # Initialize worker
-  worker = new Worker(blobUrl)
+  worker = new Worker(urlOnMessage)
   
   # Define function for when worker job is complete
   worker.onmessage = (e) ->
@@ -462,13 +376,12 @@ CompressedImage::getFrameAsync = (@frame = @frame, callback) ->
     callback.call(@, arr) if callback?
     
     # Clean up blob urls and worker
-    URL.revokeObjectURL(blobUrl)
-    URL.revokeObjectURL(algoBlobUrl)
+    URL.revokeObjectURL(urlOnMessage)
+    # URL.revokeObjectURL(urlRice)
     worker.terminate()
   
   # Information to pass to worker
   data =
-    decompression: algoBlobUrl
     buffer: @view.buffer.slice(@begin, @begin + @length)
     tableLength: @tableLength
     tableColumns: @tableColumns
@@ -482,6 +395,7 @@ CompressedImage::getFrameAsync = (@frame = @frame, callback) ->
     width: @width
     height: @height
     blank: @blank
+    urlRice: urlRice
   
   # Pass object to worker
   worker.postMessage(data)

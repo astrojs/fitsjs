@@ -101,7 +101,7 @@ class Image extends DataUnit
     fn1 = "onmessage = #{fn1}"
     
     # Functions passed to worker via url cannot be anonymous
-    fn2 = @constructor._getFrame.toString()
+    fn2 = Image._getFrame.toString()
     fn2 = fn2.replace('function', 'function _getFrame')
     
     # Construct blob for an inline worker and getFrame function
@@ -146,7 +146,7 @@ class Image extends DataUnit
     worker.postMessage(msg)
   
   getFrame: (@frame = @frame) ->
-    arr = @constructor._getFrame(@view.buffer, @width, @height, @offset, @frame, @bytes, @bitpix, @bzero, @bscale)
+    arr = Image._getFrame(@view.buffer, @width, @height, @offset, @frame, @bytes, @bitpix, @bzero, @bscale)
     @frame += 1 if @isDataCube()
     
     return arr
@@ -156,4 +156,4 @@ class Image extends DataUnit
     return if @naxis.length > 2 then true else false 
 
 
-@astro.FITS.Image = Image
+@astro.FITS.Image = Image 

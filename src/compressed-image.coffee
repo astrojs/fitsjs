@@ -1,7 +1,7 @@
 
 class CompressedImage extends BinaryTable
   @include ImageUtils
-  
+  @extend Decompress
   
   constructor: (header, view, offset) ->
     super

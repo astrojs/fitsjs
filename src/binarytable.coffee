@@ -71,7 +71,7 @@ class BinaryTable extends Tabular
                 
                 # Assuming Rice compression
                 pixels = new @typedArray[@params["BYTEPIX"]](@ztile[0])
-                astro.FITS.Decompress.Rice(arr, @params["BLOCKSIZE"], @params["BYTEPIX"], pixels, @ztile[0])
+                Decompress.Rice(arr, @params["BLOCKSIZE"], @params["BYTEPIX"], pixels, @ztile[0], Decompress.RiceSetup)
                 
                 return pixels
               @accessors.push(accessor)
