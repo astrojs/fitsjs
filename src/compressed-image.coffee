@@ -78,7 +78,6 @@ class CompressedImage extends BinaryTable
     @offset = @begin + @rowsRead * @rowByteSize
     row = []
     for accessor in @accessors
-      console.log accessor
       row.push accessor()
     
     data  = row[@columnNames["COMPRESSED_DATA"]] or row[@columnNames["UNCOMPRESSED_DATA"]] or row[@columnNames["GZIP_COMPRESSED_DATA"]]
