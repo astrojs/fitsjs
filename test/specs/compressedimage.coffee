@@ -43,7 +43,7 @@ describe "FITS CompressedImage", ->
     fits = new FITS.File(path, (f) ->
       dataunit = f.getDataUnit()
       
-      dataunit.getFrameAsync(undefined, (array) ->
+      dataunit.getFrameAsync(0, (array) ->
         ready = true
         arr = array
       )

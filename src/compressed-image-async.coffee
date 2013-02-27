@@ -343,17 +343,16 @@ CompressedImage::getFrameAsync = (@frame = @frame, callback, opts = undefined) -
     data =
       offset: offset
       arr: arr
+    
     postMessage(data)
   
   # Trick to format function for worker
-  fn1 = onmessage.toString().split('').reverse().join('').replace(' nruter', '')
-  fn1 = fn1.split('').reverse().join('')
+  fn1 = onmessage.toString().replace('return postMessage(data);', 'postMessage(data);')
   fn1 = "onmessage = #{fn1}"
   
   # Functions passed to worker via url cannot be anonymous
   fn2 = @constructor.Rice.toString()
   fn2 = fn2.replace('function', 'function Rice')
-  fn2 = fn2.replace('Decompress.', '')
   
   # Construct blob for an inline worker and Rice algorithm
   mime = "application/javascript"

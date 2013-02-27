@@ -96,8 +96,7 @@ class Image extends DataUnit
       postMessage(arr)
     
     # Trick to format function for worker
-    fn1 = onmessage.toString().split('').reverse().join('').replace(' nruter', '')
-    fn1 = fn1.split('').reverse().join('')
+    fn1 = onmessage.toString().replace('return postMessage(data);', 'postMessage(data);')
     fn1 = "onmessage = #{fn1}"
     
     # Functions passed to worker via url cannot be anonymous
