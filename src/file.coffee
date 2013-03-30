@@ -5,12 +5,16 @@ class File
   LINEWIDTH: 80
   BLOCKLENGTH: 2880
   
+  # FITS file may be initialized using either (1) path to a remote
+  # file (2) an array buffer or (3) a File object for loading local files
   constructor: (arg, callback, opts = undefined) ->
     @constructor.extendDataView(@view)
     @hdus = []
     @offset = 0
     
-    if typeof arg is 'string'
+    if arg instanceof window.File
+      @initializeFromFile(arg, callback, opts)
+    else if typeof arg is 'string'
       # Get the file using XHR
       xhr = new XMLHttpRequest()
       xhr.open('GET', arg)
@@ -32,6 +36,80 @@ class File
       @hdus.push hdu
       break if @isEOF()
     callback.call(@, @, opts) if callback?
+  
+  initializeFromFile: (file, callback, opts) ->
+    console.log 'initializeFromFile'
+    
+    # Initialize a new FileReader
+    reader = new FileReader()
+    
+    # Set start and end byte locations
+    i = 0
+    begin = i * @BLOCKLENGTH
+    end = (i + 1) * @BLOCKLENGTH
+    
+    # Running storage for header
+    headerStorage = new Uint8Array()
+    
+    # Set reader handlers
+    reader.onloadend = (e) =>
+      console.log 'onloadend', i, begin, end
+      arr = new Uint8Array(e.target.result)
+      
+      #
+      # Running storage
+      #
+      
+      # Temporary storage for header
+      tmp = new Uint8Array(headerStorage)
+      
+      # Reallocate header storage
+      headerStorage = new Uint8Array(end)
+      
+      # Copy contents from temporary storage
+      headerStorage.set(tmp, 0)
+      
+      # Copy contents from current iteration
+      headerStorage.set(arr, begin)
+      
+      # Check array for END (69, 78, 68, 32) keyword
+      rows = @BLOCKLENGTH / @LINEWIDTH
+      while rows--
+        rowIndex = rows * @LINEWIDTH
+        
+        # Check for whitespace
+        if arr[rowIndex] is 32
+          continue
+        
+        # Check for END keyword with trailing space (69, 78, 68, 32)
+        if arr[rowIndex] is 69 and
+           arr[rowIndex + 1] is 78 and
+           arr[rowIndex + 2] is 68 and
+           arr[rowIndex + 3] is 32
+          
+          # TODO: Initialize the header from headerStorage
+          
+          # Check out the strings
+          s = ''
+          for value in headerStorage
+            s += String.fromCharCode(value)
+          console.log new Header(s)
+          return
+        
+        # Otherwise read next block
+        i += 1
+        begin = i * @BLOCKLENGTH
+        end = (i + 1) * @BLOCKLENGTH
+        block = file.slice(begin, end)
+        reader.readAsArrayBuffer(block)
+        return
+    
+    # Going to do this very carefully.  Poke the file gently, to find out the entire structure
+    # of the FITS file.  Request blocks of BLOCKLENGTH until the first header is retrieved.
+    
+    # Begin parsing for header
+    block = file.slice(begin, end)
+    reader.readAsArrayBuffer(block)
   
   # ##Class Methods
 

@@ -78,4 +78,12 @@ describe "FITS", ->
       expect(f.hdus[1].data.constructor.name).toBe("Table")
     )
 
+  it 'can initialize using a File object', ->
+
+    # Should be on the same domain as site, or handle CORS requests
+    location = 'data/g-band-normalized.fits'
+    new FITS.File(location, (f) ->
+      expect(f.hdus.length).toEqual(1)
+      expect(f.isEOF()).toBeTruthy()
+    )
     
