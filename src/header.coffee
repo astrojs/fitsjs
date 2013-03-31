@@ -109,6 +109,16 @@ class Header extends Module
   hasDataUnit: ->
     return if @get("NAXIS") is 0 then false else true
   
+  getDataUnitLength: ->
+    return 0 unless @hasDataUnit()
+
+    naxis = []
+    naxis.push @get("NAXIS#{i}") for i in [1..@get("NAXIS")]
+    length = naxis.reduce( (a, b) -> a * b) * Math.abs(@get("BITPIX")) / 8
+    length += @get("PCOUNT")
+
+    return length
+
   # Check type of header
   isPrimary: -> return @primary
   isExtension: -> return @extension

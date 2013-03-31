@@ -38,27 +38,22 @@ class File
     callback.call(@, @, opts) if callback?
   
   initializeFromFile: (file, callback, opts) ->
-    console.log 'initializeFromFile'
     
     # Initialize a new FileReader
     reader = new FileReader()
     
-    # Set start and end byte locations
-    i = 0
-    begin = i * @BLOCKLENGTH
-    end = (i + 1) * @BLOCKLENGTH
+    # Set variables needed for scope of onloadend
+    blockCount = begin = end = offset = null
     
     # Running storage for header
     headerStorage = new Uint8Array()
     
     # Set reader handlers
     reader.onloadend = (e) =>
-      console.log 'onloadend', i, begin, end
-      arr = new Uint8Array(e.target.result)
+      # console.log 'onloadend', offset, blockCount, begin, end
       
-      #
-      # Running storage
-      #
+      # Read block as integers
+      arr = new Uint8Array(e.target.result)
       
       # Temporary storage for header
       tmp = new Uint8Array(headerStorage)
@@ -72,14 +67,15 @@ class File
       # Copy contents from current iteration
       headerStorage.set(arr, begin)
       
-      # Check array for END (69, 78, 68, 32) keyword
+      # Check current array one row at a time
       rows = @BLOCKLENGTH / @LINEWIDTH
       while rows--
+        
+        # Get index of first element in row
         rowIndex = rows * @LINEWIDTH
         
-        # Check for whitespace
-        if arr[rowIndex] is 32
-          continue
+        # Go to next row if whitespace found
+        continue if arr[rowIndex] is 32
         
         # Check for END keyword with trailing space (69, 78, 68, 32)
         if arr[rowIndex] is 69 and
@@ -87,28 +83,46 @@ class File
            arr[rowIndex + 2] is 68 and
            arr[rowIndex + 3] is 32
           
-          # TODO: Initialize the header from headerStorage
-          
-          # Check out the strings
+          # Interpret as string
           s = ''
           for value in headerStorage
             s += String.fromCharCode(value)
-          console.log new Header(s)
+          header = new Header(s)
+          console.log header
+          
+          # Get data unit length and update byte offset
+          length = header.getDataUnitLength()
+          offset += end + length + @excessBytes(length)
+          
+          # Reset variables for next header
+          blockCount = 0
+          begin = blockCount * @BLOCKLENGTH
+          end = begin + @BLOCKLENGTH
+          headerStorage = new Uint8Array()
+          
+          return if offset is file.size
+          
+          # Begin parsing for next header
+          block = file.slice(begin + offset, end + offset)
+          reader.readAsArrayBuffer(block)
           return
         
-        # Otherwise read next block
-        i += 1
-        begin = i * @BLOCKLENGTH
-        end = (i + 1) * @BLOCKLENGTH
-        block = file.slice(begin, end)
+        # Read next block since END not found
+        blockCount += 1
+        begin = blockCount * @BLOCKLENGTH
+        end = begin + @BLOCKLENGTH
+        block = file.slice(begin + offset, end + offset)
         reader.readAsArrayBuffer(block)
         return
     
-    # Going to do this very carefully.  Poke the file gently, to find out the entire structure
-    # of the FITS file.  Request blocks of BLOCKLENGTH until the first header is retrieved.
+    # Set start and end byte locations
+    offset = 0
+    blockCount = 0
+    begin = blockCount * @BLOCKLENGTH
+    end = begin + @BLOCKLENGTH
     
     # Begin parsing for header
-    block = file.slice(begin, end)
+    block = file.slice(begin + offset, end + offset)
     reader.readAsArrayBuffer(block)
   
   # ##Class Methods
