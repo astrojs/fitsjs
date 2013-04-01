@@ -1,5 +1,4 @@
-fitsjs
-======
+# fitsjs
 
 A standalone JavaScript library for reading the astronomical file format – FITS.  This library is built for modern browsers supporting the DataView API.  These include at least Chrome 9, Firefox 15, and Safari 6.
 
@@ -23,8 +22,7 @@ This library may be used to read various forms of the FITS format.  This impleme
 
 Please let me know if you incorporate this library in your project, and please share your application with the rest of the astronomy community.
 
-API
----
+## API
 
 ### FITS.File
 
@@ -61,8 +59,8 @@ Checks if a key is contained in the header instance.
 Checks if the header has an associated data unit.
 
 
-Examples
---------
+## Examples
+
     <script src="fits.js" type="text/javascript" charset="utf-8"></script>
     
     <script type="text/javascript">
@@ -105,8 +103,16 @@ Examples
       
     </script>
 
-References
-----------
+## TODOs
+
+  * Support local gigabyte size files
+  * Create examples
+  * Remove repeated code that currently implements methods spawning Web Workers
+  * Open support for NodeJS
+  * Literate CoffeeScript?
+  * Overall clean up
+
+## References
 
 Pence, W. D. Binary Table Extension To FITS.
 

@@ -4,8 +4,19 @@ class Image extends DataUnit
   @include ImageUtils
   
   
-  constructor: (header, view, offset) ->
-    super
+  constructor: ->
+    
+    if arguments.length is 3
+      # Arguments are (header, view, offset)
+      super
+      [header, view, offset] = arguments
+    else
+      # Arguments are (header, blob)
+      
+      # Set begin to allow new functionality of working with blobs to
+      # work with current methods.
+      @begin = 0
+      [header, @blob] = arguments
     
     naxis   = header.get("NAXIS")
     @bitpix = header.get("BITPIX")
@@ -22,6 +33,22 @@ class Image extends DataUnit
     @bytes  = Math.abs(@bitpix) / 8
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(@bitpix) / 8
     @frame  = 0    # Needed for data cubes
+  
+  # Temporary method when FITS objects are initialized using a File instance.  This method must be called
+  # by the developer before getFrame(Async), otherwise the Image instance will not have access to the representing
+  # arraybuffer.
+  start: ->
+    # Initialize a reader for the blob
+    reader = new FileReader()
+    
+    # Define the callback
+    reader.onloadend = (e) =>
+      
+      # Whoa! What a hack!
+      @view = {}
+      @view.buffer = e.target.result
+    
+    reader.readAsArrayBuffer(@blob)
   
   # Shared method for Image class and also for Web Worker.  Cannot reference any instance variables
   @_getFrame: (buffer, width, height, offset, frame, bytes, bitpix, bzero, bscale) ->

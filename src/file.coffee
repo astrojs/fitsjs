@@ -20,12 +20,12 @@ class File
       xhr.open('GET', arg)
       xhr.responseType = 'arraybuffer'
       xhr.onload = =>
-        @initBuffer(xhr.response, callback, opts)
+        @initializeFromBuffer(xhr.response, callback, opts)
       xhr.send()
     else
-      @initBuffer(arg)
+      @initializeFromBuffer(arg)
   
-  initBuffer: (buffer, callback, opts) ->
+  initializeFromBuffer: (buffer, callback, opts) ->
     @length = buffer.byteLength
     @view   = new DataView buffer
     # Loop until the end of file
@@ -50,7 +50,6 @@ class File
     
     # Set reader handlers
     reader.onloadend = (e) =>
-      # console.log 'onloadend', offset, blockCount, begin, end
       
       # Read block as integers
       arr = new Uint8Array(e.target.result)
@@ -88,19 +87,29 @@ class File
           for value in headerStorage
             s += String.fromCharCode(value)
           header = new Header(s)
-          console.log header
           
-          # Get data unit length and update byte offset
-          length = header.getDataUnitLength()
+          # Get data unit start and length
+          start = end + offset
+          length = header.getDataLength()
+          
+          # Create data unit instance
+          blob = file.slice(start, start + length)
+          data = @createDataUnit(header, blob)
+          
+          # Store HDU on instance
+          @hdus.push( new HDU(header, data) )
+          
+          # Update byte offset
           offset += end + length + @excessBytes(length)
+          
+          # Return if at the end of file
+          return if offset is file.size
           
           # Reset variables for next header
           blockCount = 0
           begin = blockCount * @BLOCKLENGTH
           end = begin + @BLOCKLENGTH
           headerStorage = new Uint8Array()
-          
-          return if offset is file.size
           
           # Begin parsing for next header
           block = file.slice(begin + offset, end + offset)
@@ -121,7 +130,7 @@ class File
     begin = blockCount * @BLOCKLENGTH
     end = begin + @BLOCKLENGTH
     
-    # Begin parsing for header
+    # Begin parsing for headers
     block = file.slice(begin + offset, end + offset)
     reader.readAsArrayBuffer(block)
   
@@ -183,7 +192,12 @@ class File
           return new Header(block)
         
         break
-
+  
+  # Create the appropriate data unit based on info from header
+  createDataUnit: (header, blob) ->
+    type = header.getDataType()
+    return new astro.FITS[type](header, blob)
+  
   # Read a data unit and initialize an appropriate instance depending
   # on the type of data unit (e.g. image, binary table, ascii table).
   # Note: Bytes are not interpreted by this function.  That is left 

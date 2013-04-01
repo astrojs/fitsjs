@@ -109,7 +109,7 @@ class Header extends Module
   hasDataUnit: ->
     return if @get("NAXIS") is 0 then false else true
   
-  getDataUnitLength: ->
+  getDataLength: ->
     return 0 unless @hasDataUnit()
 
     naxis = []
@@ -118,7 +118,18 @@ class Header extends Module
     length += @get("PCOUNT")
 
     return length
-
+  
+  # Determine the data unit type (e.g IMAGE, BINTABLE, TABLE, COMPRESSED)
+  getDataType: ->
+    switch @extensionType
+      when 'BINTABLE'
+        return 'CompressedImage' if @contains('ZIMAGE')
+        return 'BinaryTable'
+      when 'TABLE'
+        return 'Table'
+      else
+        return 'Image'
+  
   # Check type of header
   isPrimary: -> return @primary
   isExtension: -> return @extension
