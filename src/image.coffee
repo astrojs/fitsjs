@@ -15,7 +15,7 @@ class Image extends DataUnit
       
       # Set begin to allow new functionality of working with blobs to
       # work with current methods.
-      @begin = 0
+      @begin = @offset = 0
       [header, @blob] = arguments
     
     naxis   = header.get("NAXIS")
@@ -37,7 +37,7 @@ class Image extends DataUnit
   # Temporary method when FITS objects are initialized using a File instance.  This method must be called
   # by the developer before getFrame(Async), otherwise the Image instance will not have access to the representing
   # arraybuffer.
-  start: ->
+  start: (callback, context, args) ->
     # Initialize a reader for the blob
     reader = new FileReader()
     
@@ -47,6 +47,10 @@ class Image extends DataUnit
       # Whoa! What a hack!
       @view = {}
       @view.buffer = e.target.result
+      
+      # Execute callback
+      context = if context? then context else @
+      callback.apply(context, [args]) if callback?
     
     reader.readAsArrayBuffer(@blob)
   
@@ -148,7 +152,8 @@ class Image extends DataUnit
       arr = e.data
       
       # Execute callback
-      callback.call(@, arr, opts) if callback?
+      context = if opts?.context? then opts.context else @
+      callback.call(context, arr, opts) if callback?
       
       # Clean up urls and worker
       URL.revokeObjectURL(urlOnMessage)

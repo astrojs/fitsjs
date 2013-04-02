@@ -8,13 +8,14 @@ class File
   # FITS file may be initialized using either (1) path to a remote
   # file (2) an array buffer or (3) a File object for loading local files
   constructor: (arg, callback, opts = undefined) ->
-    @constructor.extendDataView(@view)
     @hdus = []
     @offset = 0
     
     if arg instanceof window.File
       @initializeFromFile(arg, callback, opts)
     else if typeof arg is 'string'
+      @constructor.extendDataView(@view)
+      
       # Get the file using XHR
       xhr = new XMLHttpRequest()
       xhr.open('GET', arg)
@@ -23,6 +24,7 @@ class File
         @initializeFromBuffer(xhr.response, callback, opts)
       xhr.send()
     else
+      @constructor.extendDataView(@view)
       @initializeFromBuffer(arg)
   
   initializeFromBuffer: (buffer, callback, opts) ->
@@ -35,7 +37,9 @@ class File
       hdu = new HDU(header, data)
       @hdus.push hdu
       break if @isEOF()
-    callback.call(@, @, opts) if callback?
+    
+    context = if opts?.context? then opts.context else @
+    callback.call(context, @, opts) if callback?
   
   initializeFromFile: (file, callback, opts) ->
     
@@ -94,7 +98,8 @@ class File
           
           # Create data unit instance
           blob = file.slice(start, start + length)
-          data = @createDataUnit(header, blob)
+          if header.hasDataUnit()
+            data = @createDataUnit(header, blob)
           
           # Store HDU on instance
           @hdus.push( new HDU(header, data) )
@@ -103,7 +108,10 @@ class File
           offset += end + length + @excessBytes(length)
           
           # Return if at the end of file
-          return if offset is file.size
+          if offset is file.size
+            context = if opts?.context? then opts.context else @
+            callback.call(context, @, opts) if callback?
+            return
           
           # Reset variables for next header
           blockCount = 0
