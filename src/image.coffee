@@ -2,6 +2,7 @@
 # Image represents a standard image stored in the data unit of a FITS file
 class Image extends DataUnit
   @include ImageUtils
+  chunkSize: 536870912
   
   
   constructor: ->
@@ -38,21 +39,42 @@ class Image extends DataUnit
   # by the developer before getFrame(Async), otherwise the Image instance will not have access to the representing
   # arraybuffer.
   start: (callback, context, args) ->
+    console.log 'start'
+    
     # Initialize a reader for the blob
     reader = new FileReader()
     
+    # Determine the number of chunkSize blobs
+    i = 1
+    nChunks = Math.floor(@blob.size / @chunkSize) - 1
+    lastChunkSize = @blob.size - @chunkSize * nChunks
+    buffer = []
+    
     # Define the callback
     reader.onloadend = (e) =>
+      console.log 'onloadend'
       
       # Whoa! What a hack!
-      @view = {}
-      @view.buffer = e.target.result
+      # @view = {}
+      # @view.buffer = e.target.result
+      buffer.push e.target.result
+      console.log buffer
       
-      # Execute callback
-      context = if context? then context else @
-      callback.apply(context, [args]) if callback?
+      while nChunks--
+        begin = @chunkSize * i
+        end = begin + @chunkSize
+        console.log begin, end
+        # reader.readAsArrayBuffer(@blob.slice(begin, end))
+        i += 1
+      
+      # # Execute callback
+      # context = if context? then context else @
+      # callback.apply(context, [args]) if callback?
     
-    reader.readAsArrayBuffer(@blob)
+    # Start by reading the first chunk
+    console.log 0, @chunkSize
+    chunk = @blob.slice(0, @chunkSize)
+    reader.readAsArrayBuffer(chunk)
   
   # Shared method for Image class and also for Web Worker.  Cannot reference any instance variables
   @_getFrame: (buffer, width, height, offset, frame, bytes, bitpix, bzero, bscale) ->

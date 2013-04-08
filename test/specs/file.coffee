@@ -86,4 +86,12 @@ describe "FITS", ->
       expect(f.hdus.length).toEqual(1)
       expect(f.isEOF()).toBeTruthy()
     )
-    
+  
+  it 'can initialize a FITS with missing data', ->
+    location = 'data/CFHTLS_082_0012_g.fits.fz'
+    new FITS.File(location, (f) ->
+      data = f.getData()
+      console.log data
+      header = f.getHeader()
+      window.h = header
+    )

@@ -21,6 +21,9 @@ class File
       xhr.open('GET', arg)
       xhr.responseType = 'arraybuffer'
       xhr.onload = =>
+        if xhr.status isnt 200
+          callback.call(@, null, opts) if callback?
+          return null
         @initializeFromBuffer(xhr.response, callback, opts)
       xhr.send()
     else

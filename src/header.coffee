@@ -128,7 +128,9 @@ class Header extends Module
       when 'TABLE'
         return 'Table'
       else
-        return 'Image'
+        if @hasDataUnit()
+          return 'Image'
+        else null
   
   # Check type of header
   isPrimary: -> return @primary
