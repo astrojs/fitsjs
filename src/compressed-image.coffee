@@ -12,6 +12,7 @@ class CompressedImage extends BinaryTable
     @znaxis   = header.get("ZNAXIS")
     @zblank   = @getValue(header, "ZBLANK", undefined)
     @blank    = @getValue(header, "BLANK", undefined)
+    @ditherOffset = header.get('ZDITHER0') or 0
     
     @ztile = []
     for i in [1..@znaxis]
@@ -44,6 +45,9 @@ class CompressedImage extends BinaryTable
     @setAccessors(@tableColumns, view)
     @defGetRow()
     
+    # Set up random look up table
+    @random = @randomGenerator()
+    
   getValue: (header, key, defaultValue) ->
     return if header.contains(key) then header.get(key) else defaultValue
     
@@ -56,22 +60,36 @@ class CompressedImage extends BinaryTable
     @getRow = if hasBlanks then @getRowHasBlanks else @getRowNoBlanks
     
   # TODO: Test this function.  Need example file with blanks.
+  # TODO: Implement subtractive dithering
   getRowHasBlanks: (arr) ->
     [data, blank, scale, zero] = @getTableRow()
     
+    # Cache frequently accessed variables
+    random = @random
+    ditherOffset = @ditherOffset
     offset = @rowsRead * @width
+    
     for value, index in data
       i = offset + index
-      arr[i] = if value is blank then NaN else (zero + scale * value)
+      r = random[ditherOffset]
+      arr[i] = if value is blank then NaN else (value - r + 0.5) * scale + zero
+      ditherOffset = (ditherOffset + 1) % 10000
     @rowsRead += 1
     
   getRowNoBlanks: (arr) ->
     [data, blank, scale, zero] = @getTableRow()
     
+    # Cache frequently accessed variables
+    random = @random
+    ditherOffset = @ditherOffset
     offset = @rowsRead * @width
+    
     for value, index in data
       i = offset + index
-      arr[i] = zero + scale * value
+      r = random[ditherOffset]
+      arr[i] = (value - r + 0.5) * scale + zero
+      ditherOffset = (ditherOffset + 1) % 10000
+    
     @rowsRead += 1
     
   getTableRow: ->
@@ -96,6 +114,20 @@ class CompressedImage extends BinaryTable
       @getRow(arr)
     
     return arr
+  
+  randomGenerator: ->
+    a = 16807
+    m = 2147483647
+    seed = 1
+    
+    random = new Float32Array(10000)
+    
+    for i in [0..9999]
+      temp = a * seed
+      seed = temp - m * parseInt(temp / m)
+      random[i] = seed / m
+      
+    return random
 
 
 @astro.FITS.CompressedImage = CompressedImage
