@@ -12,7 +12,7 @@ class CompressedImage extends BinaryTable
     @znaxis   = header.get("ZNAXIS")
     @zblank   = @getValue(header, "ZBLANK", undefined)
     @blank    = @getValue(header, "BLANK", undefined)
-    @ditherOffset = header.get('ZDITHER0') or 0
+    @zdither  = header.get('ZDITHER0') or 0
     
     @ztile = []
     for i in [1..@znaxis]
@@ -46,7 +46,7 @@ class CompressedImage extends BinaryTable
     @defGetRow()
     
     # Set up random look up table
-    @random = @randomGenerator()
+    @randomSeq = @randomGenerator()
     
   getValue: (header, key, defaultValue) ->
     return if header.contains(key) then header.get(key) else defaultValue
@@ -63,7 +63,6 @@ class CompressedImage extends BinaryTable
   # TODO: Implement subtractive dithering
   getRowHasBlanks: (arr) ->
     [data, blank, scale, zero] = @getTableRow()
-    
     # Cache frequently accessed variables
     random = @random
     ditherOffset = @ditherOffset
@@ -76,19 +75,63 @@ class CompressedImage extends BinaryTable
       ditherOffset = (ditherOffset + 1) % 10000
     @rowsRead += 1
     
+  # getRowNoBlanks: (arr) ->
+  #   [data, blank, scale, zero] = @getTableRow()
+  #   
+  #   width = @width
+  #   offset = @rowsRead * width
+  #   randomSeq = @randomSeq
+  #   zdither = @zdither
+  #   
+  #   for value, index in data
+  #     i = offset + index
+  #     
+  #     # Get tile number (usually tiles are row-wise)
+  #     # TODO: Optimize int casting
+  #     # nTile = parseInt(index / width)
+  #     # r = @getRandom(nTile)
+  #     
+  #     r = randomSeq[zdither]
+  #     
+  #     # Unquantize the pixel intensity
+  #     arr[i] = (value - r + 0.5) * scale + zero
+  #     zdither = (zdither + 1) % 10000
+  #   
+  #   @rowsRead += 1
+  
   getRowNoBlanks: (arr) ->
     [data, blank, scale, zero] = @getTableRow()
     
-    # Cache frequently accessed variables
-    random = @random
-    ditherOffset = @ditherOffset
+    # Set initial seeds using ZDITHER0
+    seed0 = @rowsRead + @zdither - 1
+    seed1 = (seed0 - 1) % 10000
+    
+    # Set initial index in random sequence
+    rIndex = parseInt(@randomSeq[seed1] * 500)
+    
+    # Set offset based on number of tiles read
     offset = @rowsRead * @width
     
     for value, index in data
       i = offset + index
-      r = random[ditherOffset]
-      arr[i] = (value - r + 0.5) * scale + zero
-      ditherOffset = (ditherOffset + 1) % 10000
+      
+      # Set NaN values
+      if value is -2147483647
+        arr[i] = NaN
+      # Set zero values
+      else if value is -2147483646
+        arr[i] = 0
+      # Unquantize
+      else
+        if @rowsRead is 0
+          console.log @randomSeq[rIndex]
+        arr[i] = (value - @randomSeq[rIndex] + 0.5) * scale + zero
+      
+      # Update the random number
+      rIndex += 1
+      if rIndex is 10000
+        seed1 = (seed1 + 1) % 10000
+        rIndex = parseInt(@randomSeq[seed1] * 500)
     
     @rowsRead += 1
     
@@ -115,6 +158,8 @@ class CompressedImage extends BinaryTable
     
     return arr
   
+  # Predefined random number generator from http://arxiv.org/pdf/1201.1336v1.pdf
+  # This is the same method used by fpack when dithering images during compression.
   randomGenerator: ->
     a = 16807
     m = 2147483647
@@ -128,6 +173,19 @@ class CompressedImage extends BinaryTable
       random[i] = seed / m
       
     return random
+  
+  getRandom: (nTile) ->
+    # Ensure nTile does not exceed length of random look up table
+    nTile = nTile % 10000
+    
+    # Get random number from predefined sequence
+    r = @random[nTile]
+    
+    # Compute offset using random
+    offset = parseInt(500 * r)
+    
+    # Return random number based on tile number and offset
+    return @random[offset]
 
 
 @astro.FITS.CompressedImage = CompressedImage

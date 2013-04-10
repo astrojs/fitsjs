@@ -39,7 +39,10 @@ class Image extends DataUnit
   # by the developer before getFrame(Async), otherwise the Image instance will not have access to the representing
   # arraybuffer.
   start: (callback, context, args) ->
-    console.log 'start'
+    unless @blob?
+      context = if context? then context else @
+      callback.apply(context, [args]) if callback?
+      return
     
     # Initialize a reader for the blob
     reader = new FileReader()
@@ -67,9 +70,9 @@ class Image extends DataUnit
         # reader.readAsArrayBuffer(@blob.slice(begin, end))
         i += 1
       
-      # # Execute callback
-      # context = if context? then context else @
-      # callback.apply(context, [args]) if callback?
+      # Execute callback
+      context = if context? then context else @
+      callback.apply(context, [args]) if callback?
     
     # Start by reading the first chunk
     console.log 0, @chunkSize

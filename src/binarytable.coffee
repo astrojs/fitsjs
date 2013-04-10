@@ -5,10 +5,21 @@ class BinaryTable extends Tabular
   constructor: (header, view, offset) ->
     super
     
-    @tableLength = @length
-    @columnNames = {}
-    tblCols = @getTableColumns(header)
-    @setAccessors(tblCols, view)
+    if arguments[1] instanceof Blob
+      reader = new FileReader()
+      reader.onloadend = (e) =>
+        @offset = @begin = 0
+        @view = e.target.result
+        @tableLength = @length
+        @columnNames = {}
+        tblCols = @getTableColumns(header)
+        @setAccessors(tblCols, view)
+      reader.readAsArrayBuffer(arguments[1])
+    else
+      @tableLength = @length
+      @columnNames = {}
+      tblCols = @getTableColumns(header)
+      @setAccessors(tblCols, view)
   
   getTableColumns: (header) ->
     parameters = []
