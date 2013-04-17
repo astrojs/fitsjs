@@ -84,7 +84,6 @@ class FITS
   # used for remote files, though this can be used for local files if
   # the arraybuffer is already in memory.
   readFromBuffer: ->
-    console.log 'readFromBuffer'
     
     # Get first 2880 block
     block = @arg.slice(@begin + @offset, @end + @offset)
@@ -95,7 +94,6 @@ class FITS
   # Read a file by copying only the headers into memory.  This is needed
   # to handle large files efficiently.
   readFromFile: ->
-    console.log 'readFromFile'
     
     # Initialize a new FileReader
     @reader = new FileReader()
