@@ -9,7 +9,9 @@ describe "FITS", ->
     fits = new FITS(path, (fits) ->
       ready = true
       
-      arr = fits.hdus[0].data.getFrame()
+      fits.hdus[0].data.getFrame(0, (arr) ->
+        console.log arr
+      )
     )
     waitsFor -> return ready
     

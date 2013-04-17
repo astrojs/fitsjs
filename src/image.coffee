@@ -42,73 +42,30 @@ class Image extends DataUnit
         frame.buffer = @buffer.slice(begin, begin + @frameLength)
       @frameOffsets.push frame
   
-  # Temporary method when FITS objects are initialized using a File instance.  This method must be called
-  # by the developer before getFrame(Async), otherwise the Image instance will not have access to the representing
-  # arraybuffer.
-  start: (callback, context, args) ->
-    unless @blob?
-      context = if context? then context else @
-      callback.apply(context, [args]) if callback?
-      return
-    
-    # Initialize a reader for the blob
-    reader = new FileReader()
-    
-    # Determine the number of chunkSize blobs
-    i = 1
-    nChunks = Math.floor(@blob.size / @chunkSize) - 1
-    lastChunkSize = @blob.size - @chunkSize * nChunks
-    buffer = []
-    
-    # Define the callback
-    reader.onloadend = (e) =>
-      console.log 'onloadend'
-      
-      # Whoa! What a hack!
-      # @view = {}
-      # @view.buffer = e.target.result
-      buffer.push e.target.result
-      console.log buffer
-      
-      while nChunks--
-        begin = @chunkSize * i
-        end = begin + @chunkSize
-        console.log begin, end
-        # reader.readAsArrayBuffer(@blob.slice(begin, end))
-        i += 1
-      
-      # Execute callback
-      context = if context? then context else @
-      callback.apply(context, [args]) if callback?
-    
-    # Start by reading the first chunk
-    console.log 0, @chunkSize
-    chunk = @blob.slice(0, @chunkSize)
-    reader.readAsArrayBuffer(chunk)
-  
   # Shared method for Image class and also for Web Worker.  Cannot reference any instance variables
-  _getFrame: (buffer, width, height, offset, frame, bytes, bitpix, bzero, bscale) ->
+  # This is an internal function that converts bytes to pixel values.  There is no reference to instance
+  # variables in this function because it is executed on a Web Worker, which always exists outside the
+  # scope of this function (class).
+  _getFrame: (buffer, bitpix, bzero, bscale) ->
     
-    # Get bytes representing this dataunit
-    nPixels = i = width * height
-    start = offset + (frame * nPixels * bytes)
-    
-    chunk = buffer.slice(start, start + nPixels * bytes)
+    # Get the number of pixels represented in buffer
+    bytes = Math.abs(bitpix) / 8
+    nPixels = i = buffer.byteLength / bytes
     
     dataType = Math.abs(bitpix)
     if bitpix > 0
       switch bitpix
         when 8
-          arr = new Uint8Array(chunk)
+          arr = new Uint8Array(buffer)
           arr = new Uint16Array(arr)
           swapEndian = (value) ->
             return value
         when 16
-          arr = new Uint16Array(chunk)
+          arr = new Uint16Array(buffer)
           swapEndian = (value) ->
             return (value << 8) | (value >> 8)
         when 32
-          arr = new Int32Array(chunk)
+          arr = new Int32Array(buffer)
           swapEndian = (value) ->
             return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
             
@@ -118,7 +75,7 @@ class Image extends DataUnit
         arr[nPixels] = bzero + bscale * value + 0.5
         
     else
-      arr = new Uint32Array(chunk)
+      arr = new Uint32Array(buffer)
       
       swapEndian = (value) ->
         return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
@@ -128,7 +85,7 @@ class Image extends DataUnit
         arr[i] = swapEndian(value)
         
       # Initialize a Float32 array using the same buffer
-      arr = new Float32Array(chunk)
+      arr = new Float32Array(buffer)
       
       # Apply BZERO and BSCALE
       while nPixels--
@@ -136,26 +93,22 @@ class Image extends DataUnit
         
     return arr
   
-  getFrameAsync: (@frame = @frame, callback, opts = undefined) ->
+  getFrameAsync: (buffer, callback, opts) ->
     
-    # Define the function to be executed on the worker thread
+    # Define function to be executed on the worker thread
     onmessage = (e) ->
-      # Cache variables
+      # Get variables sent from main thread
       data    = e.data
       buffer  = data.buffer
-      width   = data.width
-      height  = data.height
-      offset  = data.offset
-      frame   = data.frame
-      bytes   = data.bytes
       bitpix  = data.bitpix
       bzero   = data.bzero
       bscale  = data.bscale
       url     = data.url
       
+      # Import getFrame function
       importScripts(url)
       
-      arr = _getFrame(buffer, width, height, offset, frame, bytes, bitpix, bzero, bscale)
+      arr = _getFrame(buffer, bitpix, bzero, bscale)
       postMessage(arr)
     
     # Trick to format function for worker
@@ -166,13 +119,15 @@ class Image extends DataUnit
     fn2 = @_getFrame.toString()
     fn2 = fn2.replace('function', 'function _getFrame')
     
-    # Construct blob for an inline worker and getFrame function
+    # Construct blob for an inline worker and _getFrame function
     mime = "application/javascript"
     blobOnMessage = new Blob([fn1], {type: mime})
     blobGetFrame = new Blob([fn2], {type: mime})
     
-    # Prefix for Safari
-    URL = window.URL or window.webkitURL or window.MozURLProperty
+    # Get the native URL object
+    URL = URL or webkitURL
+    
+    # Create URLs to onmessage and _getFrame scripts
     urlOnMessage = URL.createObjectURL(blobOnMessage)
     urlGetFrame = URL.createObjectURL(blobGetFrame)
     
@@ -192,39 +147,28 @@ class Image extends DataUnit
       URL.revokeObjectURL(urlGetFrame)
       worker.terminate()
     
-    # Define object to be passed to worker
-    msg = {}
-    msg.buffer  = @view.buffer
-    msg.width   = @width
-    msg.height  = @height
-    msg.offset  = @offset
-    msg.frame   = @frame
-    msg.bytes   = @bytes
-    msg.bitpix  = @bitpix
-    msg.bzero   = @bzero
-    msg.bscale  = @bscale
-    msg.url     = urlGetFrame
-    
-    # Pass object to worker
+    # Define object containing parameters to be passed to worker
+    msg =
+      buffer: buffer
+      bitpix: @bitpix
+      bzero: @bzero
+      bscale: @bscale
+      url: urlGetFrame
     worker.postMessage(msg)
   
   # Read single frame from image.  Frames are read sequentially unless nFrame is set.
-  # For the case when the file is not yet in memory, a callback must be provided to
-  # expose the resulting array.  This is another case where a synchronous and
-  # asynchronous process are abstracted by a single function.
-  getFrame: (nFrame, callback) ->
+  # A callback must be provided since there are 1 or more asynchronous processes happening
+  # to convert bytes to flux. This is a case where a partially synchronous and
+  # completely asynchronous process are abstracted by a single function.
+  getFrame: (nFrame, callback, opts) ->
     
     @frame = nFrame or @frame
     frameInfo = @frameOffsets[@frame]
+    buffer = frameInfo.buffer
     
     # Check if bytes are in memory
-    if frameInfo.buffer?
-      arr = @_getFrame(frameInfo.buffer, @width, @height, @offset, @frame, @bytes, @bitpix, @bzero, @bscale)
-      
-      # Increment frame counter if handling data cube
-      @frame += 1 if @isDataCube()
-      callback.call(@, arr) if callback?
-      return arr
+    if buffer?
+      @getFrameAsync(buffer, callback, opts)
     else
       # Read frame bytes into memory since not yet copied.
       # TODO: For HUGE images each frame should be sliced into equal
@@ -247,7 +191,7 @@ class Image extends DataUnit
         @frameOffsets[frame].buffer = buffer
         
         # Call function again
-        @getFrame(frame, callback)
+        @getFrame(frame, callback, opts)
         
       reader.readAsArrayBuffer(blobFrame)
   

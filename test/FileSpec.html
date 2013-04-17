@@ -54,7 +54,7 @@
         // Initialize FITS object
         new astro.FITS(file, function(fits) {
           console.log(fits);
-          var arr = fits.hdus[0].data.getFrame(0, function(arr) {
+          var arr = fits.hdus[1].data.getFrame(0, function(arr) {
             console.log('array is', arr);
           });
           
