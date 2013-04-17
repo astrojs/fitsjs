@@ -211,6 +211,27 @@ class FITS
   isEOF: ->
     return if @offset is @length then true else false
 
+  # ### API
+
+  # Returns the first HDU containing a data unit.  An optional argument may be passed to retreive 
+  # a specific HDU
+  getHDU: (index) ->
+    return @hdus[index] if index? and @hdus[index]?
+    for hdu in @hdus
+      return hdu if hdu.hasData()
+
+  # Returns the header associated with the first HDU containing a data unit.  An optional argument
+  # may be passed to point to a specific HDU.
+  getHeader: (index) -> return @getHDU(index).header
+
+  # Returns the data object associated with the first HDU containing a data unit.  This method does not read from the array buffer
+  # An optional argument may be passed to point to a specific HDU.
+  getDataUnit: (index) -> return @getHDU(index).data
+
+  # Returns the data associated with the first HDU containing a data unit.  An optional argument
+  # may be passed to point to a specific HDU.
+  getData: (index) -> return @getHDU(index).data.getFrame()
+
 
 FITS.version = '0.5.0'
 @astro.FITS = FITS

@@ -16,7 +16,7 @@ describe "FITS", ->
     runs ->
       expect(fits.hdus.length).toEqual(1)
       expect(fits.isEOF()).toBeTruthy()
-      expect(fits.hdus[0].data.constructor.name).toBe("Image")
+      expect(fits.getDataUnit().constructor.name).toBe("Image")
     
   it 'can open a FITS Binary Table', ->
     ready = false
@@ -32,7 +32,7 @@ describe "FITS", ->
     runs ->
       expect(fits.hdus.length).toEqual(2)
       expect(fits.isEOF()).toBeTruthy()
-      expect(fits.hdus[1].data.constructor.name).toBe("BinaryTable")
+      expect(fits.getDataUnit().constructor.name).toBe("BinaryTable")
     
   it 'can open a FITS file with multiple header dataunits', ->
     ready = false
@@ -48,6 +48,6 @@ describe "FITS", ->
     runs ->
       expect(fits.hdus.length).toEqual(2)
       expect(fits.isEOF()).toBeTruthy()
-      expect(fits.hdus[0].data.constructor.name).toBe("Image")
-      expect(fits.hdus[1].data.constructor.name).toBe("Table")
+      expect(fits.getDataUnit(0).constructor.name).toBe("Image")
+      expect(fits.getDataUnit(1).constructor.name).toBe("Table")
   
