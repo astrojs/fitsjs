@@ -169,6 +169,8 @@ class FITS
         
         # Return if at the end of file
         if @offset is @length
+          @headerStorage = null
+          
           context = if @opts?.context? then @opts.context else @
           @callback.call(context, @, @opts) if @callback?
           return
@@ -198,13 +200,16 @@ class FITS
   _readBlockFromBuffer: (block) -> @readBlock(block)
   _readBlockFromFile: (block) -> @reader.readAsArrayBuffer(block)
   
-  createDataUnit: (header, chunk) ->
-    console.log 'createDataUnit'
+  # Create the appropriate data unit based on info from header
+  createDataUnit: (header, blob) ->
+    type = header.getDataType()
+    return new astro.FITS[type](header, blob)
   
   # Determine the number of characters following a header or data unit
   excessBytes: (length) ->
     return (@BLOCKLENGTH - (length % @BLOCKLENGTH)) % @BLOCKLENGTH
-
+  
+  # Check for the end of file
   isEOF: ->
     return if @offset is @length then true else false
 

@@ -50,11 +50,16 @@
         
         var files = e.dataTransfer.files;
         var file = files[0];
-        window.f = file;
         
         // Initialize FITS object
-        console.log(file);
-        var fits = new astro.FITS.File(file);
+        new astro.FITS(file, function(fits) {
+          console.log(fits);
+          var arr = fits.hdus[0].data.getFrame(0, function(arr) {
+            console.log('array is', arr);
+          });
+          
+        });
+        
       }
 
       // Setup drop zone

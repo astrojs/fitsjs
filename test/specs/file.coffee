@@ -8,14 +8,16 @@ describe "FITS", ->
     path = 'data/m101.fits'
     fits = new FITS(path, (fits) ->
       ready = true
+      
+      arr = fits.hdus[0].data.getFrame()
     )
     waitsFor -> return ready
     
     runs ->
       expect(fits.hdus.length).toEqual(2)
       expect(fits.isEOF()).toBeTruthy()
-      # expect(fits.hdus[0].data.constructor.name).toBe("Image")
-      # expect(fits.hdus[1].data.constructor.name).toBe("Table")
+      expect(fits.hdus[0].data.constructor.name).toBe("Image")
+      expect(fits.hdus[1].data.constructor.name).toBe("Table")
 
   # it 'can open a FITS file storing a compressed image', ->
   #   fits = null

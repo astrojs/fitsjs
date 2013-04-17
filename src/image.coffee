@@ -2,23 +2,16 @@
 # Image represents a standard image stored in the data unit of a FITS file
 class Image extends DataUnit
   @include ImageUtils
-  chunkSize: 536870912
+  
+  # When reading from a File object, only needed portions of file are placed into memory.
+  # When large heaps are required, they are requested in 16 MB increments.
+  allocationSize: 16777216
   
   
-  constructor: ->
+  constructor: (header, data) ->
+    super
     
-    if arguments.length is 3
-      # Arguments are (header, view, offset)
-      super
-      [header, view, offset] = arguments
-    else
-      # Arguments are (header, blob)
-      
-      # Set begin to allow new functionality of working with blobs to
-      # work with current methods.
-      @begin = @offset = 0
-      [header, @blob] = arguments
-    
+    # Get parameters from header
     naxis   = header.get("NAXIS")
     @bitpix = header.get("BITPIX")
     
@@ -27,6 +20,7 @@ class Image extends DataUnit
     
     @width  = header.get("NAXIS1")
     @height = header.get("NAXIS2") or 1
+    @depth  = header.get("NAXIS3") or 1
     
     @bzero  = header.get("BZERO") or 0
     @bscale = header.get("BSCALE") or 1
@@ -34,6 +28,19 @@ class Image extends DataUnit
     @bytes  = Math.abs(@bitpix) / 8
     @length = @naxis.reduce( (a, b) -> a * b) * Math.abs(@bitpix) / 8
     @frame  = 0    # Needed for data cubes
+    
+    # Create a look up table to store byte offsets for each frame
+    # in the image.  This is mostly relevant to data cubes.  Each entry stores
+    # the beginning offset of a frame.  A frame length parameter stores the byte
+    # length of a single frame.
+    @frameOffsets = []
+    @frameLength = @bytes * @width * @height
+    for i in [0..@depth - 1]
+      begin = i * @frameLength
+      frame = {begin: begin}
+      if @buffer?
+        frame.buffer = @buffer.slice(begin, begin + @frameLength)
+      @frameOffsets.push frame
   
   # Temporary method when FITS objects are initialized using a File instance.  This method must be called
   # by the developer before getFrame(Async), otherwise the Image instance will not have access to the representing
@@ -80,7 +87,7 @@ class Image extends DataUnit
     reader.readAsArrayBuffer(chunk)
   
   # Shared method for Image class and also for Web Worker.  Cannot reference any instance variables
-  @_getFrame: (buffer, width, height, offset, frame, bytes, bitpix, bzero, bscale) ->
+  _getFrame: (buffer, width, height, offset, frame, bytes, bitpix, bzero, bscale) ->
     
     # Get bytes representing this dataunit
     nPixels = i = width * height
@@ -156,7 +163,7 @@ class Image extends DataUnit
     fn1 = "onmessage = #{fn1}"
     
     # Functions passed to worker via url cannot be anonymous
-    fn2 = Image._getFrame.toString()
+    fn2 = @_getFrame.toString()
     fn2 = fn2.replace('function', 'function _getFrame')
     
     # Construct blob for an inline worker and getFrame function
@@ -201,11 +208,48 @@ class Image extends DataUnit
     # Pass object to worker
     worker.postMessage(msg)
   
-  getFrame: (@frame = @frame) ->
-    arr = Image._getFrame(@view.buffer, @width, @height, @offset, @frame, @bytes, @bitpix, @bzero, @bscale)
-    @frame += 1 if @isDataCube()
+  # Read single frame from image.  Frames are read sequentially unless nFrame is set.
+  # For the case when the file is not yet in memory, a callback must be provided to
+  # expose the resulting array.  This is another case where a synchronous and
+  # asynchronous process are abstracted by a single function.
+  getFrame: (nFrame, callback) ->
     
-    return arr
+    @frame = nFrame or @frame
+    frameInfo = @frameOffsets[@frame]
+    
+    # Check if bytes are in memory
+    if frameInfo.buffer?
+      arr = @_getFrame(frameInfo.buffer, @width, @height, @offset, @frame, @bytes, @bitpix, @bzero, @bscale)
+      
+      # Increment frame counter if handling data cube
+      @frame += 1 if @isDataCube()
+      callback.call(@, arr) if callback?
+      return arr
+    else
+      # Read frame bytes into memory since not yet copied.
+      # TODO: For HUGE images each frame should be sliced into equal
+      #       chunks rather than imposing so much memory to be allocated
+      #       by one operation.
+      
+      # Slice blob for only current frame bytes
+      begin = frameInfo.begin
+      blobFrame = @blob.slice(begin, begin + @frameLength)
+      
+      # Create file reader and store frame number on object for later reference
+      reader = new FileReader()
+      reader.frame = @frame
+      reader.onloadend = (e) =>
+        
+        frame = e.target.frame
+        buffer = e.target.result
+        
+        # Store the buffer for later access
+        @frameOffsets[frame].buffer = buffer
+        
+        # Call function again
+        @getFrame(frame, callback)
+        
+      reader.readAsArrayBuffer(blobFrame)
   
   # Checks if the image is a data cube
   isDataCube: ->
