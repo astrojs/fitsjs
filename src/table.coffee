@@ -29,24 +29,43 @@ class Table extends Tabular
           return @dataAccessors[descriptor](value)
         @accessors.push(accessor)
   
-  getRow: (row = null) =>
+  _getRows: (buffer) ->
     
-    # Check if row is specified, otherwise, default to sequential reading.
-    @rowsRead = row if row?
+    # Get the number of rows in buffer
+    nRows = buffer.byteLength / @rowByteSize
     
-    # Get the byte offset based on the number of rows read.
-    offset = @rowsRead * @rowByteSize
+    # Interpret the buffer
+    arr = new Uint8Array(buffer)
     
-    line = @view.getUint8()
-    line = @view.getString(@offset, @rowByteSize).trim().split(/\s+/)
+    # Storage for rows
+    rows = []
     
-    row = {}
-    for value, index in line
-      row[@columns[index]] = @accessors[index](value)
+    # Loop over the number of rows
+    for i in [0..nRows - 1]
       
-    @offset += @rowByteSize
-    @rowsRead += 1
-    return row
+      # Get the subarray for current row
+      begin = i * @rowByteSize
+      end = begin + @rowByteSize
+      subarray = arr.subarray(begin, end)
+      
+      # Convert to string representation
+      line = ''
+      for value in subarray
+        line += String.fromCharCode(value)
+      line = line.trim().split(/\s+/)
+      
+      # Storage for current row
+      row = {}
+      
+      # Convert to correct data type using accessor functions
+      for accessor, index in @accessors
+        value = line[index]
+        row[ @columns[index] ] = accessor(value)
+      
+      # Store row on array
+      rows.push row
+      
+    return rows
 
 
 @astro.FITS.Table = Table

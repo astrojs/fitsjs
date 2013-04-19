@@ -82,11 +82,8 @@ class Tabular extends DataUnit
     @rows         = header.get("NAXIS2")
     @cols         = header.get("TFIELDS")
     
-    # Bytes size of the data unit
-    @length = @rowByteSize * @rows
-    
-    # Number of rows read and column names
-    @rowsRead = 0
+    # Get bytes size of the data unit and column names
+    @length   = @rowByteSize * @rows
     @columns  = @getColumns(header)
     
     # Store functions needed to access each entry
@@ -96,10 +93,10 @@ class Tabular extends DataUnit
     if @buffer?
       
       # Define function at run time that checks if row is in memory
-      @isRowInMemory = @_rowsInMemoryBuffer
+      @rowsInMemory = @_rowsInMemoryBuffer
     
     else
-      @isRowInMemory = @_rowsInMemoryBlob
+      @rowsInMemory = @_rowsInMemoryBlob
       
       # No rows are in memory
       @firstRowInBuffer = @lastRowInBuffer = 0
@@ -122,23 +119,18 @@ class Tabular extends DataUnit
   # the file.
   getRows: (row, number, callback, opts) ->
     
-    # Check if row is in memory
+    # Check if rows are in memory
     if @rowsInMemory(row, row + number)
-      @rowsRead = row
       
-      # Storage for rows
-      rows = []
+      # Slice the buffer
+      begin = row * @rowByteSize
+      end = begin + number * @rowByteSize
+      buffer = @buffer.slice(begin, end)
       
-      while number--
-        row = {}
-        for accessor, index in @accessors
-          row[@columns[index]] = accessor()
-        @rowsRead += 1
+      # Derived classes must implement this function
+      rows = @_getRows(buffer)
       
-      # Execute callback
-      context = if opts?.context? then opts.context else @
-      callback.call(context, rows, opts) if callback?
-      
+      @runCallback(callback, opts, rows)
       return rows
     else
       

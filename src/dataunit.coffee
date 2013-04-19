@@ -33,5 +33,9 @@ class DataUnit extends Module
       @buffer = data
     else
       @blob = data
+  
+  runCallback: (callback, opts, data) ->
+    context = if opts?.context? then opts.context else @
+    callback.call(context, data, opts) if callback?
 
 @astro.FITS.DataUnit = DataUnit

@@ -4,7 +4,7 @@ class BinaryTable extends Tabular
   
   constructor: (header, data) ->
     super
-    @header = header
+    return
     
     if arguments[1] instanceof Blob
       reader = new FileReader()

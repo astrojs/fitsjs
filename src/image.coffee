@@ -135,12 +135,10 @@ class Image extends DataUnit
     worker = new Worker(urlOnMessage)
     
     # Define function for when worker job is complete
-    worker.onmessage = (e) ->
+    worker.onmessage = (e) =>
       arr = e.data
       
-      # Execute callback
-      context = if opts?.context? then opts.context else @
-      callback.call(context, arr, opts) if callback?
+      @runCallback(callback, opts, arr)
       
       # Clean up urls and worker
       URL.revokeObjectURL(urlOnMessage)
