@@ -1,6 +1,8 @@
 
 # Class to read ASCII tables from FITS files.
 class Table extends Tabular
+  
+  # Define functions for parsing ASCII entries
   dataAccessors:
     A: (value) -> return value.trim()
     I: (value) -> return parseInt(value)
@@ -8,7 +10,7 @@ class Table extends Tabular
     E: (value) -> return parseFloat(value)
     D: (value) -> return parseFloat(value)
   
-  constructor: (header, view, offset) ->
+  constructor: (header, data) ->
     super
     @setAccessors(header)
   
@@ -28,8 +30,14 @@ class Table extends Tabular
         @accessors.push(accessor)
   
   getRow: (row = null) =>
+    
+    # Check if row is specified, otherwise, default to sequential reading.
     @rowsRead = row if row?
-    @offset = @begin + @rowsRead * @rowByteSize
+    
+    # Get the byte offset based on the number of rows read.
+    offset = @rowsRead * @rowByteSize
+    
+    line = @view.getUint8()
     line = @view.getString(@offset, @rowByteSize).trim().split(/\s+/)
     
     row = {}

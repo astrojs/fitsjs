@@ -2,8 +2,9 @@
 class BinaryTable extends Tabular
   
   
-  constructor: (header, view, offset) ->
+  constructor: (header, data) ->
     super
+    @header = header
     
     if arguments[1] instanceof Blob
       reader = new FileReader()

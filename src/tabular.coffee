@@ -1,6 +1,11 @@
 
 # Abstract class for tabular FITS extensions (e.g. TABLE, BINTABLE)
 class Tabular extends DataUnit
+  
+  # The maximum amount of memory to hold on object when
+  # reading a local file. 8 MBs.
+  maxMemory: 8388608
+  
   typedArray:
     B: Uint8Array
     I: Uint16Array
@@ -42,9 +47,10 @@ class Tabular extends DataUnit
       val = factor * ((highByte << 32) | lowByte)
       return [val, offset]
     A: (view, offset) ->
-          val = view.getChar(offset)
-          offset += 1
-          return [val, offset]
+      val = view.getUint8(offset)
+      val = String.fromCharCode(val)
+      offset += 1
+      return [val, offset]
     E: (view, offset) ->
       val = view.getFloat32(offset)
       offset += 4
@@ -69,35 +75,107 @@ class Tabular extends DataUnit
       return [val, offset]
   
   
-  constructor: (header, view, offset) ->
+  constructor: (header, data) ->
     super
     
     @rowByteSize  = header.get("NAXIS1")
     @rows         = header.get("NAXIS2")
     @cols         = header.get("TFIELDS")
-    @length       = @rowByteSize * @rows
-    @rowsRead     = 0
     
-    @columns      = @getColumnNames(header)
-    @accessors    = []
-    @header       = header  # Hopefully this reference is temporary
+    # Bytes size of the data unit
+    @length = @rowByteSize * @rows
     
-  getRow: (row = null) ->
-    @rowsRead = row if row?
-    @offset = @begin + @rowsRead * @rowByteSize
-    row = {}
-    for accessor, index in @accessors
-      row[@columns[index]] = accessor()
-    @rowsRead += 1
-    return row
+    # Number of rows read and column names
+    @rowsRead = 0
+    @columns  = @getColumns(header)
     
-  getColumnNames: (header) ->
-    columnNames = []
+    # Store functions needed to access each entry
+    @accessors  = []
+    
+    # Store information about the buffer
+    if @buffer?
+      
+      # Define function at run time that checks if row is in memory
+      @isRowInMemory = @_rowsInMemoryBuffer
+    
+    else
+      @isRowInMemory = @_rowsInMemoryBlob
+      
+      # No rows are in memory
+      @firstRowInBuffer = @lastRowInBuffer = 0
+      
+      # Use maxMemory to get the number of rows to hold in memory
+      @nRowsInBuffer = Math.floor(@maxMemory / @rowByteSize)
+  
+  # Get the column names from the header
+  getColumns: (header) ->
+    columns = []
     for i in [1..@cols]
       key = "TTYPE#{i}"
       return null unless header.contains(key)
-      columnNames.push header.get(key)
-    return columnNames
+      columns.push header.get(key)
+    return columns
+  
+  # Get rows of data specified by parameters.  In the case where
+  # the data is not yet in memory, a callback must be provided to
+  # expose the results. This is due to the asynchonous reading of
+  # the file.
+  getRows: (row, number, callback, opts) ->
+    
+    # Check if row is in memory
+    if @rowsInMemory(row, row + number)
+      @rowsRead = row
+      
+      # Storage for rows
+      rows = []
+      
+      while number--
+        row = {}
+        for accessor, index in @accessors
+          row[@columns[index]] = accessor()
+        @rowsRead += 1
+      
+      # Execute callback
+      context = if opts?.context? then opts.context else @
+      callback.call(context, rows, opts) if callback?
+      
+      return rows
+    else
+      
+      # Get the offsets to slice the blob. Note the API allows for more memory to be allocated
+      # by the developer if the number of rows is greater than the default heap size.
+      begin = row * @rowByteSize
+      end = begin + Math.max(@nRowsInBuffer * @rowByteSize, number * @rowByteSize)
+      
+      # Slice blob for only bytes
+      blobRows = @blob.slice(begin, end)
+      
+      # Create file reader and store row and number on object for later reference
+      reader = new FileReader()
+      reader.row = row
+      reader.number = number
+      reader.onloadend = (e) =>
+        target = e.target
+        
+        # Store the array buffer on the object
+        @buffer = target.result
+        
+        @firstRowInBuffer = @lastRowInBuffer = target.row
+        @lastRowInBuffer += target.number
+        
+        # Call function again
+        @getRows(row, number, callback, opts)
+        
+      reader.readAsArrayBuffer(blobRows)
+  
+  # Determine if the row is in memory. For tables initialized with an array buffer, all rows
+  # are in memory, so there is no need to check. For tables initialized with a blob, this check
+  # is needed to determine if the file needs to be read before accessing data.
+  _rowsInMemoryBuffer: -> return true
+  _rowsInMemoryBlob: (firstRow, lastRow) ->
+    return false if firstRow < @firstRowInBuffer
+    return false if lastRow > @lastRowInBuffer
+    return true
 
 
 @astro.FITS.Tabular = Tabular

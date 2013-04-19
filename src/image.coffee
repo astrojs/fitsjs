@@ -171,9 +171,10 @@ class Image extends DataUnit
       @getFrameAsync(buffer, callback, opts)
     else
       # Read frame bytes into memory since not yet copied.
-      # TODO: For HUGE images each frame should be sliced into equal
-      #       chunks rather than imposing so much memory to be allocated
-      #       by one operation.
+      
+      # TODO: For HUGE images each frame should be further sliced into
+      #       equal chunks rather than imposing so much memory to be
+      #       allocated by one operation.
       
       # Slice blob for only current frame bytes
       begin = frameInfo.begin
