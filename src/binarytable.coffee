@@ -81,17 +81,6 @@ class BinaryTable extends Tabular
     
     @setAccessors(header)
   
-  getColumnLookup: (header) ->
-    parameters = []
-    for i in [1..@cols]
-      obj = {}
-      form = header.get("TFORM#{i}")
-      type = header.get("TTYPE#{i}")
-      obj[form] = type
-      parameters.push obj
-      @columnNames[type] = i - 1
-    return parameters
-  
   toBits: (byte) ->
     arr = []
     i = 128
@@ -100,7 +89,10 @@ class BinaryTable extends Tabular
       i /= 2
     return arr
   
+  # Get bytes from the heap that follows the main data structure.  Often used
+  # for binary tables and compressed images.
   getFromHeap: (descriptor) ->
+    
     # Get length and offset of the heap
     length  = @view.getInt32(@offset)
     @offset += 4
@@ -174,65 +166,95 @@ class BinaryTable extends Tabular
         if count is 1
           # Handle single element
           do (descriptor, count) =>
-            accessor = =>
-              [value, @offset] = @dataAccessors[descriptor](view, @offset)
-              return value
+            accessor = (view, offset) =>
+              [value, offset] = @dataAccessors[descriptor](view, offset)
+              return [value, offset]
             @accessors.push(accessor)
         else
+          
           # Handle bit arrays
           if descriptor is 'X'
             do (descriptor, count) =>
               nBytes = Math.log(count) / Math.log(2)
-              accessor = =>
-                # Read from the buffer
-                chunk = view.buffer.slice(@offset, @offset + nBytes)
-                bytes = new Uint8Array(chunk)
-              
+              accessor = (view, offset) =>
+                
+                # Read from buffer
+                buffer = view.buffer.slice(offset, offset + nBytes)
+                bytes = new Uint8Array(buffer)
+                
                 # Get bit representation
                 bits = []
                 for byte in bytes
                   arr = @toBits(byte)
                   bits = bits.concat(arr)
-              
+                
                 # Increment the offset
-                @offset += nBytes
-              
-                return bits[0..count - 1]
+                offset += nBytes
+                
+                return [bits[0..count - 1], offset]
               @accessors.push(accessor)
         
           # Handle character arrays
           else if descriptor is 'A'
             do (descriptor, count) =>
-              accessor = =>
-                str = view.getString(@offset, count)
-                @offset += count
-                return str.trim()
+              accessor = (view, offset) =>
+                
+                # Read from buffer
+                buffer = view.buffer.slice(offset, offset + count)
+                arr = new Uint8Array(buffer)
+                
+                s = ''
+                for value in arr
+                  s += String.fromCharCode(value)
+                s = s.trim()
+                
+                # Increment offset
+                offset += count
+                
+                return [s, offset]
+                
               @accessors.push(accessor)
         
           # Handle all other data types
           else
             do (descriptor, count) =>
-              accessor = =>
-                # TypedArray = @typedArray[descriptor]
-                # 
-                # # Read from the buffer
-                # length = count * TypedArray.BYTES_PER_ELEMENT
-                # chunk = view.buffer.slice(@offset, @offset + length)
-                # @offset += length
-                # 
-                # return new TypedArray(chunk)
+              accessor = (view, offset) =>
                 
                 data = []
                 while count--
-                  [value, @offset] = @dataAccessors[descriptor](view, @offset)
+                  [value, offset] = @dataAccessors[descriptor](view, offset)
                   data.push(value)
-                return data
+                return [data, offset]
               @accessors.push(accessor)
 
   _getRows: (buffer) ->
-    console.log '_getRows', buffer
+    
+    # Get the number of rows in buffer
+    nRows = buffer.byteLength / @rowByteSize
+    
+    # Set up view and offset
     view = new DataView(buffer)
-    console.log view
-    return []
+    offset = 0
+    
+    # Storage for rows
+    rows = []
+    
+    # Read each row
+    while nRows--
+      
+      # Storage for current row
+      row = {}
+      
+      for accessor, index in @accessors
+        
+        # Read value from each column in current row
+        [value, offset] = accessor(view, offset)
+        row[ @columns[index] ] = value
+      
+      # Store row on array
+      rows.push row
+    
+    return rows
+    
     
 @astro.FITS.BinaryTable = BinaryTable
