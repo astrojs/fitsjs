@@ -1,5 +1,5 @@
 {
-  "name": "fitsjs",
+  "name": "fits",
   "version": "0.5.0",
   "author": "Amit Kapadia <amit@zooniverse.org>",
   "description": "Library for reading the FITS astronomical file format",

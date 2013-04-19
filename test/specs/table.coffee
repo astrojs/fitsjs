@@ -1,6 +1,6 @@
 window.FITS = astro.FITS
 
-describe "FITS Table", ->
+describe "FITS ASCII Table", ->
 
   it 'can read the column names and knows buffer is in memory', ->
     ready = false

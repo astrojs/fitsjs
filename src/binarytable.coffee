@@ -1,28 +1,87 @@
 
 class BinaryTable extends Tabular
   
+  # Look up table for matching appropriate typed array
+  typedArray:
+    B: Uint8Array
+    I: Uint16Array
+    J: Int32Array
+    E: Float32Array
+    D: Float64Array
+    1: Uint8Array
+    2: Uint16Array
+    4: Int32Array
+  
+  # Define functions for parsing binary tables.
+  # NOTE: Accessor function for bit array is better implemented in another function below
+  dataAccessors:
+    L: (view, offset) ->
+      x = view.getInt8(offset)
+      offset += 1
+      val = if x is 84 then true else false
+      return [val, offset]
+    B: (view, offset) ->
+      val = view.getUint8(offset)
+      offset += 1
+      return [val, offset]
+    I: (view, offset) ->
+      val = view.getInt16(offset)
+      offset += 2
+      return [val, offset]
+    J: (view, offset) ->
+      val = view.getInt32(offset)
+      offset += 4
+      return [val, offset]
+    K: (view, offset) ->
+      highByte = Math.abs view.getInt32(offset)
+      offset += 4
+      lowByte = Math.abs view.getInt32(offset)
+      offset += 4
+      mod = highByte % 10
+      factor = if mod then -1 else 1
+      highByte -= mod
+      console.warn "Precision for 64 bit integers may be incorrect."
+      val = factor * ((highByte << 32) | lowByte)
+      return [val, offset]
+    A: (view, offset) ->
+      val = view.getUint8(offset)
+      val = String.fromCharCode(val)
+      offset += 1
+      return [val, offset]
+    E: (view, offset) ->
+      val = view.getFloat32(offset)
+      offset += 4
+      return [val, offset]
+    D: (view, offset) ->
+      val = view.getFloat64(offset)
+      offset += 8
+      return [val, offset]
+    C: (view, offset) ->
+      val1 = view.getFloat32(offset)
+      offset += 4
+      val2 = view.getFloat32(offset)
+      offset += 4
+      val = [val1, val2]
+      return [val, offset]
+    M: (view, offset) ->
+      val1 = view.getFloat64(offset)
+      offset += 8
+      val2 = view.getFloat64(offset)
+      offset += 8
+      val = [val1, val2]
+      return [val, offset]
+  
   
   constructor: (header, data) ->
     super
-    return
     
-    if arguments[1] instanceof Blob
-      reader = new FileReader()
-      reader.onloadend = (e) =>
-        @offset = @begin = 0
-        @view = e.target.result
-        @tableLength = @length
-        @columnNames = {}
-        tblCols = @getTableColumns(header)
-        @setAccessors(tblCols, view)
-      reader.readAsArrayBuffer(arguments[1])
-    else
-      @tableLength = @length
-      @columnNames = {}
-      tblCols = @getTableColumns(header)
-      @setAccessors(tblCols, view)
+    # Create reference to length, and add the heap to the total byte length
+    @tableLength = @length
+    @length += header.get("PCOUNT")
+    
+    @setAccessors(header)
   
-  getTableColumns: (header) ->
+  getColumnLookup: (header) ->
     parameters = []
     for i in [1..@cols]
       obj = {}
@@ -61,12 +120,12 @@ class BinaryTable extends Tabular
     
     return arr
   
-  setAccessors: (tblCols, view) ->
+  setAccessors: (header) ->
     pattern = /(\d*)([P|Q]*)([L|X|B|I|J|K|A|E|D|C|M]{1})/
     
-    for column, i in tblCols
-      form = Object.keys(column)[0]
-      type = column[form]
+    for i in [1..@cols]
+      form  = header.get("TFORM#{i}")
+      type  = header.get("TTYPE#{i}")
       match = pattern.exec(form)
       
       count       = parseInt(match[1]) or 1
@@ -74,8 +133,11 @@ class BinaryTable extends Tabular
       descriptor  = match[3]
       
       if isArray
+        
         # Handle array descriptors
+        
         switch type
+          
           when "COMPRESSED_DATA"
             do (descriptor, count) =>
               accessor = =>
@@ -87,6 +149,7 @@ class BinaryTable extends Tabular
                 
                 return pixels
               @accessors.push(accessor)
+          
           when "GZIP_COMPRESSED_DATA"
             # TODO: Implement GZIP
             do (descriptor, count) =>
@@ -100,11 +163,13 @@ class BinaryTable extends Tabular
                   arr[i] = NaN
                 return arr
               @accessors.push(accessor)
+          
           else
             do (descriptor, count) =>
               accessor = =>
                 return @getFromHeap(descriptor)
               @accessors.push(accessor)
+      
       else
         if count is 1
           # Handle single element
@@ -164,5 +229,10 @@ class BinaryTable extends Tabular
                 return data
               @accessors.push(accessor)
 
-
+  _getRows: (buffer) ->
+    console.log '_getRows', buffer
+    view = new DataView(buffer)
+    console.log view
+    return []
+    
 @astro.FITS.BinaryTable = BinaryTable
