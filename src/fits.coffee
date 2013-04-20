@@ -127,6 +127,12 @@ class FITS
     # Copy contents from current iteration
     @headerStorage.set(arr, @begin)
     
+    # s = ''
+    # for value in @headerStorage
+    #   s += String.fromCharCode(value)
+    # console.log s
+    # console.log @blockCount
+    
     # Check current array one row at a time starting from
     # bottom of the block.
     rows = @BLOCKLENGTH / @LINEWIDTH
@@ -186,13 +192,15 @@ class FITS
         @readNextBlock(block)
         return
       
-      # Read next block since END not found
-      @blockCount += 1
-      @begin = @blockCount * @BLOCKLENGTH
-      @end = @begin + @BLOCKLENGTH
-      block = @arg.slice(@begin + @offset, @end + @offset)
-      @readNextBlock(block)
-      return
+      break
+    
+    # Read next block since END not found
+    @blockCount += 1
+    @begin = @blockCount * @BLOCKLENGTH
+    @end = @begin + @BLOCKLENGTH
+    block = @arg.slice(@begin + @offset, @end + @offset)
+    @readNextBlock(block)
+    return
   
   # Use one of these depending on the initialization parameter (File or ArrayBuffer)
   _readBlockFromBuffer: (block) -> @readBlock(block)
