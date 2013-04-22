@@ -54,9 +54,12 @@ class FITS
         if xhr.status isnt 200
           
           # Execute callback returning a null object if request fails
+          # TODO: Import via mixin.
           context = if @opts?.context? then @opts.context else @
           @callback.call(context, null, @opts) if @callback?
-          return null
+          
+          @clean()
+          return
         
         # Get buffer from response
         @arg = xhr.response
@@ -127,12 +130,6 @@ class FITS
     # Copy contents from current iteration
     @headerStorage.set(arr, @begin)
     
-    # s = ''
-    # for value in @headerStorage
-    #   s += String.fromCharCode(value)
-    # console.log s
-    # console.log @blockCount
-    
     # Check current array one row at a time starting from
     # bottom of the block.
     rows = @BLOCKLENGTH / @LINEWIDTH
@@ -175,8 +172,11 @@ class FITS
         if @offset is @length
           @headerStorage = null
           
+          # TODO: Import via mixin.
           context = if @opts?.context? then @opts.context else @
           @callback.call(context, @, @opts) if @callback?
+          
+          @clean()
           return
         
         # Reset variables for next header
@@ -218,7 +218,23 @@ class FITS
   # Check for the end of file
   isEOF: ->
     return if @offset is @length then true else false
-
+  
+  clean: ->
+    # Remove reference to properties no longer needed.
+    # TODO: Not sure if this is the best way to accomplish garbage collection.
+    #       Another way would be to move much of this code to a Parser class
+    #       where unneeded properties fall out of scope.
+    delete @headerStorage
+    delete @start
+    delete @begin
+    delete @end
+    delete @offset
+    delete @length
+    delete @blockCount
+    delete @reader
+    delete @callback
+    delete @opts
+  
   # ### API
 
   # Returns the first HDU containing a data unit.  An optional argument may be passed to retreive 
