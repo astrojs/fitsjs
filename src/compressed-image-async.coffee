@@ -385,7 +385,7 @@ CompressedImage::getFrameAsync = (@frame = @frame, callback, opts = undefined) -
     tableLength: @tableLength
     tableColumns: @tableColumns
     columnNames: @columnNames
-    params: @params
+    params: @algorithmParameters
     ztile: @ztile
     rowByteSize: @rowByteSize
     zblank: @zblank

@@ -6,12 +6,11 @@ class CompressedImage extends BinaryTable
   constructor: (header, view, offset) ->
     super
     
-    @length   += header.get("PCOUNT")
     @zcmptype = header.get("ZCMPTYPE")
     @zbitpix  = header.get("ZBITPIX")
     @znaxis   = header.get("ZNAXIS")
-    @zblank   = @getValue(header, "ZBLANK", undefined)
-    @blank    = @getValue(header, "BLANK", undefined)
+    @zblank   = header.get("ZBLANK")
+    @blank    = header.get("BLANK")
     @zdither  = header.get('ZDITHER0') or 0
     
     @ztile = []
@@ -23,45 +22,43 @@ class CompressedImage extends BinaryTable
     @height = header.get("ZNAXIS2") or 1
     
     # Get algorithm specific parameters
-    @params = {}
+    @algorithmParameters = {}
     i = 1
     loop
       key = "ZNAME#{i}"
       break unless header.contains(key)
+      
       value = "ZVAL#{i}"
-      @params[header.get(key)] = header.get(value)
+      @algorithmParameters[ header.get(key) ] = header.get(value)
+      
       i += 1
     
     # Set default parameters unless already set
-    @setRiceDefaults() if @zcmptype is 'RICE_1'
+    if @zcmptype is 'RICE_1'
+      @algorithmParameters["BLOCKSIZE"] = 32 unless "BLOCKSIZE" of @algorithmParameters
+      @algorithmParameters["BYTEPIX"] = 4 unless "BYTEPIX" of @algorithmParameters
     
-    @zmaskcmp = @getValue(header, "ZMASKCMP", undefined)
-    @zquantiz = @getValue(header, "ZQUANTIZ", "LINEAR_SCALING")
+    @zmaskcmp = header.get("ZMASKCMP")
+    @zquantiz = header.get("ZQUANTIZ") or "LINEAR_SCALING"
     
-    @bzero  = @getValue(header, "BZERO", 0)
-    @bscale = @getValue(header, "BSCALE", 1)
+    @bzero  = header.get("BZERO") or 0
+    @bscale = header.get("BSCALE") or 1
     
-    @tableColumns = @getTableColumns(header)
-    @setAccessors(@tableColumns, view)
+    @setAccessors(header)
     @defGetRow()
     
-    # Set up random look up table
+    # Set up random look up table for dithering
+    # TODO: Does this need to be done every time?
+    # TODO: Move this to a class variable, so that it is executed only once.
     @randomSeq = @randomGenerator()
-    
-  getValue: (header, key, defaultValue) ->
-    return if header.contains(key) then header.get(key) else defaultValue
-    
-  setRiceDefaults: ->
-    @params["BLOCKSIZE"] = 32 unless "BLOCKSIZE" of @params
-    @params["BYTEPIX"] = 4 unless "BYTEPIX" of @params
-    
+  
   defGetRow: ->
-    hasBlanks = @zblank? or @blank? or @columnNames.hasOwnProperty("ZBLANK")
-    @getRow = if hasBlanks then @getRowHasBlanks else @getRowNoBlanks
+    hasBlanks = @zblank? or @blank? or @cols.indexOf("ZBLANK") > -1
+    @getRow = if hasBlanks then @_getRowHasBlanks else @_getRowNoBlanks
     
   # TODO: Test this function.  Need example file with blanks.
   # TODO: Implement subtractive dithering
-  getRowHasBlanks: (arr) ->
+  _getRowHasBlanks: (arr) ->
     [data, blank, scale, zero] = @getTableRow()
     # Cache frequently accessed variables
     random = @random
@@ -75,7 +72,7 @@ class CompressedImage extends BinaryTable
       ditherOffset = (ditherOffset + 1) % 10000
     @rowsRead += 1
     
-  # getRowNoBlanks: (arr) ->
+  # _getRowNoBlanks: (arr) ->
   #   [data, blank, scale, zero] = @getTableRow()
   #   
   #   width = @width
@@ -99,7 +96,7 @@ class CompressedImage extends BinaryTable
   #   
   #   @rowsRead += 1
   
-  getRowNoBlanks: (arr) ->
+  _getRowNoBlanks: (arr) ->
     [data, blank, scale, zero] = @getTableRow()
     
     # Set initial seeds using ZDITHER0

@@ -40,7 +40,6 @@ class BinaryTable extends Tabular
       mod = highByte % 10
       factor = if mod then -1 else 1
       highByte -= mod
-      console.warn "Precision for 64 bit integers may be incorrect."
       val = factor * ((highByte << 32) | lowByte)
       return [val, offset]
     A: (view, offset) ->
