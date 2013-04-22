@@ -27,6 +27,7 @@ class CompressedImage extends BinaryTable
   constructor: (header, view, offset) ->
     super
     
+    # Get compression values
     @zcmptype = header.get("ZCMPTYPE")
     @zbitpix  = header.get("ZBITPIX")
     @znaxis   = header.get("ZNAXIS")
@@ -42,8 +43,15 @@ class CompressedImage extends BinaryTable
     @width  = header.get("ZNAXIS1")
     @height = header.get("ZNAXIS2") or 1
     
-    # Get algorithm specific parameters
+    # Storage for compression algorithm parameters
     @algorithmParameters = {}
+    
+    # Set default parameters
+    if @zcmptype is 'RICE_1'
+      @algorithmParameters["BLOCKSIZE"] = 32
+      @algorithmParameters["BYTEPIX"] = 4
+    
+    # Get compression algorithm parameters (override defaults when keys present)
     i = 1
     loop
       key = "ZNAME#{i}"
@@ -54,23 +62,17 @@ class CompressedImage extends BinaryTable
       
       i += 1
     
-    # Set default parameters unless already set
-    if @zcmptype is 'RICE_1'
-      @algorithmParameters["BLOCKSIZE"] = 32 unless "BLOCKSIZE" of @algorithmParameters
-      @algorithmParameters["BYTEPIX"] = 4 unless "BYTEPIX" of @algorithmParameters
-    
     @zmaskcmp = header.get("ZMASKCMP")
     @zquantiz = header.get("ZQUANTIZ") or "LINEAR_SCALING"
     
     @bzero  = header.get("BZERO") or 0
     @bscale = header.get("BSCALE") or 1
     
-    @setAccessors(header)
-    @defGetRow()
-  
-  defGetRow: ->
+    # Define the internal _getRow function
     hasBlanks = @zblank? or @blank? or @cols.indexOf("ZBLANK") > -1
-    @getRow = if hasBlanks then @_getRowHasBlanks else @_getRowNoBlanks
+    @_getRow = if hasBlanks then @_getRowHasBlanks else @_getRowNoBlanks
+    
+    @setAccessors(header)
     
   # TODO: Test this function.  Need example file with blanks.
   # TODO: Implement subtractive dithering
