@@ -69,7 +69,7 @@ class CompressedImage extends BinaryTable
     @bscale = header.get("BSCALE") or 1
     
     # Define the internal _getRow function
-    hasBlanks = @zblank? or @blank? or @cols.indexOf("ZBLANK") > -1
+    hasBlanks = @zblank? or @blank? or @columns.indexOf("ZBLANK") > -1
     @_getRow = if hasBlanks then @_getRowHasBlanks else @_getRowNoBlanks
     
     @setAccessors(header)
