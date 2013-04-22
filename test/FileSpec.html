@@ -51,13 +51,7 @@
       function testBinaryTable(fits) {
         console.log('testBinaryTable', fits);
         var table = fits.getDataUnit();
-        
-        // Something goes wrong here when requesting more than 1 row.
-        // Why?  Maybe there are some padding bytes?  If so, that would also effect
-        // how the synchonous getRows is executed.  What else?!!?
-        
-        
-        table.getRows(0, 20, function(rows) {
+        table.getRows(0, 20000, function(rows) {
           console.log(rows);
         });
       }
@@ -65,8 +59,10 @@
       // Test ASCII table
       function testAsciiTable(fits) {
         console.log('testAsciiTable');
-        var table = fits.getDataUnit();
-        console.log(table);
+        var table = fits.getDataUnit(1);
+        table.getRows(0, 1600, function(rows) {
+          console.log(rows);
+        });
       }
       
       // Test Image extension
