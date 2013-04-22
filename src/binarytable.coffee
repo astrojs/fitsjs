@@ -218,9 +218,9 @@ class BinaryTable extends Tabular
           else
             do (descriptor, count) =>
               accessor = (view, offset) =>
-                
+                i = count
                 data = []
-                while count--
+                while i--
                   [value, offset] = @dataAccessors[descriptor](view, offset)
                   data.push(value)
                 return [data, offset]
@@ -249,7 +249,6 @@ class BinaryTable extends Tabular
         # Read value from each column in current row
         [value, offset] = accessor(view, offset)
         row[ @columns[index] ] = value
-      
       # Store row on array
       rows.push row
     

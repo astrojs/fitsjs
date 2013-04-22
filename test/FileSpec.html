@@ -43,6 +43,40 @@
         e.preventDefault();
       }
       
+      //
+      //  Various testing functions for different data models
+      //
+      
+      // Test binary table functionality
+      function testBinaryTable(fits) {
+        console.log('testBinaryTable', fits);
+        var table = fits.getDataUnit();
+        
+        // Something goes wrong here when requesting more than 1 row.
+        // Why?  Maybe there are some padding bytes?  If so, that would also effect
+        // how the synchonous getRows is executed.  What else?!!?
+        
+        
+        table.getRows(0, 20, function(rows) {
+          console.log(rows);
+        });
+      }
+      
+      // Test ASCII table
+      function testAsciiTable(fits) {
+        console.log('testAsciiTable');
+        var table = fits.getDataUnit();
+        console.log(table);
+      }
+      
+      // Test Image extension
+      function testImageExtension(fits) {
+        console.log('testImageExtension');
+        // var arr = fits.hdus[1].data.getFrame(0, function(arr) {
+        //   console.log('array is', arr);
+        // });
+      }
+      
       // Define handler for dropping file
       function onDrop(e) {
         e.stopPropagation();
@@ -53,10 +87,29 @@
         
         // Initialize FITS object
         new astro.FITS(file, function(fits) {
-          console.log(fits);
-          var arr = fits.hdus[1].data.getFrame(0, function(arr) {
-            console.log('array is', arr);
-          });
+          
+          // Testing is difficult when using the File API because there is
+          // no programmatic access to the file system. Checking the file
+          // name to determine the operations to test.
+          
+          var filename = fits.arg.name;
+          switch(filename) {
+            
+            case 'specObj-dr9.fits':
+              testBinaryTable(fits);
+              break;
+            case 'spec-0406-51869-0012.fits':
+              testBinaryTable(fits);
+              break;
+            case 'm101.fits':
+              testAsciiTable(fits);
+              break;
+            case 'HST_10098_09_ACS_WFC_F555W_drz.fits':
+              testImageExtension(fits);
+              break;
+            default:
+              console.log(fits);
+          }
           
         });
         
