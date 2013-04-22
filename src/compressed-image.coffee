@@ -3,6 +3,27 @@ class CompressedImage extends BinaryTable
   @include ImageUtils
   @extend Decompress
   
+  
+  # Predefined random number generator from http://arxiv.org/pdf/1201.1336v1.pdf
+  # This is the same method used by fpack when dithering images during compression.
+  @randomGenerator: ->
+    a = 16807
+    m = 2147483647
+    seed = 1
+    
+    random = new Float32Array(10000)
+    
+    for i in [0..9999]
+      temp = a * seed
+      seed = temp - m * parseInt(temp / m)
+      random[i] = seed / m
+      
+    return random
+  
+  # Store the random look up table on the class.
+  @randomSequence = @randomGenerator()
+  
+  
   constructor: (header, view, offset) ->
     super
     
@@ -46,11 +67,6 @@ class CompressedImage extends BinaryTable
     
     @setAccessors(header)
     @defGetRow()
-    
-    # Set up random look up table for dithering
-    # TODO: Does this need to be done every time?
-    # TODO: Move this to a class variable, so that it is executed only once.
-    @randomSeq = @randomGenerator()
   
   defGetRow: ->
     hasBlanks = @zblank? or @blank? or @cols.indexOf("ZBLANK") > -1
@@ -61,7 +77,7 @@ class CompressedImage extends BinaryTable
   _getRowHasBlanks: (arr) ->
     [data, blank, scale, zero] = @getTableRow()
     # Cache frequently accessed variables
-    random = @random
+    random = @constructor.randomSequence
     ditherOffset = @ditherOffset
     offset = @rowsRead * @width
     
@@ -104,7 +120,7 @@ class CompressedImage extends BinaryTable
     seed1 = (seed0 - 1) % 10000
     
     # Set initial index in random sequence
-    rIndex = parseInt(@randomSeq[seed1] * 500)
+    rIndex = parseInt(@constructor.randomSequence[seed1] * 500)
     
     # Set offset based on number of tiles read
     offset = @rowsRead * @width
@@ -121,14 +137,14 @@ class CompressedImage extends BinaryTable
       # Unquantize
       else
         if @rowsRead is 0
-          console.log @randomSeq[rIndex]
-        arr[i] = (value - @randomSeq[rIndex] + 0.5) * scale + zero
+          console.log @constructor.randomSequence[rIndex]
+        arr[i] = (value - @constructor.randomSequence[rIndex] + 0.5) * scale + zero
       
       # Update the random number
       rIndex += 1
       if rIndex is 10000
         seed1 = (seed1 + 1) % 10000
-        rIndex = parseInt(@randomSeq[seed1] * 500)
+        rIndex = parseInt(@constructor.randomSequence[seed1] * 500)
     
     @rowsRead += 1
     
@@ -155,34 +171,18 @@ class CompressedImage extends BinaryTable
     
     return arr
   
-  # Predefined random number generator from http://arxiv.org/pdf/1201.1336v1.pdf
-  # This is the same method used by fpack when dithering images during compression.
-  randomGenerator: ->
-    a = 16807
-    m = 2147483647
-    seed = 1
-    
-    random = new Float32Array(10000)
-    
-    for i in [0..9999]
-      temp = a * seed
-      seed = temp - m * parseInt(temp / m)
-      random[i] = seed / m
-      
-    return random
-  
   getRandom: (nTile) ->
     # Ensure nTile does not exceed length of random look up table
     nTile = nTile % 10000
     
     # Get random number from predefined sequence
-    r = @random[nTile]
+    r = @constructor.randomSequence[nTile]
     
     # Compute offset using random
     offset = parseInt(500 * r)
     
     # Return random number based on tile number and offset
-    return @random[offset]
+    return @constructor.randomSequence[offset]
 
 
 @astro.FITS.CompressedImage = CompressedImage
