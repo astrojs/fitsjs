@@ -20,7 +20,7 @@ class Base
     callback.call(context, data, opts) if callback?
 
 
-class FITS extends Base
+class Parser extends Base
   LINEWIDTH: 80
   BLOCKLENGTH: 2880
   
@@ -75,8 +75,6 @@ class FITS extends Base
           
           # Execute callback returning a null object on failure
           @runCallback(@callback, @opts)
-          
-          @clean()
           return
         
         # Get buffer from response
@@ -191,7 +189,6 @@ class FITS extends Base
           @headerStorage = null
           
           @runCallback(@callback, @opts, @)
-          @clean()
           return
         
         # Reset variables for next header
@@ -234,24 +231,16 @@ class FITS extends Base
   isEOF: ->
     return if @offset is @length then true else false
   
-  clean: ->
-    # Remove reference to properties no longer needed.
-    # TODO: Not sure if this is the best way to accomplish garbage collection.
-    #       Another way would be to move much of this code to a Parser class
-    #       where unneeded properties fall out of scope.
-    delete @headerStorage
-    delete @start
-    delete @begin
-    delete @end
-    delete @offset
-    delete @length
-    delete @blockCount
-    delete @reader
-    delete @callback
-    delete @opts
   
-  # ### API
-
+class FITS extends Base
+  
+  constructor: (@arg, callback, opts) ->
+    
+    parser = new Parser(@arg, (fits) =>
+      @hdus = parser.hdus
+      @runCallback(callback, opts, @)
+    )
+  
   # Returns the first HDU containing a data unit.  An optional argument may be passed to retreive 
   # a specific HDU
   getHDU: (index) ->
