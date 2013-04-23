@@ -3,7 +3,7 @@ window.FITS = astro.FITS
 describe "FITS CompressedImage", ->
 
   it 'can read a FITS compressed image', ->
-    precision = 6
+    precision = 4
     
     ready = false
     
@@ -14,30 +14,35 @@ describe "FITS CompressedImage", ->
       image = fits.getDataUnit()
       image.getFrame(0, (arr) ->
         pixels = arr
+        console.log pixels
         ready = true
       )
     )
-    # 
-    # waitsFor ->
-    #   return ready
-    # 
-    # runs ->
-    #   image.getExtent(pixels)
-    #   expect(true).toBeTruthy()
-      # expect(image.min).toBeCloseTo(-2.981497, precision)
-      # expect(image.max).toBeCloseTo(1273.853638, precision)
-      # 
-      # expect(image.getPixel(pixels, 0, 0)).toBeCloseTo(0.173962, precision)
-      # expect(image.getPixel(pixels, 400, 0)).toBeCloseTo(0.347923, precision)
-      # expect(image.getPixel(pixels, 400, 400)).toBeCloseTo(0.344889, precision)
-      # expect(image.getPixel(pixels, 0, 400)).toBeCloseTo(1.20711267, precision)
-      # 
-      # # ... and a few other random pixels
-      # expect(image.getPixel(pixels, 33, 205)).toBeCloseTo(0.975486, precision)
-      # expect(image.getPixel(pixels, 44, 149)).toBeCloseTo(-0.774174, precision)
-      # expect(image.getPixel(pixels, 237, 377)).toBeCloseTo(-0.668716, precision)
-      # expect(image.getPixel(pixels, 393, 27)).toBeCloseTo(0.490127, precision)
-  
+    
+    waitsFor ->
+      return ready
+    
+    runs ->
+      # NOTE: Difficult to test because there is no obvious control to 
+      #       test against.  Was using DS9 and PyFITS, but these either
+      #       overlook subtractive dithering or are not up-to-date to
+      #       support the new ZDITHER0 keyword.
+      image.getExtent(pixels)
+      
+      expect(image.min).toBeCloseTo(-2.935214, precision)
+      expect(image.max).toBeCloseTo(1273.8491, precision)
+      
+      expect(image.getPixel(pixels, 0, 0)).toBeCloseTo(0.249601, precision)
+      expect(image.getPixel(pixels, 400, 0)).toBeCloseTo(0.428947, precision)
+      expect(image.getPixel(pixels, 400, 400)).toBeCloseTo(0.358678, precision)
+      expect(image.getPixel(pixels, 0, 400)).toBeCloseTo(1.29172, precision)
+      
+      # ... and a few other random pixels
+      expect(image.getPixel(pixels, 33, 205)).toBeCloseTo(0.939594, precision)
+      expect(image.getPixel(pixels, 44, 149)).toBeCloseTo(-0.728912, precision)
+      expect(image.getPixel(pixels, 237, 377)).toBeCloseTo(-0.614697, precision)
+      expect(image.getPixel(pixels, 393, 27)).toBeCloseTo(0.506017, precision)
+
 #   it 'can read a frame by spawning a web worker', ->
 #     precision = 6
 #     fits = arr = null

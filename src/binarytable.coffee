@@ -99,11 +99,13 @@ class BinaryTable extends Tabular
     while i--
       arr[i] = @constructor.swapEndian[descriptor](arr[i])
     
-    return arr
+    return [arr, offset]
   
   setAccessors: (header) ->
     pattern = /(\d*)([P|Q]*)([L|X|B|I|J|K|A|E|D|C|M]{1})/
     
+    # TODO: Move @accessors.push(accessor) to end of loop
+    # rather than calling after each case.
     for i in [1..@cols]
       form  = header.get("TFORM#{i}")
       type  = header.get("TTYPE#{i}")
@@ -120,50 +122,55 @@ class BinaryTable extends Tabular
         switch type
           
           when "COMPRESSED_DATA"
+          
             do (descriptor, count) =>
               accessor = (view, offset) =>
-                arr = @getFromHeap(view, offset, descriptor)
+                [arr, offset] = @getFromHeap(view, offset, descriptor)
                 
-                return arr
                 # Assuming Rice compression
                 pixels = new @typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
                 Decompress.Rice(arr, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0], Decompress.RiceSetup)
                 
-                return pixels
+                return [pixels, offset]
               @accessors.push(accessor)
           
           when "GZIP_COMPRESSED_DATA"
-            # TODO: Implement GZIP
+          
+            # TODO: Implement GZIP using https://github.com/imaya/zlib.js
             do (descriptor, count) =>
               accessor = (view, offset) =>
-                # arr = @getFromHeap(view, offset, descriptor)
+                # [arr, offset] = @getFromHeap(view, offset, descriptor)
                 
                 # Temporarily padding with NaNs until GZIP is implemented
                 arr = new Float32Array(@width)
                 i = arr.length
-                while i--
-                  arr[i] = NaN
-                return arr
+                arr[i] = NaN while i--
+                return [arr, offset]
               @accessors.push(accessor)
           
           else
+            
             do (descriptor, count) =>
               accessor = (view, offset) =>
                 return @getFromHeap(view, offset, descriptor)
               @accessors.push(accessor)
       
       else
+        
         if count is 1
+          
           # Handle single element
           do (descriptor, count) =>
             accessor = (view, offset) =>
               [value, offset] = @dataAccessors[descriptor](view, offset)
               return [value, offset]
             @accessors.push(accessor)
+            
         else
           
           # Handle bit arrays
           if descriptor is 'X'
+            
             do (descriptor, count) =>
               nBytes = Math.log(count) / Math.log(2)
               accessor = (view, offset) =>
@@ -240,6 +247,7 @@ class BinaryTable extends Tabular
         # Read value from each column in current row
         [value, offset] = accessor(view, offset)
         row[ @columns[index] ] = value
+      
       # Store row on array
       rows.push row
     

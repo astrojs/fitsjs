@@ -72,8 +72,6 @@ class CompressedImage extends BinaryTable
     hasBlanks = @zblank? or @blank? or @columns.indexOf("ZBLANK") > -1
     @_getRows = if hasBlanks then @_getRowsHasBlanks else @_getRowsNoBlanks
     
-    @setAccessors(header)
-    
   # TODO: Test this function.  Need example file with blanks.
   # TODO: Implement subtractive dithering
   _getRowsHasBlanks: (buffer) ->
@@ -115,8 +113,6 @@ class CompressedImage extends BinaryTable
   #   @rowsRead += 1
   
   _getRowsNoBlanks: (buffer) ->
-    console.log '_getRowsNoBlanks'
-    console.log @columns
     
     # TODO: Duplicate code in binary table method. Abstract this line, input as argument to function.
     nRows = buffer.byteLength / @rowByteSize
@@ -125,10 +121,10 @@ class CompressedImage extends BinaryTable
     view = new DataView(buffer)
     offset = 0
     
-    # Storage for rows
-    rows = []
+    # Set up storage for frame
+    arr = new Float32Array(@width * @height)
     
-    # Read each row
+    # Read each row (tile)
     while nRows--
       
       # Storage for current row
@@ -138,73 +134,38 @@ class CompressedImage extends BinaryTable
         
         # Read value from each column in current row
         [value, offset] = accessor(view, offset)
+        
         row[ @columns[index] ] = value
         
-        console.log 'row', row
+        # Get array from column with returned values
+        # TODO: Check that data is returned correctly when UNCOMPRESSED_DATA or GZIP_COMPRESSED_DATA present
+        data  = row['COMPRESSED_DATA'] or row['UNCOMPRESSED_DATA'] or row['GZIP_COMPRESSED_DATA']
+        blank = row['ZBLANK'] or @zblank
+        scale = row['ZSCALE'] or @bscale
+        zero  = row['ZZERO'] or @bzero
         
-        # Get array from which ever column returned values
-        data = row['COMPRESSED_DATA'] or row['UNCOMPRESSED_DATA'] or row['GZIP_COMPRESSED_DATA']
-        
-        # Set initial seeds using ZDITHER0
-        seed0 = @height - nRows + 1
-        seed1 = (seed0 - 1) % 10000
-        
-        # Set initial index in random sequence
-        rIndex = parseInt(@constructor.randomSequence[seed1] * 500)
-        
-        
-      # Store row on array
-      rows.push row
-    return rows
-    
-    
-    [data, blank, scale, zero] = @getTableRow()
-    
-    # Set initial seeds using ZDITHER0
-    seed0 = @rowsRead + @zdither - 1
-    seed1 = (seed0 - 1) % 10000
-    
-    # Set initial index in random sequence
-    rIndex = parseInt(@constructor.randomSequence[seed1] * 500)
-    
-    # Set offset based on number of tiles read
-    offset = @rowsRead * @width
-    
-    for value, index in data
-      i = offset + index
+      # Set initial seeds using tile number and ZDITHER0 (assuming row by row tiling)
+      nTile = @height - nRows
+      seed0 = nTile + @zdither - 1
+      seed1 = (seed0 - 1) % 10000
       
-      # Set NaN values
-      if value is -2147483647
-        arr[i] = NaN
-      # Set zero values
-      else if value is -2147483646
-        arr[i] = 0
-      # Unquantize
-      else
-        if @rowsRead is 0
-          console.log @constructor.randomSequence[rIndex]
-        arr[i] = (value - @constructor.randomSequence[rIndex] + 0.5) * scale + zero
+      # Set initial index in random sequence
+      rIndex = parseInt(@constructor.randomSequence[seed1] * 500)
       
-      # Update the random number
-      rIndex += 1
-      if rIndex is 10000
-        seed1 = (seed1 + 1) % 10000
-        rIndex = parseInt(@constructor.randomSequence[seed1] * 500)
+      for value, index in data
+        
+        # Get the pixel index
+        i = (nTile - 1) * @width + index
+        
+        if value is -2147483647
+          arr[i] = NaN
+        else if value is -2147483646
+          arr[i] = 0
+        else
+          r = @constructor.randomSequence[rIndex]
+          arr[i] = (value - r + 0.5) * scale + zero
     
-    @rowsRead += 1
-    
-  getTableRow: ->
-    @offset = @begin + @rowsRead * @rowByteSize
-    row = []
-    for accessor in @accessors
-      row.push accessor()
-    
-    data  = row[@columnNames["COMPRESSED_DATA"]] or row[@columnNames["UNCOMPRESSED_DATA"]] or row[@columnNames["GZIP_COMPRESSED_DATA"]]
-    blank = row[@columnNames["ZBLANK"]] or @zblank
-    scale = row[@columnNames["ZSCALE"]] or @bscale
-    zero  = row[@columnNames["ZZERO"]] or @bzero
-    
-    return [data, blank, scale, zero]
+    return arr
   
   getRandom: (nTile) ->
     # Ensure nTile does not exceed length of random look up table
@@ -228,8 +189,9 @@ class CompressedImage extends BinaryTable
     if @heap
       
       @frame = nFrame or @frame
+      
       # TODO: Row parameters should be adjusted when working with data cubes
-      @getRows(0, @height, callback, opts)
+      @getRows(0, @rows, callback, opts)
       
     else
       # Get blob representing heap
