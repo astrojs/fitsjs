@@ -104,8 +104,6 @@ class BinaryTable extends Tabular
   setAccessors: (header) ->
     pattern = /(\d*)([P|Q]*)([L|X|B|I|J|K|A|E|D|C|M]{1})/
     
-    # TODO: Move @accessors.push(accessor) to end of loop
-    # rather than calling after each case.
     for i in [1..@cols]
       form  = header.get("TFORM#{i}")
       type  = header.get("TTYPE#{i}")
@@ -115,15 +113,16 @@ class BinaryTable extends Tabular
       isArray     = match[2]
       descriptor  = match[3]
       
-      if isArray
+      do (descriptor, count) =>
         
-        # Handle array descriptors
-        
-        switch type
+        if isArray
           
-          when "COMPRESSED_DATA"
+          # Handle array descriptors
           
-            do (descriptor, count) =>
+          switch type
+            
+            when "COMPRESSED_DATA"
+              
               accessor = (view, offset) =>
                 [arr, offset] = @getFromHeap(view, offset, descriptor)
                 
@@ -132,12 +131,10 @@ class BinaryTable extends Tabular
                 Decompress.Rice(arr, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0], Decompress.RiceSetup)
                 
                 return [pixels, offset]
-              @accessors.push(accessor)
-          
-          when "GZIP_COMPRESSED_DATA"
-          
-            # TODO: Implement GZIP using https://github.com/imaya/zlib.js
-            do (descriptor, count) =>
+            
+            when "GZIP_COMPRESSED_DATA"
+              
+              # TODO: Implement GZIP using https://github.com/imaya/zlib.js
               accessor = (view, offset) =>
                 # [arr, offset] = @getFromHeap(view, offset, descriptor)
                 
@@ -146,32 +143,26 @@ class BinaryTable extends Tabular
                 i = arr.length
                 arr[i] = NaN while i--
                 return [arr, offset]
-              @accessors.push(accessor)
-          
-          else
-            
-            do (descriptor, count) =>
+                
+            else
+              
               accessor = (view, offset) =>
                 return @getFromHeap(view, offset, descriptor)
-              @accessors.push(accessor)
-      
-      else
         
-        if count is 1
-          
-          # Handle single element
-          do (descriptor, count) =>
+        else
+        
+          if count is 1
+            
+            # Handle single element
             accessor = (view, offset) =>
               [value, offset] = @dataAccessors[descriptor](view, offset)
               return [value, offset]
-            @accessors.push(accessor)
             
-        else
-          
-          # Handle bit arrays
-          if descriptor is 'X'
+          else
             
-            do (descriptor, count) =>
+            # Handle bit arrays
+            if descriptor is 'X'
+              
               nBytes = Math.log(count) / Math.log(2)
               accessor = (view, offset) =>
                 
@@ -189,11 +180,10 @@ class BinaryTable extends Tabular
                 offset += nBytes
                 
                 return [bits[0..count - 1], offset]
-              @accessors.push(accessor)
-        
-          # Handle character arrays
-          else if descriptor is 'A'
-            do (descriptor, count) =>
+                
+            # Handle character arrays
+            else if descriptor is 'A'
+              
               accessor = (view, offset) =>
                 
                 # Read from buffer
@@ -210,11 +200,8 @@ class BinaryTable extends Tabular
                 
                 return [s, offset]
                 
-              @accessors.push(accessor)
-        
-          # Handle all other data types
-          else
-            do (descriptor, count) =>
+            # Handle all other data types
+            else
               accessor = (view, offset) =>
                 i = count
                 data = []
@@ -222,8 +209,10 @@ class BinaryTable extends Tabular
                   [value, offset] = @dataAccessors[descriptor](view, offset)
                   data.push(value)
                 return [data, offset]
-              @accessors.push(accessor)
-
+        
+        # Push accessor function to array
+        @accessors.push(accessor)
+      
   _getRows: (buffer) ->
     
     # Get the number of rows in buffer
