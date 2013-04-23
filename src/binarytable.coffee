@@ -213,10 +213,7 @@ class BinaryTable extends Tabular
         # Push accessor function to array
         @accessors.push(accessor)
       
-  _getRows: (buffer) ->
-    
-    # Get the number of rows in buffer
-    nRows = buffer.byteLength / @rowByteSize
+  _getRows: (buffer, nRows) ->
     
     # Set up view and offset
     view = new DataView(buffer)

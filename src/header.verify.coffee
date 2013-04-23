@@ -146,6 +146,9 @@ HeaderVerify =
     
     ZGCOUNT: (args...) ->
       return parseInt(arguments[0])
+    
+    ZDITHER0: (args...) ->
+      return parseInt(arguments[0])
 
 
 @astro.FITS.HeaderVerify = HeaderVerify

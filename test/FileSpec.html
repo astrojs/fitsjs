@@ -68,9 +68,10 @@
       // Test Image extension
       function testImageExtension(fits) {
         console.log('testImageExtension');
-        // var arr = fits.hdus[1].data.getFrame(0, function(arr) {
-        //   console.log('array is', arr);
-        // });
+        var image = fits.getDataUnit()
+        image.getFrame(0, function(arr) {
+          console.log(arr);
+        });
       }
       
       // Test Compressed Image

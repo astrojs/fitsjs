@@ -66,7 +66,7 @@ class Tabular extends DataUnit
       buffer = @buffer.slice(begin, end)
       
       # Derived classes must implement this function
-      rows = @_getRows(buffer)
+      rows = @_getRows(buffer, number)
       
       @runCallback(callback, opts, rows)
       return rows

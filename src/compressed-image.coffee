@@ -68,10 +68,7 @@ class CompressedImage extends BinaryTable
     @bzero  = header.get("BZERO") or 0
     @bscale = header.get("BSCALE") or 1
   
-  _getRows: (buffer) ->
-    
-    # TODO: Duplicate code in binary table method. Abstract this line, input as argument to function.
-    nRows = buffer.byteLength / @rowByteSize
+  _getRows: (buffer, nRows) ->
     
     # Set up view and offset
     view = new DataView(buffer)
