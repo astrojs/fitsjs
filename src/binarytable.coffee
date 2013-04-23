@@ -81,19 +81,18 @@ class BinaryTable extends Tabular
   
   # Get bytes from the heap that follows the main data structure.  Often used
   # for binary tables and compressed images.
-  getFromHeap: (descriptor) ->
+  getFromHeap: (view, offset, descriptor) ->
     
     # Get length and offset of the heap
-    length  = @view.getInt32(@offset)
-    @offset += 4
-    offset  = @view.getInt32(@offset)
-    @offset += 4
+    length = view.getInt32(offset)
+    offset += 4
     
-    heapOffset = @length + offset
+    heapOffset = view.getInt32(offset)
+    offset += 4
     
     # Read from the buffer
-    chunk = @view.buffer.slice(heapOffset, heapOffset + length)
-    arr = new @typedArray[descriptor](chunk)
+    heapSlice = @heap.slice(heapOffset, heapOffset + length)
+    arr = new @typedArray[descriptor](heapSlice)
     
     # Swap endian
     i = arr.length
@@ -122,12 +121,13 @@ class BinaryTable extends Tabular
           
           when "COMPRESSED_DATA"
             do (descriptor, count) =>
-              accessor = =>
-                arr = @getFromHeap(descriptor)
+              accessor = (view, offset) =>
+                arr = @getFromHeap(view, offset, descriptor)
                 
+                return arr
                 # Assuming Rice compression
-                pixels = new @typedArray[@params["BYTEPIX"]](@ztile[0])
-                Decompress.Rice(arr, @params["BLOCKSIZE"], @params["BYTEPIX"], pixels, @ztile[0], Decompress.RiceSetup)
+                pixels = new @typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
+                Decompress.Rice(arr, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0], Decompress.RiceSetup)
                 
                 return pixels
               @accessors.push(accessor)
@@ -135,8 +135,8 @@ class BinaryTable extends Tabular
           when "GZIP_COMPRESSED_DATA"
             # TODO: Implement GZIP
             do (descriptor, count) =>
-              accessor = =>
-                # arr = @getFromHeap(descriptor)
+              accessor = (view, offset) =>
+                # arr = @getFromHeap(view, offset, descriptor)
                 
                 # Temporarily padding with NaNs until GZIP is implemented
                 arr = new Float32Array(@width)
@@ -148,8 +148,8 @@ class BinaryTable extends Tabular
           
           else
             do (descriptor, count) =>
-              accessor = =>
-                return @getFromHeap(descriptor)
+              accessor = (view, offset) =>
+                return @getFromHeap(view, offset, descriptor)
               @accessors.push(accessor)
       
       else

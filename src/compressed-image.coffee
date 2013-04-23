@@ -70,13 +70,13 @@ class CompressedImage extends BinaryTable
     
     # Define the internal _getRow function
     hasBlanks = @zblank? or @blank? or @columns.indexOf("ZBLANK") > -1
-    @_getRow = if hasBlanks then @_getRowHasBlanks else @_getRowNoBlanks
+    @_getRows = if hasBlanks then @_getRowsHasBlanks else @_getRowsNoBlanks
     
     @setAccessors(header)
     
   # TODO: Test this function.  Need example file with blanks.
   # TODO: Implement subtractive dithering
-  _getRowHasBlanks: (arr) ->
+  _getRowsHasBlanks: (buffer) ->
     [data, blank, scale, zero] = @getTableRow()
     # Cache frequently accessed variables
     random = @constructor.randomSequence
@@ -90,7 +90,7 @@ class CompressedImage extends BinaryTable
       ditherOffset = (ditherOffset + 1) % 10000
     @rowsRead += 1
     
-  # _getRowNoBlanks: (arr) ->
+  # _getRowsNoBlanks: (buffer) ->
   #   [data, blank, scale, zero] = @getTableRow()
   #   
   #   width = @width
@@ -114,7 +114,50 @@ class CompressedImage extends BinaryTable
   #   
   #   @rowsRead += 1
   
-  _getRowNoBlanks: (arr) ->
+  _getRowsNoBlanks: (buffer) ->
+    console.log '_getRowsNoBlanks'
+    console.log @columns
+    
+    # TODO: Duplicate code in binary table method. Abstract this line, input as argument to function.
+    nRows = buffer.byteLength / @rowByteSize
+    
+    # Set up view and offset
+    view = new DataView(buffer)
+    offset = 0
+    
+    # Storage for rows
+    rows = []
+    
+    # Read each row
+    while nRows--
+      
+      # Storage for current row
+      row = {}
+      
+      for accessor, index in @accessors
+        
+        # Read value from each column in current row
+        [value, offset] = accessor(view, offset)
+        row[ @columns[index] ] = value
+        
+        console.log 'row', row
+        
+        # Get array from which ever column returned values
+        data = row['COMPRESSED_DATA'] or row['UNCOMPRESSED_DATA'] or row['GZIP_COMPRESSED_DATA']
+        
+        # Set initial seeds using ZDITHER0
+        seed0 = @height - nRows + 1
+        seed1 = (seed0 - 1) % 10000
+        
+        # Set initial index in random sequence
+        rIndex = parseInt(@constructor.randomSequence[seed1] * 500)
+        
+        
+      # Store row on array
+      rows.push row
+    return rows
+    
+    
     [data, blank, scale, zero] = @getTableRow()
     
     # Set initial seeds using ZDITHER0
@@ -183,13 +226,10 @@ class CompressedImage extends BinaryTable
     
     # Check if heap in memory
     if @heap
+      
       @frame = nFrame or @frame
-      arr = new Float32Array(@width * @height)
-      console.log 'heap', @heap
-      height = @height
-      while height--
-        @_getRow(arr)
-      return arr
+      # TODO: Row parameters should be adjusted when working with data cubes
+      @getRows(0, @height, callback, opts)
       
     else
       # Get blob representing heap

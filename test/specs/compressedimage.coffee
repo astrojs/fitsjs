@@ -7,6 +7,7 @@ describe "FITS CompressedImage", ->
     
     ready = false
     
+    image = null
     pixels = null
     path = 'data/CFHTLS_03_g_sci.fits.fz'
     fits = new astro.FITS(path, (fits) ->
@@ -16,14 +17,13 @@ describe "FITS CompressedImage", ->
         ready = true
       )
     )
-    
-    waitsFor ->
-      return ready
-    
-    runs ->
-      console.log pixels
-      
-      image.getExtent(pixels)
+    # 
+    # waitsFor ->
+    #   return ready
+    # 
+    # runs ->
+    #   image.getExtent(pixels)
+    #   expect(true).toBeTruthy()
       # expect(image.min).toBeCloseTo(-2.981497, precision)
       # expect(image.max).toBeCloseTo(1273.853638, precision)
       # 
