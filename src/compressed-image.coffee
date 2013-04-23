@@ -162,16 +162,6 @@ class CompressedImage extends BinaryTable
     zero  = row[@columnNames["ZZERO"]] or @bzero
     
     return [data, blank, scale, zero]
-    
-  getFrame: ->
-    arr = new Float32Array(@width * @height)
-    
-    @rowsRead = 0
-    height = @height
-    while height--
-      @getRow(arr)
-    
-    return arr
   
   getRandom: (nTile) ->
     # Ensure nTile does not exceed length of random look up table
@@ -185,6 +175,34 @@ class CompressedImage extends BinaryTable
     
     # Return random number based on tile number and offset
     return @constructor.randomSequence[offset]
-
+    
+  # Even though compressed images are represented as a binary table
+  # the API should expose the same method as images.
+  # TODO: Support compressed data cubes
+  getFrame: (nFrame, callback, opts) ->
+    
+    # Check if heap in memory
+    if @heap
+      @frame = nFrame or @frame
+      arr = new Float32Array(@width * @height)
+      console.log 'heap', @heap
+      height = @height
+      while height--
+        @_getRow(arr)
+      return arr
+      
+    else
+      # Get blob representing heap
+      heapBlob = @blob.slice(@length, @length + @heapLength)
+      
+      # Create file reader
+      reader = new FileReader()
+      reader.onloadend = (e) =>
+        @heap = e.target.result
+        
+        # Call function again
+        @getFrame(nFrame, callback, opts)
+      
+      reader.readAsArrayBuffer(heapBlob)
 
 @astro.FITS.CompressedImage = CompressedImage

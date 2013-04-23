@@ -71,15 +71,6 @@ class BinaryTable extends Tabular
       return [val, offset]
   
   
-  constructor: (header, data) ->
-    super
-    
-    # Create reference to length, and add the heap to the total byte length
-    @tableLength = @length
-    @length += header.get("PCOUNT")
-    
-    @setAccessors(header)
-  
   toBits: (byte) ->
     arr = []
     i = 128
@@ -98,7 +89,7 @@ class BinaryTable extends Tabular
     offset  = @view.getInt32(@offset)
     @offset += 4
     
-    heapOffset = @begin + @tableLength + offset
+    heapOffset = @length + offset
     
     # Read from the buffer
     chunk = @view.buffer.slice(heapOffset, heapOffset + length)

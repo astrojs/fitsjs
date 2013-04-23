@@ -73,6 +73,15 @@
         // });
       }
       
+      // Test Compressed Image
+      function testCompressedImage(fits) {
+        console.log('testCompressedImage');
+        var image = fits.getDataUnit();
+        image.getFrame(0, function(arr) {
+          console.log(arr);
+        });
+      }
+      
       // Define handler for dropping file
       function onDrop(e) {
         e.stopPropagation();
@@ -102,6 +111,9 @@
               break;
             case 'HST_10098_09_ACS_WFC_F555W_drz.fits':
               testImageExtension(fits);
+              break;
+            case 'CFHTLS_03_g_sci.fits.fz':
+              testCompressedImage(fits);
               break;
             default:
               console.log(fits);

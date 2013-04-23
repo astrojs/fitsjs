@@ -10,9 +10,6 @@ class Table extends Tabular
     E: (value) -> return parseFloat(value)
     D: (value) -> return parseFloat(value)
   
-  constructor: (header, data) ->
-    super
-    @setAccessors(header)
   
   setAccessors: (header) ->
     pattern = /([AIFED])(\d+)\.*(\d+)*/

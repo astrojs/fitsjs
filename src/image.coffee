@@ -191,7 +191,7 @@ class Image extends DataUnit
         
         # Call function again
         @getFrame(frame, callback, opts)
-        
+      
       reader.readAsArrayBuffer(blobFrame)
   
   # Checks if the image is a data cube

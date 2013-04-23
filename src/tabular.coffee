@@ -15,17 +15,19 @@ class Tabular extends DataUnit
     @cols         = header.get("TFIELDS")
     
     # Get bytes size of the data unit and column names
-    @length   = @rowByteSize * @rows
-    @columns  = @getColumns(header)
-    
-    # Store functions needed to access each entry
-    @accessors  = []
+    @length     = @rowByteSize * @rows
+    @heapLength = header.get("PCOUNT")
+    @columns    = @getColumns(header)
     
     # Store information about the buffer
     if @buffer?
       
       # Define function at run time that checks if row is in memory
       @rowsInMemory = @_rowsInMemoryBuffer
+      
+      # Keep separate buffer for heap
+      # TODO: Does this cause this portion of the buffer to be duplicated in memory?!?!
+      @heap = @buffer.slice(@length, @length + @heapLength)
     
     else
       @rowsInMemory = @_rowsInMemoryBlob
@@ -35,7 +37,11 @@ class Tabular extends DataUnit
       
       # Use maxMemory to get the number of rows to hold in memory
       @nRowsInBuffer = Math.floor(@maxMemory / @rowByteSize)
-  
+    
+    # Store functions needed to access each entry
+    @accessors  = []
+    @setAccessors(header)
+    
   # Get the column names from the header
   getColumns: (header) ->
     columns = []
