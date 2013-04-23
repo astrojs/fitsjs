@@ -1,7 +1,7 @@
 
 # Base class for FITS data units (e.g. Primary, BINTABLE, TABLE, IMAGE).  Derived classes must
 # define an instance attribute called length describing the byte length of the data unit.
-class DataUnit extends Module
+class DataUnit extends Base
   
   # Endian swaps are needed for performance.  All FITS images are stored in big
   # endian format, but typed arrays initialize based on the endianness of the CPU (typically little endian).
@@ -33,9 +33,5 @@ class DataUnit extends Module
       @buffer = data
     else
       @blob = data
-  
-  runCallback: (callback, opts, data) ->
-    context = if opts?.context? then opts.context else @
-    callback.call(context, data, opts) if callback?
 
 @astro.FITS.DataUnit = DataUnit

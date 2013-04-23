@@ -1,7 +1,7 @@
 
 # Parse and store a FITS header.  Verification is done for reserved
 # keywords (e.g. SIMPLE, BITPIX, etc).
-class Header extends Module
+class Header extends Base
   @include HeaderVerify
   
   arrayPattern: /(\D+)(\d+)/

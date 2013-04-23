@@ -1,6 +1,26 @@
 @astro = {} unless @astro?
 
-class FITS
+
+class Base
+  @include: (obj) ->
+    for key, value of obj
+      @::[key] = value
+    this
+
+  @extend: (obj) ->
+    for key, value of obj
+      @[key] = value
+    this
+
+  proxy: (func) ->
+    => func.apply(this, arguments)
+  
+  runCallback: (callback, opts, data) ->
+    context = if opts?.context? then opts.context else @
+    callback.call(context, data, opts) if callback?
+
+
+class FITS extends Base
   LINEWIDTH: 80
   BLOCKLENGTH: 2880
   
@@ -53,10 +73,8 @@ class FITS
         # Error handling on the response status
         if xhr.status isnt 200
           
-          # Execute callback returning a null object if request fails
-          # TODO: Import via mixin.
-          context = if @opts?.context? then @opts.context else @
-          @callback.call(context, null, @opts) if @callback?
+          # Execute callback returning a null object on failure
+          @runCallback(@callback, @opts)
           
           @clean()
           return
@@ -172,10 +190,7 @@ class FITS
         if @offset is @length
           @headerStorage = null
           
-          # TODO: Import via mixin.
-          context = if @opts?.context? then @opts.context else @
-          @callback.call(context, @, @opts) if @callback?
-          
+          @runCallback(@callback, @opts, @)
           @clean()
           return
         

@@ -20,11 +20,11 @@ class CompressedImage extends BinaryTable
       
     return random
   
-  # Store the random look up table on the class.
+  # Store random look up table on class.
   @randomSequence = @randomGenerator()
   
   
-  constructor: (header, view, offset) ->
+  constructor: (header, data) ->
     super
     
     # Get compression values
@@ -67,52 +67,8 @@ class CompressedImage extends BinaryTable
     
     @bzero  = header.get("BZERO") or 0
     @bscale = header.get("BSCALE") or 1
-    
-    # Define the internal _getRow function
-    hasBlanks = @zblank? or @blank? or @columns.indexOf("ZBLANK") > -1
-    @_getRows = if hasBlanks then @_getRowsHasBlanks else @_getRowsNoBlanks
-    
-  # TODO: Test this function.  Need example file with blanks.
-  # TODO: Implement subtractive dithering
-  _getRowsHasBlanks: (buffer) ->
-    [data, blank, scale, zero] = @getTableRow()
-    # Cache frequently accessed variables
-    random = @constructor.randomSequence
-    ditherOffset = @ditherOffset
-    offset = @rowsRead * @width
-    
-    for value, index in data
-      i = offset + index
-      r = random[ditherOffset]
-      arr[i] = if value is blank then NaN else (value - r + 0.5) * scale + zero
-      ditherOffset = (ditherOffset + 1) % 10000
-    @rowsRead += 1
-    
-  # _getRowsNoBlanks: (buffer) ->
-  #   [data, blank, scale, zero] = @getTableRow()
-  #   
-  #   width = @width
-  #   offset = @rowsRead * width
-  #   randomSeq = @randomSeq
-  #   zdither = @zdither
-  #   
-  #   for value, index in data
-  #     i = offset + index
-  #     
-  #     # Get tile number (usually tiles are row-wise)
-  #     # TODO: Optimize int casting
-  #     # nTile = parseInt(index / width)
-  #     # r = @getRandom(nTile)
-  #     
-  #     r = randomSeq[zdither]
-  #     
-  #     # Unquantize the pixel intensity
-  #     arr[i] = (value - r + 0.5) * scale + zero
-  #     zdither = (zdither + 1) % 10000
-  #   
-  #   @rowsRead += 1
   
-  _getRowsNoBlanks: (buffer) ->
+  _getRows: (buffer) ->
     
     # TODO: Duplicate code in binary table method. Abstract this line, input as argument to function.
     nRows = buffer.byteLength / @rowByteSize
@@ -173,19 +129,6 @@ class CompressedImage extends BinaryTable
     
     return arr
   
-  getRandom: (nTile) ->
-    # Ensure nTile does not exceed length of random look up table
-    nTile = nTile % 10000
-    
-    # Get random number from predefined sequence
-    r = @constructor.randomSequence[nTile]
-    
-    # Compute offset using random
-    offset = parseInt(500 * r)
-    
-    # Return random number based on tile number and offset
-    return @constructor.randomSequence[offset]
-    
   # Even though compressed images are represented as a binary table
   # the API should expose the same method as images.
   # TODO: Support compressed data cubes

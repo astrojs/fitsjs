@@ -15,7 +15,6 @@
   "license": "MIT",
   "_dependencyOrder": [
     "fits",
-    "module",
     "dataunit",
     "header.verify",
     "header",
