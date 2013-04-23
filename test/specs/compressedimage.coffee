@@ -43,6 +43,31 @@ describe "FITS CompressedImage", ->
       expect(image.getPixel(pixels, 237, 377)).toBeCloseTo(-0.614697, precision)
       expect(image.getPixel(pixels, 393, 27)).toBeCloseTo(0.506017, precision)
 
+  it 'can ready a (troublesome) FITS compressed image', ->
+    precision = 6
+    
+    ready = false
+    
+    image = null
+    pixels = null
+    path = 'data/CFHTLS_082_0012_g.fits.fz'
+    fits = new astro.FITS(path, (fits) ->
+      image = fits.getDataUnit()
+      image.getFrame(0, (arr) ->
+        pixels = arr
+        ready = true
+      )
+    )
+    
+    waitsFor ->
+      return ready
+    
+    runs ->
+      image.getExtent(pixels)
+      
+      expect(image.min).toBeCloseTo(-106.448853, precision)
+      expect(image.max).toBeCloseTo(793.284302, precision)
+
 #   it 'can read a frame by spawning a web worker', ->
 #     precision = 6
 #     fits = arr = null
