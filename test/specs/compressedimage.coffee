@@ -3,7 +3,7 @@ window.FITS = astro.FITS
 describe "FITS CompressedImage", ->
 
   it 'can read a FITS compressed image', ->
-    precision = 4
+    precision = 6
     
     ready = false
     
@@ -30,12 +30,12 @@ describe "FITS CompressedImage", ->
       image.getExtent(pixels)
       
       expect(image.min).toBeCloseTo(-2.935214, precision)
-      expect(image.max).toBeCloseTo(1273.8491, precision)
+      expect(image.max).toBeCloseTo(1273.849121, precision)
       
       expect(image.getPixel(pixels, 0, 0)).toBeCloseTo(0.249601, precision)
       expect(image.getPixel(pixels, 400, 0)).toBeCloseTo(0.428947, precision)
       expect(image.getPixel(pixels, 400, 400)).toBeCloseTo(0.358678, precision)
-      expect(image.getPixel(pixels, 0, 400)).toBeCloseTo(1.29172, precision)
+      expect(image.getPixel(pixels, 0, 400)).toBeCloseTo(1.2917231, precision)
       
       # ... and a few other random pixels
       expect(image.getPixel(pixels, 33, 205)).toBeCloseTo(0.939594, precision)
