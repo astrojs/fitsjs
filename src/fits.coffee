@@ -241,6 +241,8 @@ class FITS extends Base
       @runCallback(callback, opts, @)
     )
   
+  # Public API
+  
   # Returns the first HDU containing a data unit.  An optional argument may be passed to retreive 
   # a specific HDU
   getHDU: (index) ->
@@ -255,10 +257,6 @@ class FITS extends Base
   # Returns the data object associated with the first HDU containing a data unit.  This method does not read from the array buffer
   # An optional argument may be passed to point to a specific HDU.
   getDataUnit: (index) -> return @getHDU(index).data
-
-  # Returns the data associated with the first HDU containing a data unit.  An optional argument
-  # may be passed to point to a specific HDU.
-  getData: (index) -> return @getHDU(index).data.getFrame()
 
 
 FITS.version = '0.5.0'
