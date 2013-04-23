@@ -164,6 +164,12 @@ class CompressedImage extends BinaryTable
         else
           r = @constructor.randomSequence[rIndex]
           arr[i] = (value - r + 0.5) * scale + zero
+        
+        # Update the random index
+        rIndex += 1
+        if rIndex is 10000
+          seed1 = (seed1 + 1) % 10000
+          rIndex = parseInt(@randomSequence[seed1] * 500)
     
     return arr
   

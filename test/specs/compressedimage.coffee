@@ -14,7 +14,6 @@ describe "FITS CompressedImage", ->
       image = fits.getDataUnit()
       image.getFrame(0, (arr) ->
         pixels = arr
-        console.log pixels
         ready = true
       )
     )
@@ -26,7 +25,8 @@ describe "FITS CompressedImage", ->
       # NOTE: Difficult to test because there is no obvious control to 
       #       test against.  Was using DS9 and PyFITS, but these either
       #       overlook subtractive dithering or are not up-to-date to
-      #       support the new ZDITHER0 keyword.
+      #       support the new ZDITHER0 keyword.  Testing against image
+      #       uncompressed using funpack.
       image.getExtent(pixels)
       
       expect(image.min).toBeCloseTo(-2.935214, precision)
