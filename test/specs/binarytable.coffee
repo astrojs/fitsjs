@@ -105,3 +105,21 @@ describe "FITS Binary Table", ->
       bitarray = row['status']
       expect(bitarray[1]).toEqual(1)
       expect(bitarray[31]).toEqual(0)
+      
+  it 'can read a column of data', ->
+    ready = false
+    
+    path = 'data/plates-dr9.fits'
+    fits = new astro.FITS(path, (fits) ->
+      ready = true
+    )
+    
+    waitsFor ->
+      return ready
+    
+    runs ->
+      table = fits.getDataUnit()
+      table.getColumn('RACEN', 0, 10, (rows) ->
+        console.log rows
+      )
+  

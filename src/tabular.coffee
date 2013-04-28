@@ -40,8 +40,18 @@ class Tabular extends DataUnit
     
     # Store functions needed to access each entry
     @accessors  = []
+    @offsets = []
     @setAccessors(header)
     
+  # Determine if the row is in memory. For tables initialized with an array buffer, all rows
+  # are in memory, so there is no need to check. For tables initialized with a blob, this check
+  # is needed to determine if the file needs to be read before accessing data.
+  _rowsInMemoryBuffer: -> return true
+  _rowsInMemoryBlob: (firstRow, lastRow) ->
+    return false if firstRow < @firstRowInBuffer
+    return false if lastRow > @lastRowInBuffer
+    return true
+
   # Get the column names from the header
   getColumns: (header) ->
     columns = []
@@ -50,6 +60,60 @@ class Tabular extends DataUnit
       return null unless header.contains(key)
       columns.push header.get(key)
     return columns
+  
+  # Get column of data specified by parameters.
+  getColumn: (name, row, number, callback, opts) ->
+    
+    # Get index of column
+    columnIndex = @columns.indexOf(name)
+    
+    # Store row byte size locally
+    rowByteSize = @rowByteSize
+    
+    # Store byte length for single column value
+    length = @offsets[columnIndex]
+    
+    # Get byte offset from starting row
+    byteOffset = rowByteSize * row
+    
+    # Get the offset from the start of the row
+    for i in [0..columnIndex]
+      byteOffset += @offsets[i]
+    byteOffset -= length
+    
+    # Get the accessor function from the column name
+    accessor = @accessors[columnIndex]
+    
+    # Storage for column
+    # TODO: Initialize appropriate typed array when able
+    column = []
+    
+    # Check for blob
+    if @blob?
+      
+      # Request bytes using File API
+      reader = new FileReader()
+      reader.onloadend = (e) =>
+        
+        # Initialize DataView object
+        view = new DataView(e.target.result)
+        [value, offset] = accessor(view, 0)
+        column.push value
+        
+        if number is 0
+          @runCallback(callback, opts, column)
+          return column
+        
+        # Compute the next byte offsets
+        number -= 1
+        byteOffset += rowByteSize
+        slice = @blob.slice(byteOffset, byteOffset + length)
+        reader.readAsArrayBuffer(slice)
+        
+      # Get the bytes associated with the first requested element
+      slice = @blob.slice(byteOffset, byteOffset + length)
+      console.log slice
+      reader.readAsArrayBuffer(slice)
   
   # Get rows of data specified by parameters.  In the case where
   # the data is not yet in memory, a callback must be provided to
@@ -97,15 +161,6 @@ class Tabular extends DataUnit
         @getRows(row, number, callback, opts)
         
       reader.readAsArrayBuffer(blobRows)
-  
-  # Determine if the row is in memory. For tables initialized with an array buffer, all rows
-  # are in memory, so there is no need to check. For tables initialized with a blob, this check
-  # is needed to determine if the file needs to be read before accessing data.
-  _rowsInMemoryBuffer: -> return true
-  _rowsInMemoryBlob: (firstRow, lastRow) ->
-    return false if firstRow < @firstRowInBuffer
-    return false if lastRow > @lastRowInBuffer
-    return true
 
 
 @astro.FITS.Tabular = Tabular

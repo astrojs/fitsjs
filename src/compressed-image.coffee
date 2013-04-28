@@ -90,13 +90,13 @@ class CompressedImage extends BinaryTable
         
         row[ @columns[index] ] = value
         
-        # Get array from column with returned values
-        # TODO: Check that data is returned correctly when UNCOMPRESSED_DATA or GZIP_COMPRESSED_DATA present
-        data  = row['COMPRESSED_DATA'] or row['UNCOMPRESSED_DATA'] or row['GZIP_COMPRESSED_DATA']
-        blank = row['ZBLANK'] or @zblank
-        scale = row['ZSCALE'] or @bscale
-        zero  = row['ZZERO'] or @bzero
-        
+      # Get array from column with returned values
+      # TODO: Check that data is returned correctly when UNCOMPRESSED_DATA or GZIP_COMPRESSED_DATA present
+      data  = row['COMPRESSED_DATA'] or row['UNCOMPRESSED_DATA'] or row['GZIP_COMPRESSED_DATA']
+      blank = row['ZBLANK'] or @zblank
+      scale = row['ZSCALE'] or @bscale
+      zero  = row['ZZERO'] or @bzero
+      
       # Set initial seeds using tile number and ZDITHER0 (assuming row by row tiling)
       nTile = @height - nRows
       seed0 = nTile + @zdither - 1

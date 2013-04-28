@@ -51,8 +51,16 @@
       function testBinaryTable(fits) {
         console.log('testBinaryTable', fits);
         var table = fits.getDataUnit();
-        table.getRows(0, 2000, function(rows) {
+        table.getRows(0, 10, function(rows) {
           console.log(rows);
+        });
+        
+        // Total rows for specObj-dr9 is 2674200
+        table.getColumn('RACEN', 0, table.rows - 1, function(column) {
+          console.log('RACEN', column);
+        });
+        table.getColumn('DECCEN', 0, table.rows - 1, function(column) {
+          console.log('DECCEN', column);
         });
       }
       
@@ -102,6 +110,9 @@
           switch(filename) {
             
             case 'specObj-dr9.fits':
+              testBinaryTable(fits);
+              break;
+            case 'plates-dr9.fits':
               testBinaryTable(fits);
               break;
             case 'spec-0406-51869-0012.fits':

@@ -5,12 +5,24 @@ class BinaryTable extends Tabular
   typedArray:
     B: Uint8Array
     I: Uint16Array
-    J: Int32Array
+    J: Uint32Array
     E: Float32Array
     D: Float64Array
     1: Uint8Array
     2: Uint16Array
-    4: Int32Array
+    4: Uint32Array
+  
+  @offsets:
+    L: 1
+    B: 1
+    I: 2
+    J: 4
+    K: 8
+    A: 1
+    E: 4
+    D: 8
+    C: 8
+    M: 16
   
   # Define functions for parsing binary tables.
   # NOTE: Accessor function for bit array is better implemented in another function below
@@ -92,8 +104,10 @@ class BinaryTable extends Tabular
     
     # Read from the buffer
     heapSlice = @heap.slice(heapOffset, heapOffset + length)
+    
     arr = new @typedArray[descriptor](heapSlice)
     
+    # TODO: Make conditional on array type (e.g. byte arrays do not need endian swap)
     # Swap endian
     i = arr.length
     while i--
@@ -114,6 +128,9 @@ class BinaryTable extends Tabular
       descriptor  = match[3]
       
       do (descriptor, count) =>
+        
+        # Store the offset for each column
+        @offsets.push(@constructor.offsets[descriptor] * count)
         
         if isArray
           
