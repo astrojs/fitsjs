@@ -129,6 +129,9 @@ class BinaryTable extends Tabular
       
       do (descriptor, count) =>
         
+        # Store the descriptor for each column
+        @descriptors.push descriptor
+        
         # Store the offset for each column
         @offsets.push(@constructor.offsets[descriptor] * count)
         

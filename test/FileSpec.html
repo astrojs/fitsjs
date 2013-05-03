@@ -56,12 +56,15 @@
         });
         
         // Total rows for specObj-dr9 is 2674200
-        table.getColumn('RACEN', 0, table.rows - 1, function(column) {
-          console.log('RACEN', column);
+        table.getColumn('CX', 0, 10000, function(column) {
+          console.log('CX', column);
         });
-        table.getColumn('DECCEN', 0, table.rows - 1, function(column) {
-          console.log('DECCEN', column);
-        });
+        // table.getColumn('RACEN', 0, table.rows - 1, function(column) {
+        //   console.log('RACEN', column);
+        // });
+        // table.getColumn('DECCEN', 0, table.rows - 1, function(column) {
+        //   console.log('DECCEN', column);
+        // });
       }
       
       // Test ASCII table
@@ -76,7 +79,7 @@
       // Test Image extension
       function testImageExtension(fits) {
         console.log('testImageExtension');
-        var image = fits.getDataUnit()
+        var image = fits.getDataUnit();
         image.getFrame(0, function(arr) {
           console.log(arr);
         });
@@ -85,6 +88,27 @@
       // Test Compressed Image
       function testCompressedImage(fits) {
         console.log('testCompressedImage');
+        var image = fits.getDataUnit();
+        image.getFrame(0, function(arr) {
+          console.log(arr);
+        });
+      }
+      
+      // Test Data Cube
+      function testDataCube(fits) {
+        console.log('testDataCube');
+        var header = fits.getHeader();
+        var depth = header.get('NAXIS3');
+        var cube = fits.getDataUnit();
+        
+        cube.getFrames(0, 100, function(arr) {
+          console.log(arr);
+        });
+        
+      }
+      
+      function testBadData(fits) {
+        console.log(fits);
         var image = fits.getDataUnit();
         image.getFrame(0, function(arr) {
           console.log(arr);
@@ -126,6 +150,12 @@
               break;
             case 'CFHTLS_03_g_sci.fits.fz':
               testCompressedImage(fits);
+              break;
+            case 'NGC_6946_NA_CUBE_THINGS.FITS':
+              testDataCube(fits);
+              break;
+            case 'CFHTLS_082_0001_i.fits.fz':
+              testBadData(fits);
               break;
             default:
               console.log(fits);

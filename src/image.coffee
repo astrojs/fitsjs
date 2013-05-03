@@ -154,13 +154,13 @@ class Image extends DataUnit
       url: urlGetFrame
     worker.postMessage(msg)
   
-  # Read single frame from image.  Frames are read sequentially unless nFrame is set.
+  # Read frames from image.  Frames are read sequentially unless nFrame is set.
   # A callback must be provided since there are 1 or more asynchronous processes happening
   # to convert bytes to flux. This is a case where a partially synchronous and
   # completely asynchronous process are abstracted by a single function.
-  getFrame: (nFrame, callback, opts) ->
+  getFrame: (frame, callback, opts) ->
+    @frame = frame or @frame
     
-    @frame = nFrame or @frame
     frameInfo = @frameOffsets[@frame]
     buffer = frameInfo.buffer
     
@@ -169,10 +169,6 @@ class Image extends DataUnit
       @getFrameAsync(buffer, callback, opts)
     else
       # Read frame bytes into memory since not yet copied.
-      
-      # TODO: For HUGE images each frame should be further sliced into
-      #       equal chunks rather than imposing so much memory to be
-      #       allocated by one operation.
       
       # Slice blob for only current frame bytes
       begin = frameInfo.begin
@@ -193,6 +189,26 @@ class Image extends DataUnit
         @getFrame(frame, callback, opts)
       
       reader.readAsArrayBuffer(blobFrame)
+  
+  # Reads frames in a data cube in an efficient way that does not
+  # overload the browser. The callback passed will be executed once for
+  # each frame, in the sequential order of the cube.
+  getFrames: (frame, number, callback, opts) ->
+    
+    # Define callback to pass to getFrame
+    cb = (arr, opts) =>
+      
+      # Update counters
+      number -= 1
+      frame += 1
+      
+      # Request another frame and execute callback
+      if number
+        @getFrame(frame, cb, opts)
+        @runCallback(callback, opts, arr)
+    
+    # Start reading frames
+    @getFrame(frame, cb, opts)
   
   # Checks if the image is a data cube
   isDataCube: ->

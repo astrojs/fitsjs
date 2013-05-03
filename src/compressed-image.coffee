@@ -99,6 +99,7 @@ class CompressedImage extends BinaryTable
       
       # Set initial seeds using tile number and ZDITHER0 (assuming row by row tiling)
       nTile = @height - nRows
+      
       seed0 = nTile + @zdither - 1
       seed1 = (seed0 - 1) % 10000
       

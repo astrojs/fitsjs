@@ -38,9 +38,11 @@ class Tabular extends DataUnit
       # Use maxMemory to get the number of rows to hold in memory
       @nRowsInBuffer = Math.floor(@maxMemory / @rowByteSize)
     
-    # Store functions needed to access each entry
-    @accessors  = []
-    @offsets = []
+    # Storage for accessor functions, descriptors and offsets for each column
+    @accessors    = []
+    @descriptors  = []
+    @offsets      = []
+    
     @setAccessors(header)
     
   # Determine if the row is in memory. For tables initialized with an array buffer, all rows
@@ -71,6 +73,7 @@ class Tabular extends DataUnit
     rowByteSize = @rowByteSize
     
     # Store byte length for single column value
+    descriptor = @descriptors[columnIndex]
     length = @offsets[columnIndex]
     
     # Get byte offset from starting row
@@ -85,34 +88,34 @@ class Tabular extends DataUnit
     accessor = @accessors[columnIndex]
     
     # Storage for column
-    # TODO: Initialize appropriate typed array when able
-    column = []
+    column = if @typedArray.hasOwnProperty(descriptor) then new @typedArray[descriptor](number) else []
     
     # Check for blob
     if @blob?
       
       # Request bytes using File API
       reader = new FileReader()
+      index = 0
+      
       reader.onloadend = (e) =>
         
         # Initialize DataView object
         view = new DataView(e.target.result)
         [value, offset] = accessor(view, 0)
-        column.push value
+        column[index] = value
         
-        if number is 0
+        if index is number
           @runCallback(callback, opts, column)
           return column
         
         # Compute the next byte offsets
-        number -= 1
+        index += 1
         byteOffset += rowByteSize
         slice = @blob.slice(byteOffset, byteOffset + length)
         reader.readAsArrayBuffer(slice)
         
       # Get the bytes associated with the first requested element
       slice = @blob.slice(byteOffset, byteOffset + length)
-      console.log slice
       reader.readAsArrayBuffer(slice)
   
   # Get rows of data specified by parameters.  In the case where

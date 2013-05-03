@@ -5,7 +5,7 @@ import struct
 def slice():
   
   # Open a troublesome file
-  f = open("CFHTLS_082_0012_g.fits.fz", 'rb')
+  f = open("/Users/akapadia/Downloads/cfitsio/CFHTLS_082_0001_i.fits.fz", 'rb')
   
   # Read the bytes into memory
   data = f.read()
