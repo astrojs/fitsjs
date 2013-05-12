@@ -26,7 +26,7 @@ class Tabular extends DataUnit
       @rowsInMemory = @_rowsInMemoryBuffer
       
       # Keep separate buffer for heap
-      # TODO: Does this cause this portion of the buffer to be duplicated in memory?!?!
+      # NOTE: This causes a duplication of the buffer in memory. Find better solution.
       @heap = @buffer.slice(@length, @length + @heapLength)
     
     else
@@ -87,7 +87,7 @@ class Tabular extends DataUnit
     # Get the accessor function from the column name
     accessor = @accessors[columnIndex]
     
-    # Storage for column
+    # Storage for column using typed array when able
     column = if @typedArray.hasOwnProperty(descriptor) then new @typedArray[descriptor](number) else []
     
     # Check for blob
@@ -105,7 +105,7 @@ class Tabular extends DataUnit
         column[index] = value
         
         if index is number
-          @runCallback(callback, opts, column)
+          @invoke(callback, opts, column)
           return column
         
         # Compute the next byte offsets
@@ -117,6 +117,12 @@ class Tabular extends DataUnit
       # Get the bytes associated with the first requested element
       slice = @blob.slice(byteOffset, byteOffset + length)
       reader.readAsArrayBuffer(slice)
+    else
+      
+      # Table already in memory.  Jump through the bytes to extract
+      # appropriate column.
+      console.log 'getColumn from memory'
+      
   
   # Get rows of data specified by parameters.  In the case where
   # the data is not yet in memory, a callback must be provided to
@@ -135,7 +141,7 @@ class Tabular extends DataUnit
       # Derived classes must implement this function
       rows = @_getRows(buffer, number)
       
-      @runCallback(callback, opts, rows)
+      @invoke(callback, opts, rows)
       return rows
     else
       

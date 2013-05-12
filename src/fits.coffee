@@ -15,7 +15,7 @@ class Base
   proxy: (func) ->
     => func.apply(this, arguments)
   
-  runCallback: (callback, opts, data) ->
+  invoke: (callback, opts, data) ->
     context = if opts?.context? then opts.context else @
     callback.call(context, data, opts) if callback?
 
@@ -74,7 +74,7 @@ class Parser extends Base
         if xhr.status isnt 200
           
           # Execute callback returning a null object on failure
-          @runCallback(@callback, @opts)
+          @invoke(@callback, @opts)
           return
         
         # Get buffer from response
@@ -188,7 +188,7 @@ class Parser extends Base
         if @offset is @length
           @headerStorage = null
           
-          @runCallback(@callback, @opts, @)
+          @invoke(@callback, @opts, @)
           return
         
         # Reset variables for next header
@@ -238,7 +238,7 @@ class FITS extends Base
     
     parser = new Parser(@arg, (fits) =>
       @hdus = parser.hdus
-      @runCallback(callback, opts, @)
+      @invoke(callback, opts, @)
     )
   
   # Public API

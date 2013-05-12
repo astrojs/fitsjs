@@ -93,7 +93,7 @@ class Image extends DataUnit
         
     return arr
   
-  getFrameAsync: (buffer, callback, opts) ->
+  _getFrameAsync: (buffer, callback, opts) ->
     
     # Define function to be executed on the worker thread
     onmessage = (e) ->
@@ -138,7 +138,7 @@ class Image extends DataUnit
     worker.onmessage = (e) =>
       arr = e.data
       
-      @runCallback(callback, opts, arr)
+      @invoke(callback, opts, arr)
       
       # Clean up urls and worker
       URL.revokeObjectURL(urlOnMessage)
@@ -166,7 +166,7 @@ class Image extends DataUnit
     
     # Check if bytes are in memory
     if buffer?
-      @getFrameAsync(buffer, callback, opts)
+      @_getFrameAsync(buffer, callback, opts)
     else
       # Read frame bytes into memory since not yet copied.
       
@@ -205,7 +205,7 @@ class Image extends DataUnit
       # Request another frame and execute callback
       if number
         @getFrame(frame, cb, opts)
-        @runCallback(callback, opts, arr)
+        @invoke(callback, opts, arr)
     
     # Start reading frames
     @getFrame(frame, cb, opts)
