@@ -121,7 +121,12 @@ class Tabular extends DataUnit
       
       # Table already in memory.  Jump through the bytes to extract
       # appropriate column.
-      console.log 'getColumn from memory'
+      
+      cb = (rows, opts) =>
+        column = rows.map( (d) -> d[name])
+        @invoke(callback, opts, column)
+      
+      @getRows(row, number, cb, opts)
       
   
   # Get rows of data specified by parameters.  In the case where
