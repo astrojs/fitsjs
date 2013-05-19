@@ -123,6 +123,7 @@ class Tabular extends DataUnit
       # appropriate column.
       
       cb = (rows, opts) =>
+        # TODO: We lose the typed array.
         column = rows.map( (d) -> d[name])
         @invoke(callback, opts, column)
       
