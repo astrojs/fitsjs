@@ -13,49 +13,42 @@ Decompress =
   RiceSetup:
     # Set up for bytepix = 1
     1: (array) ->
-      pointer = 0
+      pointer = 1
       fsbits = 3
       fsmax = 6
       
-      lastpix = array[pointer]
-      pointer += 1
+      lastpix = array[0]
       
       return [fsbits, fsmax, lastpix, pointer]
       
     # Set up for bytepix = 2
     2: (array) ->
-      pointer = 0
+      pointer = 2
       fsbits = 4
       fsmax = 14
       
       lastpix = 0
-      bytevalue = array[pointer]
-      pointer += 1
+      bytevalue = array[0]
       lastpix = lastpix | (bytevalue << 8)
-      bytevalue = array[pointer]
-      pointer += 1
+      bytevalue = array[1]
       lastpix = lastpix | bytevalue
       
       return [fsbits, fsmax, lastpix, pointer]
     
     # Set up for bytepix = 4
     4: (array) ->
-      pointer = 0
+      pointer = 4
       fsbits = 5
       fsmax = 25
       
       lastpix = 0
-      bytevalue = array[pointer]
-      pointer += 1
+      bytevalue = array[0]
       lastpix = lastpix | (bytevalue << 24)
-      bytevalue = array[pointer]
-      pointer += 1
+      bytevalue = array[1]
       lastpix = lastpix | (bytevalue << 16)
-      bytevalue = array[pointer]
-      pointer += 1
+      bytevalue = array[2]
       lastpix = lastpix | (bytevalue << 8)
-      bytevalue = array[pointer]
-      pointer += 1
+      bytevalue = array[3]
       lastpix = lastpix | bytevalue
       
       return [fsbits, fsmax, lastpix, pointer]
@@ -83,30 +76,43 @@ Decompress =
     nonzeroCount[0] = 0
     
     # Bit buffer
-    b = array[pointer]
-    pointer += 1
-
+    b = array[pointer++]
+    
     # Number of bits remaining in b
     nbits = 8
     
     i = 0
     while i < nx
-
+      
       nbits -= fsbits
+      console.log "nbits = #{nbits}"
       while nbits < 0
-        b = (b << 8) | (array[pointer])
-        pointer += 1
+        b = (b << 8) | (array[pointer++])
+        # console.log "b = #{b}"
         nbits += 8
+      
+      # console.log "b\t=\t#{b}"
+      
       fs = (b >> nbits) - 1
       b &= (1 << nbits) - 1
       imax = i + blocksize
       imax = nx if imax > nx
-
+      
+      # console.log "fs\t=\t#{fs}"
+      # console.log "imax\t=\t#{imax}"
+      # console.log "lastpix\t=\t#{lastpix}"
+      
       if fs < 0
+        
+        # console.log ("if fs < 0")
+        
         while i < imax
           array[i] = lastpix
           i++
       else if fs is fsmax
+        
+        # console.log ("else if (fs == fsmax)")
+        
         while i < imax
           k = bbits - nbits
           diff = b << k
@@ -131,6 +137,9 @@ Decompress =
           lastpix = array[i]
           i++
       else
+        
+        # console.log ("else")
+        
         while i < imax
           while b is 0
             nbits += 8

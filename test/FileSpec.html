@@ -100,9 +100,14 @@
         var header = fits.getHeader();
         var depth = header.get('NAXIS3');
         var cube = fits.getDataUnit();
+        var table = fits.getDataUnit(115);
         
-        cube.getFrames(0, 100, function(arr) {
+        cube.getFrames(0, depth, function(arr) {
           console.log(arr);
+        });
+        
+        table.getRows(0, table.rows, function(rows) {
+          console.log(rows);
         });
         
       }
@@ -153,6 +158,7 @@
               break;
             case 'NGC_6946_NA_CUBE_THINGS.FITS':
               testDataCube(fits);
+              console.log(fits);
               break;
             case 'CFHTLS_082_0001_i.fits.fz':
               testBadData(fits);

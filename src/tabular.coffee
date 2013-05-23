@@ -119,16 +119,12 @@ class Tabular extends DataUnit
       reader.readAsArrayBuffer(slice)
     else
       
-      # Table already in memory.  Jump through the bytes to extract
-      # appropriate column.
-      
+      # Table already in memory.  Get column using getRows method
       cb = (rows, opts) =>
-        # TODO: We lose the typed array.
         column = rows.map( (d) -> d[name])
         @invoke(callback, opts, column)
       
       @getRows(row, number, cb, opts)
-      
   
   # Get rows of data specified by parameters.  In the case where
   # the data is not yet in memory, a callback must be provided to
