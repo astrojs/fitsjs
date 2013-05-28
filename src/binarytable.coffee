@@ -146,12 +146,9 @@ class BinaryTable extends Tabular
               accessor = (view, offset) =>
                 [arr, offset] = @getFromHeap(view, offset, descriptor)
                 
-                # console.log arr
                 # Assuming Rice compression
                 pixels = new @typedArray[@algorithmParameters["BYTEPIX"]](@ztile[0])
                 Decompress.Rice(arr, @algorithmParameters["BLOCKSIZE"], @algorithmParameters["BYTEPIX"], pixels, @ztile[0], Decompress.RiceSetup)
-                # console.log "----------------"
-                # throw "stop"
                 return [pixels, offset]
             
             when "GZIP_COMPRESSED_DATA"

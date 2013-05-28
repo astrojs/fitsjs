@@ -83,48 +83,34 @@ Decompress =
     
     i = 0
     while i < nx
-      
       nbits -= fsbits
-      console.log "nbits = #{nbits}"
-      while nbits < 0
-        b = (b << 8) | (array[pointer++])
-        # console.log "b = #{b}"
-        nbits += 8
       
-      # console.log "b\t=\t#{b}"
+      while nbits < 0
+        b = (b << 8) | array[pointer++]
+        nbits += 8
       
       fs = (b >> nbits) - 1
       b &= (1 << nbits) - 1
+      
       imax = i + blocksize
       imax = nx if imax > nx
       
-      # console.log "fs\t=\t#{fs}"
-      # console.log "imax\t=\t#{imax}"
-      # console.log "lastpix\t=\t#{lastpix}"
-      
       if fs < 0
-        
-        # console.log ("if fs < 0")
-        
         while i < imax
-          array[i] = lastpix
-          i++
+          pixels[i] = lastpix
+          i += 1
       else if fs is fsmax
-        
-        # console.log ("else if (fs == fsmax)")
         
         while i < imax
           k = bbits - nbits
           diff = b << k
           k -= 8
           while k >= 0
-            b = array[pointer]
-            pointer += 1
+            b = array[pointer++]
             diff |= b << k
             k -= 8
           if nbits > 0
-            b = array[pointer]
-            pointer += 1
+            b = array[pointer++]
             diff |= b >> (-k)
             b &= (1 << nbits) - 1
           else
@@ -133,25 +119,21 @@ Decompress =
             diff = diff >> 1
           else
             diff = ~(diff >> 1)
-          array[i] = diff + lastpix
-          lastpix = array[i]
+          pixels[i] = diff + lastpix
+          lastpix = pixels[i]
           i++
       else
-        
-        # console.log ("else")
         
         while i < imax
           while b is 0
             nbits += 8
-            b = array[pointer]
-            pointer += 1
+            b = array[pointer++]
           nzero = nbits - nonzeroCount[b]
           nbits -= nzero + 1
           b ^= 1 << nbits
           nbits -= fs
           while nbits < 0
-            b = (b << 8) | (array[pointer])
-            pointer += 1
+            b = (b << 8) | (array[pointer++])
             nbits += 8
           diff = (nzero << fs) | (b >> nbits)
           b &= (1 << nbits) - 1
