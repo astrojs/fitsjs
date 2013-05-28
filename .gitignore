@@ -3,4 +3,5 @@ node_modules/
 *.fits
 *.fits.fz
 doc/
+docs/
 blah/
