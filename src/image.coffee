@@ -124,9 +124,6 @@ class Image extends DataUnit
     blobOnMessage = new Blob([fn1], {type: mime})
     blobGetFrame = new Blob([fn2], {type: mime})
     
-    # Get the native URL object
-    URL = URL or webkitURL
-    
     # Create URLs to onmessage and _getFrame scripts
     urlOnMessage = URL.createObjectURL(blobOnMessage)
     urlGetFrame = URL.createObjectURL(blobGetFrame)
@@ -204,8 +201,8 @@ class Image extends DataUnit
       
       # Request another frame and execute callback
       if number
-        @getFrame(frame, cb, opts)
         @invoke(callback, opts, arr)
+        @getFrame(frame, cb, opts)
     
     # Start reading frames
     @getFrame(frame, cb, opts)

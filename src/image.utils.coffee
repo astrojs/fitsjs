@@ -3,7 +3,7 @@ ImageUtils =
   
   # Compute the minimum and maximum pixels
   getExtent: (arr) ->
-    return [@min, @max] if @min? and @max?
+    # return [@min, @max] if @min? and @max?
     
     # Set initial values for min/max
     index = arr.length

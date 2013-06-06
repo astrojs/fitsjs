@@ -88,7 +88,8 @@ class Tabular extends DataUnit
     accessor = @accessors[columnIndex]
     
     # Storage for column using typed array when able
-    column = if @typedArray.hasOwnProperty(descriptor) then new @typedArray[descriptor](number) else []
+    # column = if @typedArray.hasOwnProperty(descriptor) then new @typedArray[descriptor](number) else []
+    column = new Array(number)
     
     # Check for blob
     if @blob?
@@ -118,7 +119,6 @@ class Tabular extends DataUnit
       slice = @blob.slice(byteOffset, byteOffset + length)
       reader.readAsArrayBuffer(slice)
     else
-      
       # Table already in memory.  Get column using getRows method
       cb = (rows, opts) =>
         column = rows.map( (d) -> d[name])

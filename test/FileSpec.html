@@ -80,8 +80,12 @@
       function testImageExtension(fits) {
         console.log('testImageExtension');
         var image = fits.getDataUnit();
+        startTime = new Date();
         image.getFrame(0, function(arr) {
-          console.log(arr);
+          endTime = new Date();
+          console.log(endTime - startTime);
+          console.log(arr.subarray(1900 * 1868, 1900 * 1868 + 10));
+          // console.log(arr);
         });
       }
       
@@ -157,6 +161,10 @@
               testCompressedImage(fits);
               break;
             case 'NGC_6946_NA_CUBE_THINGS.FITS':
+              testDataCube(fits);
+              console.log(fits);
+              break;
+            case 'L1448_13CO.fits':
               testDataCube(fits);
               console.log(fits);
               break;
