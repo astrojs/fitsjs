@@ -64,60 +64,92 @@ class Tabular extends DataUnit
     return columns
   
   # Get column of data specified by parameters.
-  getColumn: (name, row, number, callback, opts) ->
+  getColumn: (name, callback, opts) ->
     
-    # Get index of column
-    columnIndex = @columns.indexOf(name)
-    
-    # Store row byte size locally
-    rowByteSize = @rowByteSize
-    
-    # Store byte length for single column value
-    descriptor = @descriptors[columnIndex]
-    length = @offsets[columnIndex]
-    
-    # Get byte offset from starting row
-    byteOffset = rowByteSize * row
-    
-    # Get the offset from the start of the row
-    for i in [0..columnIndex]
-      byteOffset += @offsets[i]
-    byteOffset -= length
-    
-    # Get the accessor function from the column name
-    accessor = @accessors[columnIndex]
+    # # Get index of column
+    # columnIndex = @columns.indexOf(name)
+    # 
+    # # Store row byte size locally
+    # rowByteSize = @rowByteSize
+    # 
+    # # Store byte length for single column value
+    # descriptor = @descriptors[columnIndex]
+    # length = @offsets[columnIndex]
+    # 
+    # # Get byte offset from starting row
+    # byteOffset = rowByteSize * row
+    # 
+    # # Get the offset from the start of the row
+    # for i in [0..columnIndex]
+    #   byteOffset += @offsets[i]
+    # byteOffset -= length
+    # 
+    # # Get the accessor function from the column name
+    # accessor = @accessors[columnIndex]
     
     # Storage for column using typed array when able
     # column = if @typedArray.hasOwnProperty(descriptor) then new @typedArray[descriptor](number) else []
-    column = new Array(number)
+    column = []
     
     # Check for blob
     if @blob?
       
-      # Request bytes using File API
-      reader = new FileReader()
-      index = 0
+      # TESTING: Faster method to get column from local file
       
-      reader.onloadend = (e) =>
+      # Read rows in ~8 MB chunks
+      rowsPerIteration = ~~(4 * @maxMemory / @rowByteSize)
+      rowsPerIteration = Math.min(rowsPerIteration, @rows)
+      
+      # Get number of iterations needed to read entire file
+      iterations = ~~(@rows / rowsPerIteration)
+      i = 0
+      
+      # Define callback to pass to getRows
+      cb = (rows, opts) =>
+        console.log iterations
         
-        # Initialize DataView object
-        view = new DataView(e.target.result)
-        [value, offset] = accessor(view, 0)
-        column[index] = value
+        # Get the values of specified column
+        c = rows.map( (d) -> return d[name] )
+        column = column.concat(c)
         
-        if index is number
+        # Update counters
+        iterations -= 1
+        
+        # Request another frame and execute callback
+        if iterations
+          startRow = i * rowsPerIteration
+          @getRows(startRow, startRow + rowsPerIteration, cb, opts)
+        else
           @invoke(callback, opts, column)
-          return column
-        
-        # Compute the next byte offsets
-        index += 1
-        byteOffset += rowByteSize
-        slice = @blob.slice(byteOffset, byteOffset + length)
-        reader.readAsArrayBuffer(slice)
-        
-      # Get the bytes associated with the first requested element
-      slice = @blob.slice(byteOffset, byteOffset + length)
-      reader.readAsArrayBuffer(slice)
+          return
+      
+      # Start reading rows
+      @getRows(0, rowsPerIteration, cb, opts)
+      
+      # # Request bytes using File API
+      # reader = new FileReader()
+      # index = 0
+      # 
+      # reader.onloadend = (e) =>
+      #   
+      #   # Initialize DataView object
+      #   view = new DataView(e.target.result)
+      #   [value, offset] = accessor(view, 0)
+      #   column[index] = value
+      #   
+      #   if index is number
+      #     @invoke(callback, opts, column)
+      #     return column
+      #   
+      #   # Compute the next byte offsets
+      #   index += 1
+      #   byteOffset += rowByteSize
+      #   slice = @blob.slice(byteOffset, byteOffset + length)
+      #   reader.readAsArrayBuffer(slice)
+      #   
+      # # Get the bytes associated with the first requested element
+      # slice = @blob.slice(byteOffset, byteOffset + length)
+      # reader.readAsArrayBuffer(slice)
     else
       # Table already in memory.  Get column using getRows method
       cb = (rows, opts) =>

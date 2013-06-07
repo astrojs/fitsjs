@@ -50,19 +50,22 @@
       // Test binary table functionality
       function testBinaryTable(fits) {
         console.log('testBinaryTable', fits);
+        
         var table = fits.getDataUnit();
-        table.getRows(0, 10, function(rows) {
-          console.log(rows);
+        // table.getRows(0, 10, function(rows) {
+        //   console.log(rows);
+        // });
+        
+        // // Total rows for specObj-dr9 is 2674200
+        // table.getColumn('CX', function(column) {
+        //   console.log('CX', column);
+        // });
+        
+        table.getColumn('RACEN', function(column) {
+          console.log('RACEN', column);
         });
         
-        // Total rows for specObj-dr9 is 2674200
-        table.getColumn('CX', 0, 10000, function(column) {
-          console.log('CX', column);
-        });
-        // table.getColumn('RACEN', 0, table.rows - 1, function(column) {
-        //   console.log('RACEN', column);
-        // });
-        // table.getColumn('DECCEN', 0, table.rows - 1, function(column) {
+        // table.getColumn('DECCEN', function(column) {
         //   console.log('DECCEN', column);
         // });
       }
