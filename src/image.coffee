@@ -194,15 +194,16 @@ class Image extends DataUnit
     
     # Define callback to pass to getFrame
     cb = (arr, opts) =>
+      @invoke(callback, opts, arr)
       
       # Update counters
       number -= 1
       frame += 1
       
-      # Request another frame and execute callback
-      if number
-        @invoke(callback, opts, arr)
-        @getFrame(frame, cb, opts)
+      return unless number
+      
+      # Request another frame
+      @getFrame(frame, cb, opts)
     
     # Start reading frames
     @getFrame(frame, cb, opts)
