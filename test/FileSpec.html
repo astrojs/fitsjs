@@ -87,8 +87,13 @@
         image.getFrame(0, function(arr) {
           endTime = new Date();
           console.log(endTime - startTime);
-          console.log(arr.subarray(1900 * 1868, 1900 * 1868 + 10));
-          // console.log(arr);
+          for (var i = 0; i < arr.length; i++) {
+            var value = arr[i];
+            if (value != 0) {
+              console.log(i, value);
+              break;
+            }
+          }
         });
       }
       
@@ -117,14 +122,6 @@
           console.log(rows);
         });
         
-      }
-      
-      function testBadData(fits) {
-        console.log(fits);
-        var image = fits.getDataUnit();
-        image.getFrame(0, function(arr) {
-          console.log(arr);
-        });
       }
       
       // Define handler for dropping file
@@ -171,8 +168,9 @@
               testDataCube(fits);
               console.log(fits);
               break;
-            case 'CFHTLS_082_0001_i.fits.fz':
-              testBadData(fits);
+            case 'hlsp_hudf12_hst_acs_udfpar2_f814w_v1.0_drz_drz.fits':
+              testImageExtension(fits);
+              console.log(fits);
               break;
             default:
               console.log(fits);

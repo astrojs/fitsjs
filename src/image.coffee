@@ -35,11 +35,15 @@ class Image extends DataUnit
     # length of a single frame.
     @frameOffsets = []
     @frameLength = @bytes * @width * @height
+    
+    # Set number of buffers per frame
+    @nBuffers = if @buffer? then 1 else 2
+    
     for i in [0..@depth - 1]
       begin = i * @frameLength
       frame = {begin: begin}
       if @buffer?
-        frame.buffer = @buffer.slice(begin, begin + @frameLength)
+        frame.buffers = [@buffer.slice(begin, begin + @frameLength)]
       @frameOffsets.push frame
   
   # Shared method for Image class and also for Web Worker.  Cannot reference any instance variables
@@ -93,7 +97,7 @@ class Image extends DataUnit
         
     return arr
   
-  _getFrameAsync: (buffer, callback, opts) ->
+  _getFrameAsync: (buffers, callback, opts) ->
     
     # Define function to be executed on the worker thread
     onmessage = (e) ->
@@ -112,7 +116,7 @@ class Image extends DataUnit
       postMessage(arr)
     
     # Trick to format function for worker
-    fn1 = onmessage.toString().replace('return postMessage(data);', 'postMessage(data);')
+    fn1 = onmessage.toString().replace('return postMessage', 'postMessage')
     fn1 = "onmessage = #{fn1}"
     
     # Functions passed to worker via url cannot be anonymous
@@ -131,25 +135,42 @@ class Image extends DataUnit
     # Initialize worker
     worker = new Worker(urlOnMessage)
     
-    # Define function for when worker job is complete
-    worker.onmessage = (e) =>
-      arr = e.data
-      
-      @invoke(callback, opts, arr)
-      
-      # Clean up urls and worker
-      URL.revokeObjectURL(urlOnMessage)
-      URL.revokeObjectURL(urlGetFrame)
-      worker.terminate()
-    
-    # Define object containing parameters to be passed to worker
+    # Define object containing parameters to be passed to worker beginning with first buffer
     msg =
-      buffer: buffer
+      buffer: buffers[0]
       bitpix: @bitpix
       bzero: @bzero
       bscale: @bscale
       url: urlGetFrame
-    worker.postMessage(msg)
+    
+    
+    # Define function for when worker job is complete
+    i = 0
+    worker.onmessage = (e) =>
+      arr = e.data
+      
+      # Initialize storage for all pixels
+      unless pixels?
+        pixels = new arr.constructor(@width * @height)
+      
+      # Set array to pixels array
+      start = i * arr.length
+      pixels.set(arr, start)
+      
+      i += 1
+      if i is @nBuffers
+        @invoke(callback, opts, pixels)
+        
+        # Clean up urls and worker
+        URL.revokeObjectURL(urlOnMessage)
+        URL.revokeObjectURL(urlGetFrame)
+        worker.terminate()
+      else
+        msg.buffer = buffers[i]
+        worker.postMessage(msg, [buffers[i]])
+    
+    worker.postMessage(msg, [buffers[0]])
+    return
   
   # Read frames from image.  Frames are read sequentially unless nFrame is set.
   # A callback must be provided since there are 1 or more asynchronous processes happening
@@ -159,33 +180,53 @@ class Image extends DataUnit
     @frame = frame or @frame
     
     frameInfo = @frameOffsets[@frame]
-    buffer = frameInfo.buffer
+    buffers = frameInfo.buffers
     
     # Check if bytes are in memory
-    if buffer?
-      @_getFrameAsync(buffer, callback, opts)
+    if buffers?.length is @nBuffers
+      @_getFrameAsync(buffers, callback, opts)
     else
       # Read frame bytes into memory since not yet copied.
+      
+      @frameOffsets[@frame].buffers = []
       
       # Slice blob for only current frame bytes
       begin = frameInfo.begin
       blobFrame = @blob.slice(begin, begin + @frameLength)
       
+      # Slice blob into chunks to prevent reading too much data in single operation
+      # TODO: Chunk size should be determined dynamically based on the blob size
+      length = blobFrame.size
+      chunkLength = length / @nBuffers
+      blobs = []
+      
+      for i in [0..@nBuffers - 1]
+        start = i * chunkLength
+        blobs.push blobFrame.slice(start, start + chunkLength)
+      
+      # Create array for buffers
+      buffers = []
+      
       # Create file reader and store frame number on object for later reference
       reader = new FileReader()
       reader.frame = @frame
+      i = 0
       reader.onloadend = (e) =>
         
         frame = e.target.frame
         buffer = e.target.result
         
         # Store the buffer for later access
-        @frameOffsets[frame].buffer = buffer
+        @frameOffsets[frame].buffers.push buffer
         
-        # Call function again
-        @getFrame(frame, callback, opts)
+        i += 1
+        if i is @nBuffers
+          # Call function again
+          @getFrame(frame, callback, opts)
+        else
+          reader.readAsArrayBuffer( blobs[i] )
       
-      reader.readAsArrayBuffer(blobFrame)
+      reader.readAsArrayBuffer(blobs[0])
   
   # Reads frames in a data cube in an efficient way that does not
   # overload the browser. The callback passed will be executed once for

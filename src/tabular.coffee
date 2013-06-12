@@ -156,7 +156,7 @@ class Tabular extends DataUnit
         column = rows.map( (d) -> d[name])
         @invoke(callback, opts, column)
       
-      @getRows(row, number, cb, opts)
+      @getRows(0, @rows, cb, opts)
   
   # Get rows of data specified by parameters.  In the case where
   # the data is not yet in memory, a callback must be provided to
