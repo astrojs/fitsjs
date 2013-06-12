@@ -146,6 +146,7 @@ class Image extends DataUnit
     
     # Define function for when worker job is complete
     i = 0
+    pixels = null
     worker.onmessage = (e) =>
       arr = e.data
       
@@ -156,7 +157,6 @@ class Image extends DataUnit
       # Set array to pixels array
       start = i * arr.length
       pixels.set(arr, start)
-      
       i += 1
       if i is @nBuffers
         @invoke(callback, opts, pixels)
@@ -195,14 +195,13 @@ class Image extends DataUnit
       blobFrame = @blob.slice(begin, begin + @frameLength)
       
       # Slice blob into chunks to prevent reading too much data in single operation
-      # TODO: Chunk size should be determined dynamically based on the blob size
-      length = blobFrame.size
-      chunkLength = length / @nBuffers
       blobs = []
       
+      nRowsPerBuffer = Math.floor(@height / @nBuffers)
+      bytesPerBuffer = nRowsPerBuffer * @bytes * @width
       for i in [0..@nBuffers - 1]
-        start = i * chunkLength
-        blobs.push blobFrame.slice(start, start + chunkLength)
+        start = i * bytesPerBuffer
+        blobs.push blobFrame.slice(start, start + bytesPerBuffer)
       
       # Create array for buffers
       buffers = []
