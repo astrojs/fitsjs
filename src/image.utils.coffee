@@ -3,7 +3,7 @@ ImageUtils =
   
   # Compute the minimum and maximum pixels
   getExtent: (arr) ->
-    console.log arr
+    
     # Set initial values for min and max
     index = arr.length
     while index--
