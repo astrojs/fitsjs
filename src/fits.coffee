@@ -59,14 +59,14 @@ class Parser extends Base
     # Check the input type for either
     # 1) Path to remote file
     # 2) Native File object
-    if typeof(arg) is 'string'
+    if typeof(@arg) is 'string'
       
       # Define function at runtime for getting next block
       @readNextBlock = @_readBlockFromBuffer
       
       # Get the remote file as an arraybuffer
       xhr = new XMLHttpRequest()
-      xhr.open('GET', arg)
+      xhr.open('GET', @arg)
       xhr.responseType = 'arraybuffer'
       xhr.onload = =>
         

@@ -143,20 +143,21 @@ class Image extends DataUnit
       bscale: @bscale
       url: urlGetFrame
     
-    
     # Define function for when worker job is complete
     i = 0
     pixels = null
+    start = 0
     worker.onmessage = (e) =>
       arr = e.data
       
       # Initialize storage for all pixels
       unless pixels?
         pixels = new arr.constructor(@width * @height)
-      
-      # Set array to pixels array
-      start = i * arr.length
       pixels.set(arr, start)
+      
+      # Set start index for next iteration
+      start += arr.length
+      
       i += 1
       if i is @nBuffers
         @invoke(callback, opts, pixels)
@@ -167,9 +168,9 @@ class Image extends DataUnit
         worker.terminate()
       else
         msg.buffer = buffers[i]
-        worker.postMessage(msg, [buffers[i]])
+        worker.postMessage( msg, [ buffers[i] ] )
     
-    worker.postMessage(msg, [buffers[0]])
+    worker.postMessage( msg, [ buffers[0] ] )
     return
   
   # Read frames from image.  Frames are read sequentially unless nFrame is set.
@@ -186,8 +187,8 @@ class Image extends DataUnit
     if buffers?.length is @nBuffers
       @_getFrameAsync(buffers, callback, opts)
     else
-      # Read frame bytes into memory since not yet copied.
       
+      # Read frame bytes into memory incrementally
       @frameOffsets[@frame].buffers = []
       
       # Slice blob for only current frame bytes
@@ -201,7 +202,11 @@ class Image extends DataUnit
       bytesPerBuffer = nRowsPerBuffer * @bytes * @width
       for i in [0..@nBuffers - 1]
         start = i * bytesPerBuffer
-        blobs.push blobFrame.slice(start, start + bytesPerBuffer)
+        
+        if i is @nBuffers - 1
+          blobs.push blobFrame.slice(start)
+        else
+          blobs.push blobFrame.slice(start, start + bytesPerBuffer)
       
       # Create array for buffers
       buffers = []
@@ -225,7 +230,7 @@ class Image extends DataUnit
         else
           reader.readAsArrayBuffer( blobs[i] )
       
-      reader.readAsArrayBuffer(blobs[0])
+      reader.readAsArrayBuffer( blobs[0] )
   
   # Reads frames in a data cube in an efficient way that does not
   # overload the browser. The callback passed will be executed once for
