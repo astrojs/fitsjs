@@ -25,9 +25,6 @@ ImageUtils =
       
       if value > max
         max = value
-      
-      # min = value if value < min
-      # max = value if value > max
     
     return [min, max]
   

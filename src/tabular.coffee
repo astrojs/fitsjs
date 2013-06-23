@@ -106,7 +106,6 @@ class Tabular extends DataUnit
       
       # Define callback to pass to getRows
       cb = (rows, opts) =>
-        console.log iterations
         
         # Get the values of specified column
         c = rows.map( (d) -> return d[name] )
