@@ -38,15 +38,6 @@ may be passed to point to a specific HDU.
 Returns the data object associated with the first HDU containing a data unit.  This method does not read from the array buffer.
 An optional argument may be passed to point to a specific HDU.
 
-    fits.getData()
-Returns the data associated with the first HDU containing a data unit.  An optional argument
-may be passed to point to a specific HDU.
-
-### FITS.HDU
-
-    hdu.getCard(key)
-Returns the value from the header of the user specified key.
-
 ### FITS.Header
 
     hdr.get(key)
@@ -67,7 +58,7 @@ Checks if the header has an associated data unit.
       var FITS = astro.FITS;
       
       // Define a callback function for when the FITS file is received
-      fn = function() {
+      var callback = function() {
         
         // Get the first header-dataunit containing a dataunit
         var hdu = this.getHDU();
@@ -94,23 +85,19 @@ Checks if the header has an associated data unit.
       var url = "/some/FITS/file/on/your/server.fits";
       
       // Initialize a new FITS File object
-      var fits = new FITS.File(url, fn);
+      var fits = new FITS(url, callback);
       
-      // Alternatively, the FITS.File object may be initialized with a buffer
-      // using the HTML5 File API or an XML HTTP request.  In this case, no callback function
-      // is required.
-      var fits = new FITS.File(buffer);
+      // Alternatively, the FITS object may be initialized using the HTML File API.
+      var fits = new FITS.File(fileObj, callback);
       
     </script>
 
 ## TODOs
 
-  * Support local gigabyte size files
   * Create examples
   * Remove repeated code that currently implements methods spawning Web Workers
   * Open support for NodeJS
   * Literate CoffeeScript?
-  * Overall clean up
 
 
 ## Decompression and Dithering Algorithm
@@ -170,3 +157,16 @@ Pence, W. D., L. Chiappetti, C. G. Page, R. a. Shaw, and E. Stobie. 2010. Defini
 Ponz, J.D., Thompson, R.W., Muñoz, J.R. The FITS Image Extension.
 
 White, Richard L, Perry Greenfield, William Pence, Nasa Gsfc, Doug Tody, and Rob Seaman. 2011. Tiled Image Convention for Storing Compressed Images in FITS Binary Tables: 1-17.
+
+
+## Changes for fitsjs 0.5
+
+Many changes have been made to the library to support large FITS files.  Prior, the library attempted to copy an entire file into memory before parsing for information.  Now it handles files more intelligently by only copying relevant portions into memory.
+
+During the rewrite, API changes have been made.  There is no longer a File object.  Instances of FITS files are now initialized:
+
+    var f = new astro.FITS(path/to/remote/file, callback);
+
+or using a native HTML5 File instance pointing to a local file.
+
+    var f = new astro.FITS(file-instance, callback);

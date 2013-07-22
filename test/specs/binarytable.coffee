@@ -3,20 +3,23 @@ window.FITS = astro.FITS
 describe "FITS Binary Table", ->
   
   it 'can read a binary table with various data types', ->
-    fits = null
     precision = 6
     
-    xhr = new XMLHttpRequest()
-    xhr.open('GET', 'data/bintable.fits')
-    xhr.responseType = 'arraybuffer'
-    xhr.onload = -> fits = new FITS.File(xhr.response)
-    xhr.send()
+    ready = false
     
-    waitsFor -> return fits?
+    path = 'data/bintable.fits'
+    fits = new astro.FITS(path, (fits) ->
+      ready = true
+    )
+    
+    waitsFor ->
+      return ready
     
     runs ->
-      dataunit = fits.getDataUnit()
-      row = dataunit.getRow()
+      table = fits.getDataUnit()
+      rows = table.getRows(0, 1)
+      
+      row = rows[0]
       
       expect(row['RUN']).toBe(94)
       expect(row['RERUN']).toBe('301')
@@ -52,46 +55,71 @@ describe "FITS Binary Table", ->
       expect(row['NUERR']).toBeCloseTo(0.038667, precision)
 
   it 'can read a binary table with various data types II', ->
-    fits = null
     precision = 6
-
-    xhr = new XMLHttpRequest()
-    xhr.open('GET', 'data/allskytable.fits')
-    xhr.responseType = 'arraybuffer'
-    xhr.onload = -> fits = new FITS.File(xhr.response)
-    xhr.send()
-
-    waitsFor -> return fits?
-
+    
+    ready = false
+    
+    path = 'data/allskytable.fits'
+    fits = new astro.FITS(path, (fits) ->
+      ready = true
+    )
+    
+    waitsFor ->
+      return ready
+    
     runs ->
-      dataunit = fits.getDataUnit()
-      row = dataunit.getRow()
+      
+      table = fits.getDataUnit()
+      rows = table.getRows(0, 1)
+      
+      row = rows[0]
       
       expect(row['ALLSKY'][0]).toBeCloseTo(187.24862671, precision)
       expect(row['XINTERP'][0]).toBeCloseTo(-4.37500000e-01, precision)
       expect(row['YINTERP'][0]).toBeCloseTo(0.5625, 4)
       
-          
   it 'can read a bit array', ->
-    fits = null
+    ready = false
     
-    xhr = new XMLHttpRequest()
-    xhr.open('GET', 'data/bit.fits')
-    xhr.responseType = 'arraybuffer'
-    xhr.onload = -> fits = new FITS.File(xhr.response)
-    xhr.send()
+    path = 'data/bit.fits'
+    fits = new astro.FITS(path, (fits) ->
+      ready = true
+    )
     
-    waitsFor -> return fits?
+    waitsFor ->
+      return ready
     
     runs ->
-      dataunit = fits.getDataUnit()
-      row = dataunit.getRow()
+      table = fits.getDataUnit()
+      rows = table.getRows(0, 1)
+      
+      row = rows[0]
       
       bitarray = row['status']
       expect(bitarray[0]).toEqual(1)
       expect(bitarray[31]).toEqual(0)
-
-      row = dataunit.getRow()
+      
+      rows = table.getRows(1, 1)
+      row = rows[0]
+      
       bitarray = row['status']
       expect(bitarray[1]).toEqual(1)
       expect(bitarray[31]).toEqual(0)
+      
+  it 'can read a column of data', ->
+    ready = false
+    
+    path = 'data/plates-dr9.fits'
+    fits = new astro.FITS(path, (fits) ->
+      ready = true
+    )
+    
+    waitsFor ->
+      return ready
+    
+    runs ->
+      table = fits.getDataUnit()
+      table.getColumn('RACEN', (column) ->
+        console.log column
+      )
+  

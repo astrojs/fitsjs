@@ -3,12 +3,8 @@ class HDU
 
   constructor: (@header, @data) ->
   
-  hasData: -> return if @data? then true else false
-  
-  # ### API
-  
-  # Returns the value from the header of the user specifed key
-  getCard: (key) -> return @header.get(key)
+  hasData: ->
+    return if @data? then true else false
 
 
 @astro.FITS.HDU = HDU

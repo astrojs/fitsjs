@@ -1,6 +1,8 @@
 
 # Class to read ASCII tables from FITS files.
 class Table extends Tabular
+  
+  # Define functions for parsing ASCII entries
   dataAccessors:
     A: (value) -> return value.trim()
     I: (value) -> return parseInt(value)
@@ -8,9 +10,6 @@ class Table extends Tabular
     E: (value) -> return parseFloat(value)
     D: (value) -> return parseFloat(value)
   
-  constructor: (header, view, offset) ->
-    super
-    @setAccessors(header)
   
   setAccessors: (header) ->
     pattern = /([AIFED])(\d+)\.*(\d+)*/
@@ -27,18 +26,43 @@ class Table extends Tabular
           return @dataAccessors[descriptor](value)
         @accessors.push(accessor)
   
-  getRow: (row = null) =>
-    @rowsRead = row if row?
-    @offset = @begin + @rowsRead * @rowByteSize
-    line = @view.getString(@offset, @rowByteSize).trim().split(/\s+/)
+  _getRows: (buffer) ->
     
-    row = {}
-    for value, index in line
-      row[@columns[index]] = @accessors[index](value)
+    # Get the number of rows in buffer
+    nRows = buffer.byteLength / @rowByteSize
+    
+    # Interpret the buffer
+    arr = new Uint8Array(buffer)
+    
+    # Storage for rows
+    rows = []
+    
+    # Loop over the number of rows
+    for i in [0..nRows - 1]
       
-    @offset += @rowByteSize
-    @rowsRead += 1
-    return row
+      # Get the subarray for current row
+      begin = i * @rowByteSize
+      end = begin + @rowByteSize
+      subarray = arr.subarray(begin, end)
+      
+      # Convert to string representation
+      line = ''
+      for value in subarray
+        line += String.fromCharCode(value)
+      line = line.trim().split(/\s+/)
+      
+      # Storage for current row
+      row = {}
+      
+      # Convert to correct data type using accessor functions
+      for accessor, index in @accessors
+        value = line[index]
+        row[ @columns[index] ] = accessor(value)
+      
+      # Store row on array
+      rows.push row
+      
+    return rows
 
 
 @astro.FITS.Table = Table

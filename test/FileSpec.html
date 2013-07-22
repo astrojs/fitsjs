@@ -43,6 +43,87 @@
         e.preventDefault();
       }
       
+      //
+      //  Various testing functions for different data models
+      //
+      
+      // Test binary table functionality
+      function testBinaryTable(fits) {
+        console.log('testBinaryTable', fits);
+        
+        var table = fits.getDataUnit();
+        // table.getRows(0, 10, function(rows) {
+        //   console.log(rows);
+        // });
+        
+        // // Total rows for specObj-dr9 is 2674200
+        // table.getColumn('CX', function(column) {
+        //   console.log('CX', column);
+        // });
+        
+        table.getColumn('RACEN', function(column) {
+          console.log('RACEN', column);
+        });
+        
+        // table.getColumn('DECCEN', function(column) {
+        //   console.log('DECCEN', column);
+        // });
+      }
+      
+      // Test ASCII table
+      function testAsciiTable(fits) {
+        console.log('testAsciiTable');
+        var table = fits.getDataUnit(1);
+        table.getRows(0, 1600, function(rows) {
+          console.log(rows);
+        });
+      }
+      
+      // Test Image extension
+      function testImageExtension(fits) {
+        console.log('testImageExtension');
+        var image = fits.getDataUnit();
+        startTime = new Date();
+        image.getFrame(0, function(arr) {
+          endTime = new Date();
+          console.log(endTime - startTime);
+          for (var i = 0; i < arr.length; i++) {
+            var value = arr[i];
+            if (value != 0) {
+              console.log(i, value);
+              break;
+            }
+          }
+        });
+      }
+      
+      // Test Compressed Image
+      function testCompressedImage(fits) {
+        console.log('testCompressedImage');
+        var image = fits.getDataUnit();
+        image.getFrame(0, function(arr) {
+          console.log(arr);
+        });
+      }
+      
+      // Test Data Cube
+      function testDataCube(fits) {
+        console.log('testDataCube');
+        var header = fits.getHeader();
+        var depth = header.get('NAXIS3');
+        var cube = fits.getDataUnit();
+        var table = fits.getDataUnit(115);
+        
+        cube.getFrames(0, depth, function(arr) {
+          console.log(arr);
+        });
+        
+        table.getRows(0, table.rows, function(rows) {
+          console.log(rows);
+        });
+        
+      }
+      
       // Define handler for dropping file
       function onDrop(e) {
         e.stopPropagation();
@@ -50,11 +131,54 @@
         
         var files = e.dataTransfer.files;
         var file = files[0];
-        window.f = file;
         
         // Initialize FITS object
-        console.log(file);
-        var fits = new astro.FITS.File(file);
+        new astro.FITS(file, function(fits) {
+          
+          // Testing is difficult when using the File API because there is
+          // no programmatic access to the file system. Checking the file
+          // name to determine the operations to test.
+          
+          var filename = fits.arg.name;
+          switch(filename) {
+            
+            case 'specObj-dr9.fits':
+              testBinaryTable(fits);
+              break;
+            case 'plates-dr9.fits':
+              testBinaryTable(fits);
+              break;
+            case 'spec-0406-51869-0012.fits':
+              testBinaryTable(fits);
+              break;
+            case 'm101.fits':
+              testAsciiTable(fits);
+              testImageExtension(fits);
+              break;
+            case 'HST_10098_09_ACS_WFC_F555W_drz.fits':
+              testImageExtension(fits);
+              break;
+            case 'CFHTLS_03_g_sci.fits.fz':
+              testCompressedImage(fits);
+              break;
+            case 'NGC_6946_NA_CUBE_THINGS.FITS':
+              testDataCube(fits);
+              console.log(fits);
+              break;
+            case 'L1448_13CO.fits':
+              testDataCube(fits);
+              console.log(fits);
+              break;
+            case 'hlsp_hudf12_hst_acs_udfpar2_f814w_v1.0_drz_drz.fits':
+              testImageExtension(fits);
+              console.log(fits);
+              break;
+            default:
+              console.log(fits);
+          }
+          
+        });
+        
       }
 
       // Setup drop zone

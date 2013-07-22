@@ -4,20 +4,20 @@ window.FITS = astro.FITS
 describe "FITS Header", ->
 
   it 'can parse a FITS header describing an image and ASCII table', ->
-    fits = null
+    ready = false
     
-    xhr = new XMLHttpRequest()
-    xhr.open('GET', 'data/m101.fits')
-    xhr.responseType = 'arraybuffer'
-    xhr.onload = -> fits = new FITS.File(xhr.response)
-    xhr.send()
+    path = 'data/m101.fits'
+    fits = new astro.FITS(path, (fits) ->
+      ready = true
+    )
     
-    waitsFor -> return fits?
+    waitsFor ->
+      return ready
     
     runs ->
       hdr1 = fits.getHeader(0)
       hdr2 = fits.getHeader(1)
-    
+      
       expect(hdr1.isPrimary()).toBeTruthy()
       expect(hdr1.isExtension()).toBeFalsy()
       
@@ -211,15 +211,15 @@ describe "FITS Header", ->
       expect(hdr2.get('TUNIT4')).toBe('ARCSEC')
     
   it 'can parse a FITS header describing an compressed image', ->
-    fits = null
+    ready = false
     
-    xhr = new XMLHttpRequest()
-    xhr.open('GET', 'data/CFHTLS_03_g_sci.fits.fz')
-    xhr.responseType = 'arraybuffer'
-    xhr.onload = -> fits = new FITS.File(xhr.response)
-    xhr.send()
+    path = 'data/CFHTLS_03_g_sci.fits.fz'
+    fits = new astro.FITS(path, (fits) ->
+      ready = true
+    )
     
-    waitsFor -> return fits?
+    waitsFor ->
+      return ready
     
     runs ->
       hdr1 = fits.getHeader(0)
@@ -311,15 +311,15 @@ describe "FITS Header", ->
       expect(hdr2.get('DATASUM')).toBe('3223591956')
 
   it 'can parse a FITS header describing a binary table', ->
-    fits = null
+    ready = false
     
-    xhr = new XMLHttpRequest()
-    xhr.open('GET', 'data/spec-0406-51869-0012.fits')
-    xhr.responseType = 'arraybuffer'
-    xhr.onload = -> fits = new FITS.File(xhr.response)
-    xhr.send()
+    path = 'data/spec-0406-51869-0012.fits'
+    fits = new astro.FITS(path, (fits) ->
+      ready = true
+    )
     
-    waitsFor -> return fits?
+    waitsFor ->
+      return ready
     
     runs ->
       hdr1 = fits.getHeader(0)

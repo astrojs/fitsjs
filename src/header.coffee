@@ -1,13 +1,16 @@
 
-# Header parses and stores the FITS header.  Verification is done for reserved
+# Parse and store a FITS header.  Verification is done for reserved
 # keywords (e.g. SIMPLE, BITPIX, etc).
-
-
-class Header extends Module
+class Header extends Base
   @include HeaderVerify
   
   arrayPattern: /(\D+)(\d+)/
-  maxLines: 600 # Parsing header stops after maxLines
+  
+  # Headers can become extremely large (for instance after Drizzle). This parameters
+  # limits the number of lines that are parsed.  Typically the important information
+  # describing the structure of the associated data unit and astrometry are near the
+  # top.
+  maxLines: 600
   
   
   constructor: (block) ->
@@ -19,7 +22,7 @@ class Header extends Module
     @verifyCard[name] = @proxy(method) for name, method of @VerifyFns
     
     # e.g. [index, value, comment]
-    @cards      = {}
+    @cards = {}
     @cards["COMMENT"] = []
     @cards["HISTORY"] = []
     @cardIndex  = 0
@@ -40,8 +43,7 @@ class Header extends Module
     @cardIndex += 1
   
   # Checks if the header contains a specified keyword
-  contains: (key) ->
-    return @cards.hasOwnProperty(key)
+  contains: (key) -> @cards.hasOwnProperty(key)
   
   readLine: (l) ->
     
@@ -132,7 +134,7 @@ class Header extends Module
           return 'Image'
         else null
   
-  # Check type of header
+  # Determine type of header
   isPrimary: -> return @primary
   isExtension: -> return @extension
 
