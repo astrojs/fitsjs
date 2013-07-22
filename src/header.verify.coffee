@@ -29,7 +29,7 @@ HeaderVerify =
       key = "BITPIX"
       value = parseInt(arguments[0])
       @verifyOrder(key, 1)
-      throw "#{key} value #{value} is not permitted" unless value in [8, 16, 32, -32]
+      throw "#{key} value #{value} is not permitted" unless value in [8, 16, 32, -32, -64]
       return value
       
     NAXIS: (args...) ->
