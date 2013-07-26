@@ -1,17 +1,29 @@
 <!DOCTYPE html><html lang="en"><head><title>src/dataunit</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="src/dataunit"><meta name="groc-project-path" content="src/dataunit.coffee"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/dataunit.coffee</div></div><div id="document"><div class="segment"></div><div class="segment"><div class="comments"><div class="wrapper"><p>Base class for FITS data units (e.g. Primary, BINTABLE, TABLE, IMAGE).  Derived classes must
-define an instance attribute called length describing the byte length of the data unit.</p></div></div><div class="code"><div class="wrapper"><span class="k">class</span> <span class="nx">DataUnit</span> <span class="k">extends</span> <span class="nx">Module</span>
-  
-  <span class="nv">swapEndian:</span>
+define an instance attribute called length describing the byte length of the data unit.</p></div></div><div class="code"><div class="wrapper"><span class="k">class</span> <span class="nx">DataUnit</span> <span class="k">extends</span> <span class="nx">Base</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Endian swaps are needed for performance.  All FITS images are stored in big
+endian format, but typed arrays initialize based on the endianness of the CPU (typically little endian).
+Swaps are triggered to recover the correct values.</p></div></div><div class="code"><div class="wrapper">  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>TODO: Check endianness of client machine by defining a typed array with a known value.
+Initialize a second typed array using the underlying byte representation.
+The arrays should be identical if working on a little endian machine.
+arr = new Uint16Array([524])
+value = new Uint16Array(arr.buffer)[0]
+@littleEndian = if value is 524 then true else false</p></div></div><div class="code"><div class="wrapper">  
+  <span class="vi">@swapEndian:</span>
     <span class="nv">B: </span><span class="nf">(value) -&gt;</span> <span class="k">return</span> <span class="nx">value</span>
     <span class="nv">I: </span><span class="nf">(value) -&gt;</span> <span class="k">return</span> <span class="p">(</span><span class="nx">value</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="nx">value</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span>
     <span class="nv">J: </span><span class="nf">(value) -&gt;</span> <span class="k">return</span> <span class="p">((</span><span class="nx">value</span> <span class="o">&amp;</span> <span class="mh">0xFF</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">24</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="nx">value</span> <span class="o">&amp;</span> <span class="mh">0xFF00</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="nx">value</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xFF00</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="nx">value</span> <span class="o">&gt;&gt;</span> <span class="mi">24</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xFF</span><span class="p">)</span>
   
-  <span class="err">@</span><span class="o">::</span><span class="nx">swapEndian</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="err">@</span><span class="o">::</span><span class="nx">swapEndian</span><span class="p">[</span><span class="s1">&#39;B&#39;</span><span class="p">]</span>
-  <span class="err">@</span><span class="o">::</span><span class="nx">swapEndian</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span> <span class="o">=</span> <span class="err">@</span><span class="o">::</span><span class="nx">swapEndian</span><span class="p">[</span><span class="s1">&#39;I&#39;</span><span class="p">]</span>
-  <span class="err">@</span><span class="o">::</span><span class="nx">swapEndian</span><span class="p">[</span><span class="mi">32</span><span class="p">]</span> <span class="o">=</span> <span class="err">@</span><span class="o">::</span><span class="nx">swapEndian</span><span class="p">[</span><span class="s1">&#39;J&#39;</span><span class="p">]</span>
-  
-  <span class="nv">constructor: </span><span class="nf">(header, @view, @offset) -&gt;</span>
-    <span class="vi">@begin = </span><span class="nx">@offset</span>
-
+  <span class="nx">@swapEndian</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@swapEndian</span><span class="p">[</span><span class="s">&#39;B&#39;</span><span class="p">]</span>
+  <span class="nx">@swapEndian</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@swapEndian</span><span class="p">[</span><span class="s">&#39;I&#39;</span><span class="p">]</span>
+  <span class="nx">@swapEndian</span><span class="p">[</span><span class="mi">32</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@swapEndian</span><span class="p">[</span><span class="s">&#39;J&#39;</span><span class="p">]</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Data units are initialized with the associated header and data that is either
+1) ArrayBuffer
+2) Blob
+In the case of the array buffer, the entire file structure is already in memory.
+The blob has not yet placed the file in memory.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">constructor: </span><span class="nf">(header, data) -&gt;</span>
+    <span class="k">if</span> <span class="nx">data</span> <span class="k">instanceof</span> <span class="nx">ArrayBuffer</span>
+      <span class="vi">@buffer = </span><span class="nx">data</span>
+    <span class="k">else</span>
+      <span class="vi">@blob = </span><span class="nx">data</span>
 
 <span class="vi">@astro.FITS.DataUnit = </span><span class="nx">DataUnit</span></div></div></div></div></body></html>

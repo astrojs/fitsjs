@@ -47,14 +47,6 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
                   "type": "heading",
                   "data": {
                     "level": 3,
-                    "title": "FITS.HDU",
-                    "slug": "fitshdu"
-                  },
-                  "depth": 3
-                }, {
-                  "type": "heading",
-                  "data": {
-                    "level": 3,
                     "title": "FITS.Header",
                     "slug": "fitsheader"
                   },
@@ -73,8 +65,51 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
               "type": "heading",
               "data": {
                 "level": 2,
+                "title": "TODOs",
+                "slug": "todos"
+              },
+              "depth": 2
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 2,
+                "title": "Decompression and Dithering Algorithm",
+                "slug": "decompression-and-dithering-algorithm"
+              },
+              "depth": 2,
+              "children": [
+                {
+                  "type": "heading",
+                  "data": {
+                    "level": 3,
+                    "title": "Definitions",
+                    "slug": "definitions"
+                  },
+                  "depth": 3
+                }, {
+                  "type": "heading",
+                  "data": {
+                    "level": 3,
+                    "title": "Algorithm",
+                    "slug": "algorithm"
+                  },
+                  "depth": 3
+                }
+              ]
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 2,
                 "title": "References",
                 "slug": "references"
+              },
+              "depth": 2
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 2,
+                "title": "Changes for fitsjs 0.5",
+                "slug": "changes-for-fitsjs-05"
               },
               "depth": 2
             }
@@ -105,14 +140,6 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
               "type": "heading",
               "data": {
                 "level": 3,
-                "title": "FITS.HDU",
-                "slug": "fitshdu"
-              },
-              "depth": 3
-            }, {
-              "type": "heading",
-              "data": {
-                "level": 3,
                 "title": "FITS.Header",
                 "slug": "fitsheader"
               },
@@ -131,8 +158,51 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
           "type": "heading",
           "data": {
             "level": 2,
+            "title": "TODOs",
+            "slug": "todos"
+          },
+          "depth": 2
+        }, {
+          "type": "heading",
+          "data": {
+            "level": 2,
+            "title": "Decompression and Dithering Algorithm",
+            "slug": "decompression-and-dithering-algorithm"
+          },
+          "depth": 2,
+          "children": [
+            {
+              "type": "heading",
+              "data": {
+                "level": 3,
+                "title": "Definitions",
+                "slug": "definitions"
+              },
+              "depth": 3
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 3,
+                "title": "Algorithm",
+                "slug": "algorithm"
+              },
+              "depth": 3
+            }
+          ]
+        }, {
+          "type": "heading",
+          "data": {
+            "level": 2,
             "title": "References",
             "slug": "references"
+          },
+          "depth": 2
+        }, {
+          "type": "heading",
+          "data": {
+            "level": 2,
+            "title": "Changes for fitsjs 0.5",
+            "slug": "changes-for-fitsjs-05"
           },
           "depth": 2
         }
@@ -160,17 +230,7 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
             "title": "binarytable"
           },
           "depth": 2,
-          "outline": [
-            {
-              "type": "heading",
-              "data": {
-                "level": 1,
-                "title": "Read from the buffer",
-                "slug": "read-from-the-buffer"
-              },
-              "depth": 1
-            }
-          ]
+          "outline": []
         }, {
           "type": "file",
           "data": {
@@ -184,6 +244,32 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
             "projectPath": "src/compressed-image.coffee",
             "targetPath": "src/compressed-image",
             "title": "compressed-image"
+          },
+          "depth": 2,
+          "outline": []
+        }, {
+          "type": "file",
+          "data": {
+            "language": {
+              "nameMatchers": [".coffee", "Cakefile"],
+              "pygmentsLexer": "coffee-script",
+              "singleLineComment": ["#"],
+              "name": "CoffeeScript"
+            },
+            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/compressed-image-async.coffee",
+            "projectPath": "src/compressed-image-async.coffee",
+            "targetPath": "src/compressed-image-async",
+            "firstHeader": {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "An extension to the CompressedImage class adding getFrameAsync",
+                "slug": "an-extension-to-the-compressedimage-class-adding-getframeasync",
+                "isFileHeader": true
+              },
+              "depth": 1
+            },
+            "title": "An extension to the CompressedImage class adding getFrameAsync"
           },
           "depth": 2,
           "outline": []
@@ -259,51 +345,6 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
               "singleLineComment": ["#"],
               "name": "CoffeeScript"
             },
-            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/file.coffee",
-            "projectPath": "src/file.coffee",
-            "targetPath": "src/file",
-            "title": "file"
-          },
-          "depth": 2,
-          "outline": [
-            {
-              "type": "heading",
-              "data": {
-                "level": 2,
-                "title": "Class Methods",
-                "slug": "class-methods"
-              },
-              "depth": 2
-            }, {
-              "type": "heading",
-              "data": {
-                "level": 2,
-                "title": "Instance Methods",
-                "slug": "instance-methods"
-              },
-              "depth": 2,
-              "children": [
-                {
-                  "type": "heading",
-                  "data": {
-                    "level": 3,
-                    "title": "API",
-                    "slug": "api"
-                  },
-                  "depth": 3
-                }
-              ]
-            }
-          ]
-        }, {
-          "type": "file",
-          "data": {
-            "language": {
-              "nameMatchers": [".coffee", "Cakefile"],
-              "pygmentsLexer": "coffee-script",
-              "singleLineComment": ["#"],
-              "name": "CoffeeScript"
-            },
             "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/fits.coffee",
             "projectPath": "src/fits.coffee",
             "targetPath": "src/fits",
@@ -326,17 +367,7 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
             "title": "hdu"
           },
           "depth": 2,
-          "outline": [
-            {
-              "type": "heading",
-              "data": {
-                "level": 3,
-                "title": "API",
-                "slug": "api"
-              },
-              "depth": 3
-            }
-          ]
+          "outline": []
         }, {
           "type": "file",
           "data": {
@@ -400,32 +431,6 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
             "title": "image.utils"
           },
           "depth": 2,
-          "outline": [
-            {
-              "type": "heading",
-              "data": {
-                "level": 1,
-                "title": "Get the value of a pixel from the arraybuffer",
-                "slug": "get-the-value-of-a-pixel-from-the-arraybuffer"
-              },
-              "depth": 1
-            }
-          ]
-        }, {
-          "type": "file",
-          "data": {
-            "language": {
-              "nameMatchers": [".coffee", "Cakefile"],
-              "pygmentsLexer": "coffee-script",
-              "singleLineComment": ["#"],
-              "name": "CoffeeScript"
-            },
-            "sourcePath": "/Users/akapadia/astrojs/fitsjs/src/module.coffee",
-            "projectPath": "src/module.coffee",
-            "targetPath": "src/module",
-            "title": "module"
-          },
-          "depth": 2,
           "outline": []
         }, {
           "type": "file",
@@ -458,7 +463,73 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
             "title": "tabular"
           },
           "depth": 2,
-          "outline": []
+          "outline": [
+            {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "Get index of column",
+                "slug": "get-index-of-column"
+              },
+              "depth": 1
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "Store row byte size locally",
+                "slug": "store-row-byte-size-locally"
+              },
+              "depth": 1
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "Store byte length for single column value",
+                "slug": "store-byte-length-for-single-column-value"
+              },
+              "depth": 1
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "Get byte offset from starting row",
+                "slug": "get-byte-offset-from-starting-row"
+              },
+              "depth": 1
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "Get the offset from the start of the row",
+                "slug": "get-the-offset-from-the-start-of-the-row"
+              },
+              "depth": 1
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "Get the accessor function from the column name",
+                "slug": "get-the-accessor-function-from-the-column-name"
+              },
+              "depth": 1
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "Request bytes using File API",
+                "slug": "request-bytes-using-file-api"
+              },
+              "depth": 1
+            }, {
+              "type": "heading",
+              "data": {
+                "level": 1,
+                "title": "Get the bytes associated with the first requested element",
+                "slug": "get-the-bytes-associated-with-the-first-requested-element"
+              },
+              "depth": 1
+            }
+          ]
         }
       ]
     }

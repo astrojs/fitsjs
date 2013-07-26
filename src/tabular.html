@@ -1,98 +1,147 @@
 <!DOCTYPE html><html lang="en"><head><title>src/tabular</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="src/tabular"><meta name="groc-project-path" content="src/tabular.coffee"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/tabular.coffee</div></div><div id="document"><div class="segment"></div><div class="segment"><div class="comments"><div class="wrapper"><p>Abstract class for tabular FITS extensions (e.g. TABLE, BINTABLE)</p></div></div><div class="code"><div class="wrapper"><span class="k">class</span> <span class="nx">Tabular</span> <span class="k">extends</span> <span class="nx">DataUnit</span>
-  <span class="nv">typedArray:</span>
-    <span class="nv">B: </span><span class="nx">Uint8Array</span>
-    <span class="nv">I: </span><span class="nx">Uint16Array</span>
-    <span class="nv">J: </span><span class="nx">Int32Array</span>
-    <span class="nv">E: </span><span class="nx">Float32Array</span>
-    <span class="nv">D: </span><span class="nx">Float64Array</span>
-    <span class="mi">1</span><span class="o">:</span> <span class="nx">Uint8Array</span>
-    <span class="mi">2</span><span class="o">:</span> <span class="nx">Uint16Array</span>
-    <span class="mi">4</span><span class="o">:</span> <span class="nx">Int32Array</span>
-  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>NOTE: Accessor functions for bit array is better implemented in binary table class</p></div></div><div class="code"><div class="wrapper">  <span class="nv">dataAccessors:</span>
-    <span class="nv">L: </span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">offset</span><span class="p">)</span> <span class="o">=&gt;</span>
-      <span class="nv">x = </span><span class="nx">view</span><span class="p">.</span><span class="nx">getInt8</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">1</span>
-      <span class="nv">val = </span><span class="k">if</span> <span class="nx">x</span> <span class="o">is</span> <span class="mi">84</span> <span class="k">then</span> <span class="kc">true</span> <span class="k">else</span> <span class="kc">false</span>
-      <span class="k">return</span> <span class="p">[</span><span class="nx">val</span><span class="p">,</span> <span class="nx">offset</span><span class="p">]</span>
-    <span class="nv">B: </span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">offset</span><span class="p">)</span> <span class="o">=&gt;</span>
-      <span class="nv">val = </span><span class="nx">view</span><span class="p">.</span><span class="nx">getUint8</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">1</span>
-      <span class="k">return</span> <span class="p">[</span><span class="nx">val</span><span class="p">,</span> <span class="nx">offset</span><span class="p">]</span>
-    <span class="nv">I: </span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">offset</span><span class="p">)</span> <span class="o">=&gt;</span>
-      <span class="nv">val = </span><span class="nx">view</span><span class="p">.</span><span class="nx">getInt16</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">2</span>
-      <span class="k">return</span> <span class="p">[</span><span class="nx">val</span><span class="p">,</span> <span class="nx">offset</span><span class="p">]</span>
-    <span class="nv">J: </span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">offset</span><span class="p">)</span> <span class="o">=&gt;</span>
-      <span class="nv">val = </span><span class="nx">view</span><span class="p">.</span><span class="nx">getInt32</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">4</span>
-      <span class="k">return</span> <span class="p">[</span><span class="nx">val</span><span class="p">,</span> <span class="nx">offset</span><span class="p">]</span>
-    <span class="nv">K: </span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">offset</span><span class="p">)</span> <span class="o">=&gt;</span>
-      <span class="nv">highByte = </span><span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span> <span class="nx">view</span><span class="p">.</span><span class="nx">getInt32</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">4</span>
-      <span class="nv">lowByte = </span><span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span> <span class="nx">view</span><span class="p">.</span><span class="nx">getInt32</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">4</span>
-      <span class="nv">mod = </span><span class="nx">highByte</span> <span class="o">%</span> <span class="mi">10</span>
-      <span class="nv">factor = </span><span class="k">if</span> <span class="nx">mod</span> <span class="k">then</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="mi">1</span>
-      <span class="nx">highByte</span> <span class="o">-=</span> <span class="nx">mod</span>
-      <span class="nx">console</span><span class="p">.</span><span class="nx">warn</span> <span class="s2">&quot;Precision for 64 bit integers may be incorrect.&quot;</span>
-      <span class="nv">val = </span><span class="nx">factor</span> <span class="o">*</span> <span class="p">((</span><span class="nx">highByte</span> <span class="o">&lt;&lt;</span> <span class="mi">32</span><span class="p">)</span> <span class="o">|</span> <span class="nx">lowByte</span><span class="p">)</span>
-      <span class="k">return</span> <span class="p">[</span><span class="nx">val</span><span class="p">,</span> <span class="nx">offset</span><span class="p">]</span>
-    <span class="nv">A: </span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">offset</span><span class="p">)</span> <span class="o">=&gt;</span>
-          <span class="nv">val = </span><span class="nx">view</span><span class="p">.</span><span class="nx">getChar</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-          <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">1</span>
-          <span class="k">return</span> <span class="p">[</span><span class="nx">val</span><span class="p">,</span> <span class="nx">offset</span><span class="p">]</span>
-    <span class="nv">E: </span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">offset</span><span class="p">)</span> <span class="o">=&gt;</span>
-      <span class="nv">val = </span><span class="nx">view</span><span class="p">.</span><span class="nx">getFloat32</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">4</span>
-      <span class="k">return</span> <span class="p">[</span><span class="nx">val</span><span class="p">,</span> <span class="nx">offset</span><span class="p">]</span>
-    <span class="nv">D: </span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">offset</span><span class="p">)</span> <span class="o">=&gt;</span>
-      <span class="nv">val = </span><span class="nx">view</span><span class="p">.</span><span class="nx">getFloat64</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">8</span>
-      <span class="k">return</span> <span class="p">[</span><span class="nx">val</span><span class="p">,</span> <span class="nx">offset</span><span class="p">]</span>
-    <span class="nv">C: </span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">offset</span><span class="p">)</span> <span class="o">=&gt;</span>
-      <span class="nv">val1 = </span><span class="nx">view</span><span class="p">.</span><span class="nx">getFloat32</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">4</span>
-      <span class="nv">val2 = </span><span class="nx">view</span><span class="p">.</span><span class="nx">getFloat32</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">4</span>
-      <span class="nv">val = </span><span class="p">[</span><span class="nx">val1</span><span class="p">,</span> <span class="nx">val2</span><span class="p">]</span>
-      <span class="k">return</span> <span class="p">[</span><span class="nx">val</span><span class="p">,</span> <span class="nx">offset</span><span class="p">]</span>
-    <span class="nv">M: </span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">offset</span><span class="p">)</span> <span class="o">=&gt;</span>
-      <span class="nv">val1 = </span><span class="nx">view</span><span class="p">.</span><span class="nx">getFloat64</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">8</span>
-      <span class="nv">val2 = </span><span class="nx">view</span><span class="p">.</span><span class="nx">getFloat64</span><span class="p">(</span><span class="nx">offset</span><span class="p">)</span>
-      <span class="nx">offset</span> <span class="o">+=</span> <span class="mi">8</span>
-      <span class="nv">val = </span><span class="p">[</span><span class="nx">val1</span><span class="p">,</span> <span class="nx">val2</span><span class="p">]</span>
-      <span class="k">return</span> <span class="p">[</span><span class="nx">val</span><span class="p">,</span> <span class="nx">offset</span><span class="p">]</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>The maximum amount of memory to hold on object when
+reading a local file. 8 MBs.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">maxMemory: </span><span class="mi">8388608</span>
   
   
-  <span class="nv">constructor: </span><span class="nf">(header, view, offset) -&gt;</span>
+  <span class="nv">constructor: </span><span class="nf">(header, data) -&gt;</span>
     <span class="k">super</span>
     
-    <span class="vi">@rowByteSize  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;NAXIS1&quot;</span><span class="p">)</span>
-    <span class="vi">@rows         = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;NAXIS2&quot;</span><span class="p">)</span>
-    <span class="vi">@cols         = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;TFIELDS&quot;</span><span class="p">)</span>
-    <span class="vi">@length       = </span><span class="nx">@rowByteSize</span> <span class="o">*</span> <span class="nx">@rows</span>
-    <span class="vi">@rowsRead     = </span><span class="mi">0</span>
+    <span class="vi">@rowByteSize  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;NAXIS1&quot;</span><span class="p">)</span>
+    <span class="vi">@rows         = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;NAXIS2&quot;</span><span class="p">)</span>
+    <span class="vi">@cols         = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;TFIELDS&quot;</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get bytes size of the data unit and column names</p></div></div><div class="code"><div class="wrapper">    <span class="vi">@length     = </span><span class="nx">@rowByteSize</span> <span class="o">*</span> <span class="nx">@rows</span>
+    <span class="vi">@heapLength = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;PCOUNT&quot;</span><span class="p">)</span>
+    <span class="vi">@columns    = </span><span class="nx">@getColumns</span><span class="p">(</span><span class="nx">header</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Store information about the buffer</p></div></div><div class="code"><div class="wrapper">    <span class="k">if</span> <span class="nx">@buffer</span><span class="o">?</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Define function at run time that checks if row is in memory</p></div></div><div class="code"><div class="wrapper">      <span class="vi">@rowsInMemory = </span><span class="nx">@_rowsInMemoryBuffer</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Keep separate buffer for heap
+NOTE: This causes a duplication of the buffer in memory. Find better solution.</p></div></div><div class="code"><div class="wrapper">      <span class="vi">@heap = </span><span class="nx">@buffer</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">@length</span><span class="p">,</span> <span class="nx">@length</span> <span class="o">+</span> <span class="nx">@heapLength</span><span class="p">)</span>
     
-    <span class="vi">@columns      = </span><span class="nx">@getColumnNames</span><span class="p">(</span><span class="nx">header</span><span class="p">)</span>
-    <span class="vi">@accessors    = </span><span class="p">[]</span>
-
-  <span class="nv">getRow: </span><span class="p">(</span><span class="nv">row = </span><span class="kc">null</span><span class="p">)</span> <span class="o">=&gt;</span>
-    <span class="vi">@rowsRead = </span><span class="nx">row</span> <span class="k">if</span> <span class="nx">row</span><span class="o">?</span>
-    <span class="vi">@offset = </span><span class="nx">@begin</span> <span class="o">+</span> <span class="nx">@rowsRead</span> <span class="o">*</span> <span class="nx">@rowByteSize</span>
-    <span class="nv">row = </span><span class="p">{}</span>
-    <span class="k">for</span> <span class="nx">accessor</span><span class="p">,</span> <span class="nx">index</span> <span class="k">in</span> <span class="nx">@accessors</span>
-      <span class="nx">row</span><span class="p">[</span><span class="nx">@columns</span><span class="p">[</span><span class="nx">index</span><span class="p">]]</span> <span class="o">=</span> <span class="nx">accessor</span><span class="p">()</span>
-    <span class="nx">@rowsRead</span> <span class="o">+=</span> <span class="mi">1</span>
-    <span class="k">return</span> <span class="nx">row</span>
-
-  <span class="nv">getColumnNames: </span><span class="nf">(header) -&gt;</span>
-    <span class="nv">columnNames = </span><span class="p">[]</span>
+    <span class="k">else</span>
+      <span class="vi">@rowsInMemory = </span><span class="nx">@_rowsInMemoryBlob</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>No rows are in memory</p></div></div><div class="code"><div class="wrapper">      <span class="vi">@firstRowInBuffer = @lastRowInBuffer = </span><span class="mi">0</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Use maxMemory to get the number of rows to hold in memory</p></div></div><div class="code"><div class="wrapper">      <span class="vi">@nRowsInBuffer = </span><span class="nb">Math</span><span class="p">.</span><span class="nx">floor</span><span class="p">(</span><span class="nx">@maxMemory</span> <span class="o">/</span> <span class="nx">@rowByteSize</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Storage for accessor functions, descriptors and offsets for each column</p></div></div><div class="code"><div class="wrapper">    <span class="vi">@accessors    = </span><span class="p">[]</span>
+    <span class="vi">@descriptors  = </span><span class="p">[]</span>
+    <span class="vi">@offsets      = </span><span class="p">[]</span>
+    
+    <span class="nx">@setAccessors</span><span class="p">(</span><span class="nx">header</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Determine if the row is in memory. For tables initialized with an array buffer, all rows
+are in memory, so there is no need to check. For tables initialized with a blob, this check
+is needed to determine if the file needs to be read before accessing data.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">_rowsInMemoryBuffer: </span><span class="nf">-&gt;</span> <span class="k">return</span> <span class="kc">true</span>
+  <span class="nv">_rowsInMemoryBlob: </span><span class="nf">(firstRow, lastRow) -&gt;</span>
+    <span class="k">return</span> <span class="kc">false</span> <span class="k">if</span> <span class="nx">firstRow</span> <span class="o">&lt;</span> <span class="nx">@firstRowInBuffer</span>
+    <span class="k">return</span> <span class="kc">false</span> <span class="k">if</span> <span class="nx">lastRow</span> <span class="o">&gt;</span> <span class="nx">@lastRowInBuffer</span>
+    <span class="k">return</span> <span class="kc">true</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get the column names from the header</p></div></div><div class="code"><div class="wrapper">  <span class="nv">getColumns: </span><span class="nf">(header) -&gt;</span>
+    <span class="nv">columns = </span><span class="p">[]</span>
     <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">@cols</span><span class="p">]</span>
-      <span class="nv">key = </span><span class="s2">&quot;TTYPE#{i}&quot;</span>
-      <span class="k">return</span> <span class="kc">null</span> <span class="nx">unless</span> <span class="nx">header</span><span class="p">.</span><span class="nx">contains</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
-      <span class="nx">columnNames</span><span class="p">.</span><span class="nx">push</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nx">columnNames</span>
+      <span class="nv">key = </span><span class="s">&quot;TTYPE</span><span class="si">#{</span><span class="nx">i</span><span class="si">}</span><span class="s">&quot;</span>
+      <span class="k">return</span> <span class="kc">null</span> <span class="k">unless</span> <span class="nx">header</span><span class="p">.</span><span class="nx">contains</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+      <span class="nx">columns</span><span class="p">.</span><span class="nx">push</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nx">columns</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get column of data specified by parameters.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">getColumn: </span><span class="nf">(name, callback, opts) -&gt;</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><h1 id="get-index-of-column">Get index of column</h1>
+
+<p>columnIndex = @columns.indexOf(name)</p>
+
+<h1 id="store-row-byte-size-locally">Store row byte size locally</h1>
+
+<p>rowByteSize = @rowByteSize</p>
+
+<h1 id="store-byte-length-for-single-column-value">Store byte length for single column value</h1>
+
+<p>descriptor = @descriptors[columnIndex]
+length = @offsets[columnIndex]</p>
+
+<h1 id="get-byte-offset-from-starting-row">Get byte offset from starting row</h1>
+
+<p>byteOffset = rowByteSize * row</p>
+
+<h1 id="get-the-offset-from-the-start-of-the-row">Get the offset from the start of the row</h1>
+
+<p>for i in [0..columnIndex]
+  byteOffset += @offsets[i]
+byteOffset -= length</p>
+
+<h1 id="get-the-accessor-function-from-the-column-name">Get the accessor function from the column name</h1>
+
+<p>accessor = @accessors[columnIndex]</p></div></div><div class="code"><div class="wrapper">    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Storage for column using typed array when able
+column = if @typedArray.hasOwnProperty(descriptor) then new @typedArray<a href="number">descriptor</a> else []</p></div></div><div class="code"><div class="wrapper">    <span class="nv">column = </span><span class="p">[]</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Check for blob</p></div></div><div class="code"><div class="wrapper">    <span class="k">if</span> <span class="nx">@blob</span><span class="o">?</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>TESTING: Faster method to get column from local file</p></div></div><div class="code"><div class="wrapper">      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Read rows in ~8 MB chunks</p></div></div><div class="code"><div class="wrapper">      <span class="nv">rowsPerIteration = </span><span class="o">~~</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="nx">@maxMemory</span> <span class="o">/</span> <span class="nx">@rowByteSize</span><span class="p">)</span>
+      <span class="nv">rowsPerIteration = </span><span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="nx">rowsPerIteration</span><span class="p">,</span> <span class="nx">@rows</span><span class="p">)</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get number of iterations needed to read entire file</p></div></div><div class="code"><div class="wrapper">      <span class="nv">iterations = </span><span class="o">~~</span><span class="p">(</span><span class="nx">@rows</span> <span class="o">/</span> <span class="nx">rowsPerIteration</span><span class="p">)</span>
+      <span class="nv">i = </span><span class="mi">0</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Define callback to pass to getRows</p></div></div><div class="code"><div class="wrapper">      <span class="nv">cb = </span><span class="nf">(rows, opts) =&gt;</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get the values of specified column</p></div></div><div class="code"><div class="wrapper">        <span class="nv">c = </span><span class="nx">rows</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span> <span class="nf">(d) -&gt;</span> <span class="k">return</span> <span class="nx">d</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="p">)</span>
+        <span class="nv">column = </span><span class="nx">column</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="nx">c</span><span class="p">)</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Update counters</p></div></div><div class="code"><div class="wrapper">        <span class="nx">iterations</span> <span class="o">-=</span> <span class="mi">1</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Request another frame and execute callback</p></div></div><div class="code"><div class="wrapper">        <span class="k">if</span> <span class="nx">iterations</span>
+          <span class="nv">startRow = </span><span class="nx">i</span> <span class="o">*</span> <span class="nx">rowsPerIteration</span>
+          <span class="nx">@getRows</span><span class="p">(</span><span class="nx">startRow</span><span class="p">,</span> <span class="nx">startRow</span> <span class="o">+</span> <span class="nx">rowsPerIteration</span><span class="p">,</span> <span class="nx">cb</span><span class="p">,</span> <span class="nx">opts</span><span class="p">)</span>
+        <span class="k">else</span>
+          <span class="nx">@invoke</span><span class="p">(</span><span class="nx">callback</span><span class="p">,</span> <span class="nx">opts</span><span class="p">,</span> <span class="nx">column</span><span class="p">)</span>
+          <span class="k">return</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Start reading rows</p></div></div><div class="code"><div class="wrapper">      <span class="nx">@getRows</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">rowsPerIteration</span><span class="p">,</span> <span class="nx">cb</span><span class="p">,</span> <span class="nx">opts</span><span class="p">)</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><h1 id="request-bytes-using-file-api">Request bytes using File API</h1>
+
+<p>reader = new FileReader()
+index = 0</p>
+
+<p>reader.onloadend = (e) =></p>
+
+<p># Initialize DataView object
+  view = new DataView(e.target.result)
+  [value, offset] = accessor(view, 0)
+  column[index] = value</p>
+
+<p>if index is number
+    @invoke(callback, opts, column)
+    return column</p>
+
+<p># Compute the next byte offsets
+  index += 1
+  byteOffset += rowByteSize
+  slice = @blob.slice(byteOffset, byteOffset + length)
+  reader.readAsArrayBuffer(slice)</p>
+
+<h1 id="get-the-bytes-associated-with-the-first-requested-element">Get the bytes associated with the first requested element</h1>
+
+<p>slice = @blob.slice(byteOffset, byteOffset + length)
+reader.readAsArrayBuffer(slice)</p></div></div><div class="code"><div class="wrapper">    <span class="k">else</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Table already in memory.  Get column using getRows method</p></div></div><div class="code"><div class="wrapper">      <span class="nv">cb = </span><span class="nf">(rows, opts) =&gt;</span>
+        <span class="nv">column = </span><span class="nx">rows</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span> <span class="nf">(d) -&gt;</span> <span class="nx">d</span><span class="p">[</span><span class="nx">name</span><span class="p">])</span>
+        <span class="nx">@invoke</span><span class="p">(</span><span class="nx">callback</span><span class="p">,</span> <span class="nx">opts</span><span class="p">,</span> <span class="nx">column</span><span class="p">)</span>
+      
+      <span class="nx">@getRows</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">@rows</span><span class="p">,</span> <span class="nx">cb</span><span class="p">,</span> <span class="nx">opts</span><span class="p">)</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get rows of data specified by parameters.  In the case where
+the data is not yet in memory, a callback must be provided to
+expose the results. This is due to the asynchonous reading of
+the file.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">getRows: </span><span class="nf">(row, number, callback, opts) -&gt;</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Check if rows are in memory</p></div></div><div class="code"><div class="wrapper">    <span class="k">if</span> <span class="nx">@rowsInMemory</span><span class="p">(</span><span class="nx">row</span><span class="p">,</span> <span class="nx">row</span> <span class="o">+</span> <span class="nx">number</span><span class="p">)</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Slice the buffer</p></div></div><div class="code"><div class="wrapper">      <span class="nv">begin = </span><span class="nx">row</span> <span class="o">*</span> <span class="nx">@rowByteSize</span>
+      <span class="nv">end = </span><span class="nx">begin</span> <span class="o">+</span> <span class="nx">number</span> <span class="o">*</span> <span class="nx">@rowByteSize</span>
+      <span class="nv">buffer = </span><span class="nx">@buffer</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">begin</span><span class="p">,</span> <span class="nx">end</span><span class="p">)</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Derived classes must implement this function</p></div></div><div class="code"><div class="wrapper">      <span class="nv">rows = </span><span class="nx">@_getRows</span><span class="p">(</span><span class="nx">buffer</span><span class="p">,</span> <span class="nx">number</span><span class="p">)</span>
+      
+      <span class="nx">@invoke</span><span class="p">(</span><span class="nx">callback</span><span class="p">,</span> <span class="nx">opts</span><span class="p">,</span> <span class="nx">rows</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nx">rows</span>
+    <span class="k">else</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get the offsets to slice the blob. Note the API allows for more memory to be allocated
+by the developer if the number of rows is greater than the default heap size.</p></div></div><div class="code"><div class="wrapper">      <span class="nv">begin = </span><span class="nx">row</span> <span class="o">*</span> <span class="nx">@rowByteSize</span>
+      <span class="nv">end = </span><span class="nx">begin</span> <span class="o">+</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="nx">@nRowsInBuffer</span> <span class="o">*</span> <span class="nx">@rowByteSize</span><span class="p">,</span> <span class="nx">number</span> <span class="o">*</span> <span class="nx">@rowByteSize</span><span class="p">)</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Slice blob for only bytes</p></div></div><div class="code"><div class="wrapper">      <span class="nv">blobRows = </span><span class="nx">@blob</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">begin</span><span class="p">,</span> <span class="nx">end</span><span class="p">)</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Create file reader and store row and number on object for later reference</p></div></div><div class="code"><div class="wrapper">      <span class="nv">reader = </span><span class="k">new</span> <span class="nx">FileReader</span><span class="p">()</span>
+      <span class="nv">reader.row = </span><span class="nx">row</span>
+      <span class="nv">reader.number = </span><span class="nx">number</span>
+      <span class="nv">reader.onloadend = </span><span class="nf">(e) =&gt;</span>
+        <span class="nv">target = </span><span class="nx">e</span><span class="p">.</span><span class="nx">target</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Store the array buffer on the object</p></div></div><div class="code"><div class="wrapper">        <span class="vi">@buffer = </span><span class="nx">target</span><span class="p">.</span><span class="nx">result</span>
+        
+        <span class="vi">@firstRowInBuffer = @lastRowInBuffer = </span><span class="nx">target</span><span class="p">.</span><span class="nx">row</span>
+        <span class="nx">@lastRowInBuffer</span> <span class="o">+=</span> <span class="nx">target</span><span class="p">.</span><span class="nx">number</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Call function again</p></div></div><div class="code"><div class="wrapper">        <span class="nx">@getRows</span><span class="p">(</span><span class="nx">row</span><span class="p">,</span> <span class="nx">number</span><span class="p">,</span> <span class="nx">callback</span><span class="p">,</span> <span class="nx">opts</span><span class="p">)</span>
+        
+      <span class="nx">reader</span><span class="p">.</span><span class="nx">readAsArrayBuffer</span><span class="p">(</span><span class="nx">blobRows</span><span class="p">)</span>
 
 
 <span class="vi">@astro.FITS.Tabular = </span><span class="nx">Tabular</span></div></div></div></div></body></html>

@@ -1,9 +1,12 @@
-<!DOCTYPE html><html lang="en"><head><title>src/header</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="src/header"><meta name="groc-project-path" content="src/header.coffee"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/header.coffee</div></div><div id="document"><div class="segment"></div><div class="segment"><div class="comments"><div class="wrapper"><p>Header parses and stores the FITS header.  Verification is done for reserved
-keywords (e.g. SIMPLE, BITPIX, etc).</p></div></div><div class="code"><div class="wrapper"><span class="k">class</span> <span class="nx">Header</span> <span class="k">extends</span> <span class="nx">Module</span>
+<!DOCTYPE html><html lang="en"><head><title>src/header</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="src/header"><meta name="groc-project-path" content="src/header.coffee"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/header.coffee</div></div><div id="document"><div class="segment"></div><div class="segment"><div class="comments"><div class="wrapper"><p>Parse and store a FITS header.  Verification is done for reserved
+keywords (e.g. SIMPLE, BITPIX, etc).</p></div></div><div class="code"><div class="wrapper"><span class="k">class</span> <span class="nx">Header</span> <span class="k">extends</span> <span class="nx">Base</span>
   <span class="nx">@include</span> <span class="nx">HeaderVerify</span>
   
   <span class="nv">arrayPattern: </span><span class="sr">/(\D+)(\d+)/</span>
-  <span class="nv">maxLines: </span><span class="mi">600</span> <span class="c1"># Parsing header stops after maxLines</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Headers can become extremely large (for instance after Drizzle). This parameters
+limits the number of lines that are parsed.  Typically the important information
+describing the structure of the associated data unit and astrometry are near the
+top.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">maxLines: </span><span class="mi">600</span>
   
   
   <span class="nv">constructor: </span><span class="nf">(block) -&gt;</span>
@@ -11,40 +14,39 @@ keywords (e.g. SIMPLE, BITPIX, etc).</p></div></div><div class="code"><div class
     <span class="vi">@extension  = </span><span class="kc">false</span>
     </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Add verification methods to instance</p></div></div><div class="code"><div class="wrapper">    <span class="vi">@verifyCard = </span><span class="p">{}</span>
     <span class="nx">@verifyCard</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@proxy</span><span class="p">(</span><span class="nx">method</span><span class="p">)</span> <span class="k">for</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">method</span> <span class="k">of</span> <span class="nx">@VerifyFns</span>
-    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>e.g. [index, value, comment]</p></div></div><div class="code"><div class="wrapper">    <span class="vi">@cards      = </span><span class="p">{}</span>
-    <span class="nx">@cards</span><span class="p">[</span><span class="s2">&quot;COMMENT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="nx">@cards</span><span class="p">[</span><span class="s2">&quot;HISTORY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>e.g. [index, value, comment]</p></div></div><div class="code"><div class="wrapper">    <span class="vi">@cards = </span><span class="p">{}</span>
+    <span class="nx">@cards</span><span class="p">[</span><span class="s">&quot;COMMENT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="nx">@cards</span><span class="p">[</span><span class="s">&quot;HISTORY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="vi">@cardIndex  = </span><span class="mi">0</span>
     
     <span class="nx">@readBlock</span><span class="p">(</span><span class="nx">block</span><span class="p">)</span>
     </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get the value for a key</p></div></div><div class="code"><div class="wrapper">  <span class="nv">get: </span><span class="nf">(key) -&gt;</span>
     <span class="k">if</span> <span class="nx">@contains</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="k">then</span> <span class="k">return</span> <span class="nx">@cards</span><span class="p">[</span><span class="nx">key</span><span class="p">].</span><span class="nx">value</span> <span class="k">else</span> <span class="kc">null</span>
   </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set value to key with optional comment</p></div></div><div class="code"><div class="wrapper">  <span class="nv">set: </span><span class="nf">(key, value, comment) -&gt;</span>
-    <span class="nv">comment = </span><span class="nx">comment</span> <span class="o">or</span> <span class="s1">&#39;&#39;</span>
+    <span class="nv">comment = </span><span class="nx">comment</span> <span class="o">or</span> <span class="s">&#39;&#39;</span>
     <span class="nx">@cards</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span>
       <span class="nv">index: </span><span class="nx">@cardIndex</span>
       <span class="nv">value: </span><span class="nx">value</span>
       <span class="nv">comment: </span><span class="nx">comment</span>
     <span class="nx">@cardIndex</span> <span class="o">+=</span> <span class="mi">1</span>
-  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Checks if the header contains a specified keyword</p></div></div><div class="code"><div class="wrapper">  <span class="nv">contains: </span><span class="nf">(key) -&gt;</span>
-    <span class="k">return</span> <span class="nx">@cards</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Checks if the header contains a specified keyword</p></div></div><div class="code"><div class="wrapper">  <span class="nv">contains: </span><span class="nf">(key) -&gt;</span> <span class="nx">@cards</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
   
   <span class="nv">readLine: </span><span class="nf">(l) -&gt;</span>
     </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Check bytes 1 to 8 for key or whitespace</p></div></div><div class="code"><div class="wrapper">    <span class="nv">key = </span><span class="nx">l</span><span class="p">[</span><span class="mi">0</span><span class="p">..</span><span class="mi">7</span><span class="p">].</span><span class="nx">trim</span><span class="p">()</span>
-    <span class="nv">blank = </span><span class="nx">key</span> <span class="o">is</span> <span class="s1">&#39;&#39;</span>
+    <span class="nv">blank = </span><span class="nx">key</span> <span class="o">is</span> <span class="s">&#39;&#39;</span>
     <span class="k">return</span> <span class="k">if</span> <span class="nx">blank</span>
     </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get indicator and value</p></div></div><div class="code"><div class="wrapper">    <span class="nv">indicator = </span><span class="nx">l</span><span class="p">[</span><span class="mi">8</span><span class="p">..</span><span class="mi">9</span><span class="p">]</span>
     <span class="nv">value = </span><span class="nx">l</span><span class="p">[</span><span class="mi">10</span><span class="p">..]</span>
-    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Check the indicator</p></div></div><div class="code"><div class="wrapper">    <span class="nx">unless</span> <span class="nx">indicator</span> <span class="o">is</span> <span class="s2">&quot;= &quot;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Key will be either COMMENT, HISTORY or END
-all else is outside the standard.</p></div></div><div class="code"><div class="wrapper">      <span class="k">if</span> <span class="nx">key</span> <span class="k">in</span> <span class="p">[</span><span class="s1">&#39;COMMENT&#39;</span><span class="p">,</span> <span class="s1">&#39;HISTORY&#39;</span><span class="p">]</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Check the indicator</p></div></div><div class="code"><div class="wrapper">    <span class="k">unless</span> <span class="nx">indicator</span> <span class="o">is</span> <span class="s">&quot;= &quot;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Key will be either COMMENT, HISTORY or END
+all else is outside the standard.</p></div></div><div class="code"><div class="wrapper">      <span class="k">if</span> <span class="nx">key</span> <span class="k">in</span> <span class="p">[</span><span class="s">&#39;COMMENT&#39;</span><span class="p">,</span> <span class="s">&#39;HISTORY&#39;</span><span class="p">]</span>
         <span class="nx">@cards</span><span class="p">[</span><span class="nx">key</span><span class="p">].</span><span class="nx">push</span><span class="p">(</span><span class="nx">value</span><span class="p">.</span><span class="nx">trim</span><span class="p">())</span>
       <span class="k">return</span>
-    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Check the value</p></div></div><div class="code"><div class="wrapper">    <span class="p">[</span><span class="nx">value</span><span class="p">,</span> <span class="nx">comment</span><span class="p">]</span> <span class="o">=</span> <span class="nx">value</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39; /&#39;</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Check the value</p></div></div><div class="code"><div class="wrapper">    <span class="p">[</span><span class="nx">value</span><span class="p">,</span> <span class="nx">comment</span><span class="p">]</span> <span class="o">=</span> <span class="nx">value</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s">&#39; /&#39;</span><span class="p">)</span>
     <span class="nv">value = </span><span class="nx">value</span><span class="p">.</span><span class="nx">trim</span><span class="p">()</span>
     </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Values can be a string pattern starting with single quote
 a boolean pattern (T or F), or a numeric</p></div></div><div class="code"><div class="wrapper">    <span class="nv">firstByte = </span><span class="nx">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">if</span> <span class="nx">firstByte</span> <span class="o">is</span> <span class="s2">&quot;&#39;&quot;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>String data type</p></div></div><div class="code"><div class="wrapper">      <span class="nv">value = </span><span class="nx">value</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">).</span><span class="nx">trim</span><span class="p">()</span>
-    <span class="k">else</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Boolean or numeric</p></div></div><div class="code"><div class="wrapper">      <span class="nx">unless</span> <span class="nx">value</span> <span class="k">in</span> <span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nx">firstByte</span> <span class="o">is</span> <span class="s">&quot;&#39;&quot;</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>String data type</p></div></div><div class="code"><div class="wrapper">      <span class="nv">value = </span><span class="nx">value</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">).</span><span class="nx">trim</span><span class="p">()</span>
+    <span class="k">else</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Boolean or numeric</p></div></div><div class="code"><div class="wrapper">      <span class="k">unless</span> <span class="nx">value</span> <span class="k">in</span> <span class="p">[</span><span class="s">&#39;T&#39;</span><span class="p">,</span> <span class="s">&#39;F&#39;</span><span class="p">]</span>
         <span class="nv">value = </span><span class="nb">parseFloat</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
     
     <span class="nv">value = </span><span class="nx">@validate</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">value</span><span class="p">)</span>
@@ -65,19 +67,40 @@ a boolean pattern (T or F), or a numeric</p></div></div><div class="code"><div c
     
     <span class="k">return</span> <span class="nx">value</span>
   
-  <span class="nv">readBlock: </span><span class="p">(</span><span class="nx">block</span><span class="p">)</span> <span class="o">=&gt;</span>
+  <span class="nv">readBlock: </span><span class="nf">(block) -&gt;</span>
     <span class="nv">lineWidth = </span><span class="mi">80</span>
     
-    <span class="nv">nLines = </span><span class="nx">block</span><span class="p">.</span><span class="nx">length</span> <span class="err">/ lineWidth</span>
+    <span class="nv">nLines = </span><span class="nx">block</span><span class="p">.</span><span class="nx">length</span> <span class="o">/</span> <span class="nx">lineWidth</span>
     <span class="nv">nLines = </span><span class="k">if</span> <span class="nx">nLines</span> <span class="o">&lt;</span> <span class="nx">@maxLines</span> <span class="k">then</span> <span class="nx">nLines</span> <span class="k">else</span> <span class="nx">@maxLines</span>
     
     <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">..</span><span class="nx">nLines</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
       <span class="nv">line = </span><span class="nx">block</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">i</span> <span class="o">*</span> <span class="nx">lineWidth</span><span class="p">,</span> <span class="p">(</span><span class="nx">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="nx">lineWidth</span><span class="p">)</span>
       <span class="nx">@readLine</span><span class="p">(</span><span class="nx">line</span><span class="p">)</span>
-  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Tells if a data unit follows based on NAXIS</p></div></div><div class="code"><div class="wrapper">  <span class="nv">hasDataUnit: </span><span class="o">-&gt;</span>
-    <span class="k">return</span> <span class="k">if</span> <span class="nx">@get</span><span class="p">(</span><span class="s2">&quot;NAXIS&quot;</span><span class="p">)</span> <span class="o">is</span> <span class="mi">0</span> <span class="k">then</span> <span class="kc">false</span> <span class="k">else</span> <span class="kc">true</span>
-  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Check type of header</p></div></div><div class="code"><div class="wrapper">  <span class="nv">isPrimary: </span><span class="o">-&gt;</span> <span class="k">return</span> <span class="nx">@primary</span>
-  <span class="nv">isExtension: </span><span class="o">-&gt;</span> <span class="k">return</span> <span class="nx">@extension</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Tells if a data unit follows based on NAXIS</p></div></div><div class="code"><div class="wrapper">  <span class="nv">hasDataUnit: </span><span class="nf">-&gt;</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&quot;NAXIS&quot;</span><span class="p">)</span> <span class="o">is</span> <span class="mi">0</span> <span class="k">then</span> <span class="kc">false</span> <span class="k">else</span> <span class="kc">true</span>
+  
+  <span class="nv">getDataLength: </span><span class="nf">-&gt;</span>
+    <span class="k">return</span> <span class="mi">0</span> <span class="k">unless</span> <span class="nx">@hasDataUnit</span><span class="p">()</span>
+
+    <span class="nv">naxis = </span><span class="p">[]</span>
+    <span class="nx">naxis</span><span class="p">.</span><span class="nx">push</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&quot;NAXIS</span><span class="si">#{</span><span class="nx">i</span><span class="si">}</span><span class="s">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">@get</span><span class="p">(</span><span class="s">&quot;NAXIS&quot;</span><span class="p">)]</span>
+    <span class="nv">length = </span><span class="nx">naxis</span><span class="p">.</span><span class="nx">reduce</span><span class="p">(</span> <span class="nf">(a, b) -&gt;</span> <span class="nx">a</span> <span class="o">*</span> <span class="nx">b</span><span class="p">)</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span><span class="p">(</span><span class="nx">@get</span><span class="p">(</span><span class="s">&quot;BITPIX&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">8</span>
+    <span class="nx">length</span> <span class="o">+=</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&quot;PCOUNT&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nx">length</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Determine the data unit type (e.g IMAGE, BINTABLE, TABLE, COMPRESSED)</p></div></div><div class="code"><div class="wrapper">  <span class="nv">getDataType: </span><span class="nf">-&gt;</span>
+    <span class="k">switch</span> <span class="nx">@extensionType</span>
+      <span class="k">when</span> <span class="s">&#39;BINTABLE&#39;</span>
+        <span class="k">return</span> <span class="s">&#39;CompressedImage&#39;</span> <span class="k">if</span> <span class="nx">@contains</span><span class="p">(</span><span class="s">&#39;ZIMAGE&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39;BinaryTable&#39;</span>
+      <span class="k">when</span> <span class="s">&#39;TABLE&#39;</span>
+        <span class="k">return</span> <span class="s">&#39;Table&#39;</span>
+      <span class="k">else</span>
+        <span class="k">if</span> <span class="nx">@hasDataUnit</span><span class="p">()</span>
+          <span class="k">return</span> <span class="s">&#39;Image&#39;</span>
+        <span class="k">else</span> <span class="kc">null</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Determine type of header</p></div></div><div class="code"><div class="wrapper">  <span class="nv">isPrimary: </span><span class="nf">-&gt;</span> <span class="k">return</span> <span class="nx">@primary</span>
+  <span class="nv">isExtension: </span><span class="nf">-&gt;</span> <span class="k">return</span> <span class="nx">@extension</span>
 
 
 <span class="vi">@astro.FITS.Header = </span><span class="nx">Header</span></div></div></div></div></body></html>

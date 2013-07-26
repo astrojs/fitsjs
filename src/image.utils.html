@@ -1,26 +1,26 @@
 <!DOCTYPE html><html lang="en"><head><title>src/image.utils</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="src/image.utils"><meta name="groc-project-path" content="src/image.utils.coffee"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/image.utils.coffee</div></div><div id="document"><div class="segment"><div class="code"><div class="wrapper"><span class="nv">ImageUtils =</span>
   </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Compute the minimum and maximum pixels</p></div></div><div class="code"><div class="wrapper">  <span class="nv">getExtent: </span><span class="nf">(arr) -&gt;</span>
-    <span class="k">return</span> <span class="p">[</span><span class="nx">@min</span><span class="p">,</span> <span class="nx">@max</span><span class="p">]</span> <span class="k">if</span> <span class="nx">@min</span><span class="o">?</span> <span class="o">and</span> <span class="nx">@max</span><span class="o">?</span>
-    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set initial values for min/max</p></div></div><div class="code"><div class="wrapper">    <span class="nv">index = </span><span class="nx">arr</span><span class="p">.</span><span class="nx">length</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set initial values for min and max</p></div></div><div class="code"><div class="wrapper">    <span class="nv">index = </span><span class="nx">arr</span><span class="p">.</span><span class="nx">length</span>
     <span class="k">while</span> <span class="nx">index</span><span class="o">--</span>
       <span class="nv">value = </span><span class="nx">arr</span><span class="p">[</span><span class="nx">index</span><span class="p">]</span>
       <span class="k">continue</span> <span class="k">if</span> <span class="nb">isNaN</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
       
-      <span class="p">[</span><span class="nx">min</span><span class="p">,</span> <span class="nx">max</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nx">value</span><span class="p">,</span> <span class="nx">value</span><span class="p">]</span>
+      <span class="nv">min = max = </span><span class="nx">value</span>
       <span class="k">break</span>
     </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Continue loop to find extent</p></div></div><div class="code"><div class="wrapper">    <span class="k">while</span> <span class="nx">index</span><span class="o">--</span>
       <span class="nv">value = </span><span class="nx">arr</span><span class="p">[</span><span class="nx">index</span><span class="p">]</span>
-      <span class="k">continue</span> <span class="k">if</span> <span class="nb">isNaN</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
-      <span class="nv">min = </span><span class="nx">value</span> <span class="k">if</span> <span class="nx">value</span> <span class="o">&lt;</span> <span class="nx">min</span>
-      <span class="nv">max = </span><span class="nx">value</span> <span class="k">if</span> <span class="nx">value</span> <span class="o">&gt;</span> <span class="nx">max</span>
+      
+      <span class="k">if</span> <span class="nb">isNaN</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+        <span class="k">continue</span>
+      
+      <span class="k">if</span> <span class="nx">value</span> <span class="o">&lt;</span> <span class="nx">min</span>
+        <span class="nv">min = </span><span class="nx">value</span>
+      
+      <span class="k">if</span> <span class="nx">value</span> <span class="o">&gt;</span> <span class="nx">max</span>
+        <span class="nv">max = </span><span class="nx">value</span>
     
-    <span class="p">[</span><span class="nx">@min</span><span class="p">,</span> <span class="nx">@max</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nx">min</span><span class="p">,</span> <span class="nx">max</span><span class="p">]</span>
-    <span class="k">return</span> <span class="p">[</span><span class="nx">@min</span><span class="p">,</span> <span class="nx">@max</span><span class="p">]</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><h1 id="get-the-value-of-a-pixel-from-the-arraybuffer">Get the value of a pixel from the arraybuffer</h1>
-
-<p>getPixel: (x, y, z) ->
-  z = z or 0
-  @offset = @begin + ((y + @height * z) * @width + x) * @bytes
-  return @accessor()</p></div></div><div class="code"><div class="wrapper">  
+    <span class="k">return</span> <span class="p">[</span><span class="nx">min</span><span class="p">,</span> <span class="nx">max</span><span class="p">]</span>
+  
   <span class="nv">getPixel: </span><span class="nf">(arr, x, y) -&gt;</span>
     <span class="k">return</span> <span class="nx">arr</span><span class="p">[</span><span class="nx">y</span> <span class="o">*</span> <span class="nx">@width</span> <span class="o">+</span> <span class="nx">x</span><span class="p">]</span>
 

@@ -2,92 +2,111 @@
   <span class="nx">@include</span> <span class="nx">ImageUtils</span>
   <span class="nx">@extend</span> <span class="nx">Decompress</span>
   
-  
-  <span class="nv">constructor: </span><span class="nf">(header, view, offset) -&gt;</span>
-    <span class="k">super</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Predefined random number generator from http://arxiv.org/pdf/1201.1336v1.pdf
+This is the same method used by fpack when dithering images during compression.</p></div></div><div class="code"><div class="wrapper">  <span class="vi">@randomGenerator: </span><span class="nf">-&gt;</span>
+    <span class="nv">a = </span><span class="mi">16807</span>
+    <span class="nv">m = </span><span class="mi">2147483647</span>
+    <span class="nv">seed = </span><span class="mi">1</span>
     
-    <span class="nx">@length</span>   <span class="o">+=</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;PCOUNT&quot;</span><span class="p">)</span>
-    <span class="vi">@zcmptype = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;ZCMPTYPE&quot;</span><span class="p">)</span>
-    <span class="vi">@zbitpix  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;ZBITPIX&quot;</span><span class="p">)</span>
-    <span class="vi">@znaxis   = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;ZNAXIS&quot;</span><span class="p">)</span>
-    <span class="vi">@zblank   = </span><span class="nx">@getValue</span><span class="p">(</span><span class="nx">header</span><span class="p">,</span> <span class="s2">&quot;ZBLANK&quot;</span><span class="p">,</span> <span class="kc">undefined</span><span class="p">)</span>
-    <span class="vi">@blank    = </span><span class="nx">@getValue</span><span class="p">(</span><span class="nx">header</span><span class="p">,</span> <span class="s2">&quot;BLANK&quot;</span><span class="p">,</span> <span class="kc">undefined</span><span class="p">)</span>
+    <span class="nv">random = </span><span class="k">new</span> <span class="nx">Float32Array</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">..</span><span class="mi">9999</span><span class="p">]</span>
+      <span class="nv">temp = </span><span class="nx">a</span> <span class="o">*</span> <span class="nx">seed</span>
+      <span class="nv">seed = </span><span class="nx">temp</span> <span class="o">-</span> <span class="nx">m</span> <span class="o">*</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">temp</span> <span class="o">/</span> <span class="nx">m</span><span class="p">)</span>
+      <span class="nx">random</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">seed</span> <span class="o">/</span> <span class="nx">m</span>
+      
+    <span class="k">return</span> <span class="nx">random</span>
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Store random look up table on class.</p></div></div><div class="code"><div class="wrapper">  <span class="vi">@randomSequence = </span><span class="nx">@randomGenerator</span><span class="p">()</span>
+  
+  
+  <span class="nv">constructor: </span><span class="nf">(header, data) -&gt;</span>
+    <span class="k">super</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get compression values</p></div></div><div class="code"><div class="wrapper">    <span class="vi">@zcmptype = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;ZCMPTYPE&quot;</span><span class="p">)</span>
+    <span class="vi">@zbitpix  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;ZBITPIX&quot;</span><span class="p">)</span>
+    <span class="vi">@znaxis   = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;ZNAXIS&quot;</span><span class="p">)</span>
+    <span class="vi">@zblank   = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;ZBLANK&quot;</span><span class="p">)</span>
+    <span class="vi">@blank    = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;BLANK&quot;</span><span class="p">)</span>
+    <span class="vi">@zdither  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;ZDITHER0&#39;</span><span class="p">)</span> <span class="o">or</span> <span class="mi">0</span>
     
     <span class="vi">@ztile = </span><span class="p">[]</span>
     <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">..</span><span class="nx">@znaxis</span><span class="p">]</span>
-      <span class="nv">ztile = </span><span class="k">if</span> <span class="nx">header</span><span class="p">.</span><span class="nx">contains</span><span class="p">(</span><span class="s2">&quot;ZTILE#{i}&quot;</span><span class="p">)</span> <span class="k">then</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;ZTILE#{i}&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">i</span> <span class="o">is</span> <span class="mi">1</span> <span class="k">then</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;ZNAXIS1&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span>
+      <span class="nv">ztile = </span><span class="k">if</span> <span class="nx">header</span><span class="p">.</span><span class="nx">contains</span><span class="p">(</span><span class="s">&quot;ZTILE</span><span class="si">#{</span><span class="nx">i</span><span class="si">}</span><span class="s">&quot;</span><span class="p">)</span> <span class="k">then</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;ZTILE</span><span class="si">#{</span><span class="nx">i</span><span class="si">}</span><span class="s">&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">i</span> <span class="o">is</span> <span class="mi">1</span> <span class="k">then</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;ZNAXIS1&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span>
       <span class="nx">@ztile</span><span class="p">.</span><span class="nx">push</span> <span class="nx">ztile</span>
     
-    <span class="vi">@width  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;ZNAXIS1&quot;</span><span class="p">)</span>
-    <span class="vi">@height = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;ZNAXIS2&quot;</span><span class="p">)</span> <span class="o">or</span> <span class="mi">1</span>
-    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get algorithm specific parameters</p></div></div><div class="code"><div class="wrapper">    <span class="vi">@params = </span><span class="p">{}</span>
-    <span class="nv">i = </span><span class="mi">1</span>
-    <span class="nx">loop</span>
-      <span class="nv">key = </span><span class="s2">&quot;ZNAME#{i}&quot;</span>
-      <span class="k">break</span> <span class="nx">unless</span> <span class="nx">header</span><span class="p">.</span><span class="nx">contains</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
-      <span class="nv">value = </span><span class="s2">&quot;ZVAL#{i}&quot;</span>
-      <span class="nx">@params</span><span class="p">[</span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">key</span><span class="p">)]</span> <span class="o">=</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+    <span class="vi">@width  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;ZNAXIS1&quot;</span><span class="p">)</span>
+    <span class="vi">@height = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;ZNAXIS2&quot;</span><span class="p">)</span> <span class="o">or</span> <span class="mi">1</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Storage for compression algorithm parameters</p></div></div><div class="code"><div class="wrapper">    <span class="vi">@algorithmParameters = </span><span class="p">{}</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set default parameters</p></div></div><div class="code"><div class="wrapper">    <span class="k">if</span> <span class="nx">@zcmptype</span> <span class="o">is</span> <span class="s">&#39;RICE_1&#39;</span>
+      <span class="nx">@algorithmParameters</span><span class="p">[</span><span class="s">&quot;BLOCKSIZE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">32</span>
+      <span class="nx">@algorithmParameters</span><span class="p">[</span><span class="s">&quot;BYTEPIX&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get compression algorithm parameters (override defaults when keys present)</p></div></div><div class="code"><div class="wrapper">    <span class="nv">i = </span><span class="mi">1</span>
+    <span class="k">loop</span>
+      <span class="nv">key = </span><span class="s">&quot;ZNAME</span><span class="si">#{</span><span class="nx">i</span><span class="si">}</span><span class="s">&quot;</span>
+      <span class="k">break</span> <span class="k">unless</span> <span class="nx">header</span><span class="p">.</span><span class="nx">contains</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+      
+      <span class="nv">value = </span><span class="s">&quot;ZVAL</span><span class="si">#{</span><span class="nx">i</span><span class="si">}</span><span class="s">&quot;</span>
+      <span class="nx">@algorithmParameters</span><span class="p">[</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="p">]</span> <span class="o">=</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+      
       <span class="nx">i</span> <span class="o">+=</span> <span class="mi">1</span>
-    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set default parameters unless already set</p></div></div><div class="code"><div class="wrapper">    <span class="nx">@setRiceDefaults</span><span class="p">()</span> <span class="k">if</span> <span class="nx">@zcmptype</span> <span class="o">is</span> <span class="s1">&#39;RICE_1&#39;</span>
     
-    <span class="vi">@zmaskcmp = </span><span class="nx">@getValue</span><span class="p">(</span><span class="nx">header</span><span class="p">,</span> <span class="s2">&quot;ZMASKCMP&quot;</span><span class="p">,</span> <span class="kc">undefined</span><span class="p">)</span>
-    <span class="vi">@zquantiz = </span><span class="nx">@getValue</span><span class="p">(</span><span class="nx">header</span><span class="p">,</span> <span class="s2">&quot;ZQUANTIZ&quot;</span><span class="p">,</span> <span class="s2">&quot;LINEAR_SCALING&quot;</span><span class="p">)</span>
+    <span class="vi">@zmaskcmp = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;ZMASKCMP&quot;</span><span class="p">)</span>
+    <span class="vi">@zquantiz = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;ZQUANTIZ&quot;</span><span class="p">)</span> <span class="o">or</span> <span class="s">&quot;LINEAR_SCALING&quot;</span>
     
-    <span class="vi">@bzero  = </span><span class="nx">@getValue</span><span class="p">(</span><span class="nx">header</span><span class="p">,</span> <span class="s2">&quot;BZERO&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="vi">@bscale = </span><span class="nx">@getValue</span><span class="p">(</span><span class="nx">header</span><span class="p">,</span> <span class="s2">&quot;BSCALE&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    
-    <span class="nx">@setAccessors</span><span class="p">(</span><span class="nx">header</span><span class="p">)</span>
-    <span class="nx">@defGetRow</span><span class="p">()</span>
-    
-  <span class="nv">getValue: </span><span class="nf">(header, key, defaultValue) -&gt;</span>
-    <span class="k">return</span> <span class="k">if</span> <span class="nx">header</span><span class="p">.</span><span class="nx">contains</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="k">then</span> <span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="k">else</span> <span class="nx">defaultValue</span>
-    
-  <span class="nv">setRiceDefaults: </span><span class="o">-&gt;</span>
-    <span class="nx">@params</span><span class="p">[</span><span class="s2">&quot;BLOCKSIZE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">32</span> <span class="nx">unless</span> <span class="s2">&quot;BLOCKSIZE&quot;</span> <span class="k">of</span> <span class="nx">@params</span>
-    <span class="nx">@params</span><span class="p">[</span><span class="s2">&quot;BYTEPIX&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span> <span class="nx">unless</span> <span class="s2">&quot;BYTEPIX&quot;</span> <span class="k">of</span> <span class="nx">@params</span>
-    
-  <span class="nv">defGetRow: </span><span class="o">-&gt;</span>
-    <span class="nv">hasBlanks = </span><span class="nx">@zblank</span><span class="o">?</span> <span class="o">or</span> <span class="nx">@blank</span><span class="o">?</span> <span class="o">or</span> <span class="nx">@columnNames</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="s2">&quot;ZBLANK&quot;</span><span class="p">)</span>
-    <span class="vi">@getRow = </span><span class="k">if</span> <span class="nx">hasBlanks</span> <span class="k">then</span> <span class="nx">@getRowHasBlanks</span> <span class="k">else</span> <span class="nx">@getRowNoBlanks</span>
-    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>TODO: Test this function.  Need example file with blanks.</p></div></div><div class="code"><div class="wrapper">  <span class="nv">getRowHasBlanks: </span><span class="nf">(arr) -&gt;</span>
-    <span class="p">[</span><span class="nx">data</span><span class="p">,</span> <span class="nx">blank</span><span class="p">,</span> <span class="nx">scale</span><span class="p">,</span> <span class="nx">zero</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@getTableRow</span><span class="p">()</span>
-    
-    <span class="nv">offset = </span><span class="nx">@rowsRead</span> <span class="o">*</span> <span class="nx">@width</span>
-    <span class="k">for</span> <span class="nx">value</span><span class="p">,</span> <span class="nx">index</span> <span class="k">in</span> <span class="nx">data</span>
-      <span class="nv">i = </span><span class="nx">offset</span> <span class="o">+</span> <span class="nx">index</span>
-      <span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="k">if</span> <span class="nx">value</span> <span class="o">is</span> <span class="nx">blank</span> <span class="k">then</span> <span class="kc">NaN</span> <span class="k">else</span> <span class="p">(</span><span class="nx">zero</span> <span class="o">+</span> <span class="nx">scale</span> <span class="o">*</span> <span class="nx">value</span><span class="p">)</span>
-    <span class="nx">@rowsRead</span> <span class="o">+=</span> <span class="mi">1</span>
-    
-  <span class="nv">getRowNoBlanks: </span><span class="nf">(arr) -&gt;</span>
-    <span class="p">[</span><span class="nx">data</span><span class="p">,</span> <span class="nx">blank</span><span class="p">,</span> <span class="nx">scale</span><span class="p">,</span> <span class="nx">zero</span><span class="p">]</span> <span class="o">=</span> <span class="nx">@getTableRow</span><span class="p">()</span>
-    
-    <span class="nv">offset = </span><span class="nx">@rowsRead</span> <span class="o">*</span> <span class="nx">@width</span>
-    <span class="k">for</span> <span class="nx">value</span><span class="p">,</span> <span class="nx">index</span> <span class="k">in</span> <span class="nx">data</span>
-      <span class="nv">i = </span><span class="nx">offset</span> <span class="o">+</span> <span class="nx">index</span>
-      <span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">zero</span> <span class="o">+</span> <span class="nx">scale</span> <span class="o">*</span> <span class="nx">value</span>
-    <span class="nx">@rowsRead</span> <span class="o">+=</span> <span class="mi">1</span>
-    
-  <span class="nv">getTableRow: </span><span class="o">-&gt;</span>
-    <span class="vi">@offset = </span><span class="nx">@begin</span> <span class="o">+</span> <span class="nx">@rowsRead</span> <span class="o">*</span> <span class="nx">@rowByteSize</span>
-    <span class="nv">row = </span><span class="p">[]</span>
-    <span class="k">for</span> <span class="nx">accessor</span> <span class="k">in</span> <span class="nx">@accessors</span>
-      <span class="nx">row</span><span class="p">.</span><span class="nx">push</span> <span class="nx">accessor</span><span class="p">()</span>
-    
-    <span class="nv">data  = </span><span class="nx">row</span><span class="p">[</span><span class="nx">@columnNames</span><span class="p">[</span><span class="s2">&quot;COMPRESSED_DATA&quot;</span><span class="p">]]</span> <span class="o">or</span> <span class="nx">row</span><span class="p">[</span><span class="nx">@columnNames</span><span class="p">[</span><span class="s2">&quot;UNCOMPRESSED_DATA&quot;</span><span class="p">]]</span> <span class="o">or</span> <span class="nx">row</span><span class="p">[</span><span class="nx">@columnNames</span><span class="p">[</span><span class="s2">&quot;GZIP_COMPRESSED_DATA&quot;</span><span class="p">]]</span>
-    <span class="nv">blank = </span><span class="nx">row</span><span class="p">[</span><span class="nx">@columnNames</span><span class="p">[</span><span class="s2">&quot;ZBLANK&quot;</span><span class="p">]]</span> <span class="o">or</span> <span class="nx">@zblank</span>
-    <span class="nv">scale = </span><span class="nx">row</span><span class="p">[</span><span class="nx">@columnNames</span><span class="p">[</span><span class="s2">&quot;ZSCALE&quot;</span><span class="p">]]</span> <span class="o">or</span> <span class="nx">@bscale</span>
-    <span class="nv">zero  = </span><span class="nx">row</span><span class="p">[</span><span class="nx">@columnNames</span><span class="p">[</span><span class="s2">&quot;ZZERO&quot;</span><span class="p">]]</span> <span class="o">or</span> <span class="nx">@bzero</span>
-    <span class="k">return</span> <span class="p">[</span><span class="nx">data</span><span class="p">,</span> <span class="nx">blank</span><span class="p">,</span> <span class="nx">scale</span><span class="p">,</span> <span class="nx">zero</span><span class="p">]</span>
-    
-  <span class="nv">getFrame: </span><span class="o">-&gt;</span>
-    <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Float32Array</span><span class="p">(</span><span class="nx">@width</span> <span class="o">*</span> <span class="nx">@height</span><span class="p">)</span>
-    
-    <span class="vi">@rowsRead = </span><span class="mi">0</span>
-    <span class="nv">height = </span><span class="nx">@height</span>
-    <span class="k">while</span> <span class="nx">height</span><span class="o">--</span>
-      <span class="nx">@getRow</span><span class="p">(</span><span class="nx">arr</span><span class="p">)</span>
+    <span class="vi">@bzero  = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;BZERO&quot;</span><span class="p">)</span> <span class="o">or</span> <span class="mi">0</span>
+    <span class="vi">@bscale = </span><span class="nx">header</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;BSCALE&quot;</span><span class="p">)</span> <span class="o">or</span> <span class="mi">1</span>
+  
+  <span class="nv">_getRows: </span><span class="nf">(buffer, nRows) -&gt;</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set up view and offset</p></div></div><div class="code"><div class="wrapper">    <span class="nv">view = </span><span class="k">new</span> <span class="nx">DataView</span><span class="p">(</span><span class="nx">buffer</span><span class="p">)</span>
+    <span class="nv">offset = </span><span class="mi">0</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set up storage for frame</p></div></div><div class="code"><div class="wrapper">    <span class="nv">arr = </span><span class="k">new</span> <span class="nx">Float32Array</span><span class="p">(</span><span class="nx">@width</span> <span class="o">*</span> <span class="nx">@height</span><span class="p">)</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Read each row (tile)</p></div></div><div class="code"><div class="wrapper">    <span class="k">while</span> <span class="nx">nRows</span><span class="o">--</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Storage for current row</p></div></div><div class="code"><div class="wrapper">      <span class="nv">row = </span><span class="p">{}</span>
+      
+      <span class="k">for</span> <span class="nx">accessor</span><span class="p">,</span> <span class="nx">index</span> <span class="k">in</span> <span class="nx">@accessors</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Read value from each column in current row</p></div></div><div class="code"><div class="wrapper">        <span class="p">[</span><span class="nx">value</span><span class="p">,</span> <span class="nx">offset</span><span class="p">]</span> <span class="o">=</span> <span class="nx">accessor</span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">offset</span><span class="p">)</span>
+        
+        <span class="nx">row</span><span class="p">[</span> <span class="nx">@columns</span><span class="p">[</span><span class="nx">index</span><span class="p">]</span> <span class="p">]</span> <span class="o">=</span> <span class="nx">value</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get array from column with returned values
+TODO: Check that data is returned correctly when UNCOMPRESSED<em>DATA or GZIP</em>COMPRESSED_DATA present</p></div></div><div class="code"><div class="wrapper">      <span class="nv">data  = </span><span class="nx">row</span><span class="p">[</span><span class="s">&#39;COMPRESSED_DATA&#39;</span><span class="p">]</span> <span class="o">or</span> <span class="nx">row</span><span class="p">[</span><span class="s">&#39;UNCOMPRESSED_DATA&#39;</span><span class="p">]</span> <span class="o">or</span> <span class="nx">row</span><span class="p">[</span><span class="s">&#39;GZIP_COMPRESSED_DATA&#39;</span><span class="p">]</span>
+      <span class="nv">blank = </span><span class="nx">row</span><span class="p">[</span><span class="s">&#39;ZBLANK&#39;</span><span class="p">]</span> <span class="o">or</span> <span class="nx">@zblank</span>
+      <span class="nv">scale = </span><span class="nx">row</span><span class="p">[</span><span class="s">&#39;ZSCALE&#39;</span><span class="p">]</span> <span class="o">or</span> <span class="nx">@bscale</span>
+      <span class="nv">zero  = </span><span class="nx">row</span><span class="p">[</span><span class="s">&#39;ZZERO&#39;</span><span class="p">]</span> <span class="o">or</span> <span class="nx">@bzero</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set initial seeds using tile number and ZDITHER0 (assuming row by row tiling)</p></div></div><div class="code"><div class="wrapper">      <span class="nv">nTile = </span><span class="nx">@height</span> <span class="o">-</span> <span class="nx">nRows</span>
+      
+      <span class="nv">seed0 = </span><span class="nx">nTile</span> <span class="o">+</span> <span class="nx">@zdither</span> <span class="o">-</span> <span class="mi">1</span>
+      <span class="nv">seed1 = </span><span class="p">(</span><span class="nx">seed0</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10000</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Set initial index in random sequence</p></div></div><div class="code"><div class="wrapper">      <span class="nv">rIndex = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">@constructor</span><span class="p">.</span><span class="nx">randomSequence</span><span class="p">[</span><span class="nx">seed1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">500</span><span class="p">)</span>
+      
+      <span class="k">for</span> <span class="nx">value</span><span class="p">,</span> <span class="nx">index</span> <span class="k">in</span> <span class="nx">data</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get the pixel index</p></div></div><div class="code"><div class="wrapper">        <span class="nv">i = </span><span class="p">(</span><span class="nx">nTile</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="nx">@width</span> <span class="o">+</span> <span class="nx">index</span>
+        
+        <span class="k">if</span> <span class="nx">value</span> <span class="o">is</span> <span class="o">-</span><span class="mi">2147483647</span>
+          <span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">NaN</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="nx">value</span> <span class="o">is</span> <span class="o">-</span><span class="mi">2147483646</span>
+          <span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span>
+          <span class="nv">r = </span><span class="nx">@constructor</span><span class="p">.</span><span class="nx">randomSequence</span><span class="p">[</span><span class="nx">rIndex</span><span class="p">]</span>
+          <span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nx">value</span> <span class="o">-</span> <span class="nx">r</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="nx">scale</span> <span class="o">+</span> <span class="nx">zero</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Update the random index</p></div></div><div class="code"><div class="wrapper">        <span class="nx">rIndex</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="nx">rIndex</span> <span class="o">is</span> <span class="mi">10000</span>
+          <span class="nv">seed1 = </span><span class="p">(</span><span class="nx">seed1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">10000</span>
+          <span class="nv">rIndex = </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">@randomSequence</span><span class="p">[</span><span class="nx">seed1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">500</span><span class="p">)</span>
     
     <span class="k">return</span> <span class="nx">arr</span>
-
+  </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Even though compressed images are represented as a binary table
+the API should expose the same method as images.
+TODO: Support compressed data cubes</p></div></div><div class="code"><div class="wrapper">  <span class="nv">getFrame: </span><span class="nf">(nFrame, callback, opts) -&gt;</span>
+    </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Check if heap in memory</p></div></div><div class="code"><div class="wrapper">    <span class="k">if</span> <span class="nx">@heap</span>
+      
+      <span class="vi">@frame = </span><span class="nx">nFrame</span> <span class="o">or</span> <span class="nx">@frame</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>TODO: Row parameters should be adjusted when working with data cubes</p></div></div><div class="code"><div class="wrapper">      <span class="nx">@getRows</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">@rows</span><span class="p">,</span> <span class="nx">callback</span><span class="p">,</span> <span class="nx">opts</span><span class="p">)</span>
+      
+    <span class="k">else</span></div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Get blob representing heap</p></div></div><div class="code"><div class="wrapper">      <span class="nv">heapBlob = </span><span class="nx">@blob</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">@length</span><span class="p">,</span> <span class="nx">@length</span> <span class="o">+</span> <span class="nx">@heapLength</span><span class="p">)</span>
+      </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Create file reader</p></div></div><div class="code"><div class="wrapper">      <span class="nv">reader = </span><span class="k">new</span> <span class="nx">FileReader</span><span class="p">()</span>
+      <span class="nv">reader.onloadend = </span><span class="nf">(e) =&gt;</span>
+        <span class="vi">@heap = </span><span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">result</span>
+        </div></div></div><div class="segment"><div class="comments"><div class="wrapper"><p>Call function again</p></div></div><div class="code"><div class="wrapper">        <span class="nx">@getFrame</span><span class="p">(</span><span class="nx">nFrame</span><span class="p">,</span> <span class="nx">callback</span><span class="p">,</span> <span class="nx">opts</span><span class="p">)</span>
+      
+      <span class="nx">reader</span><span class="p">.</span><span class="nx">readAsArrayBuffer</span><span class="p">(</span><span class="nx">heapBlob</span><span class="p">)</span>
 
 <span class="vi">@astro.FITS.CompressedImage = </span><span class="nx">CompressedImage</span></div></div></div></div></body></html>
