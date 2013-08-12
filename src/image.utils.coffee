@@ -13,6 +13,9 @@ ImageUtils =
       min = max = value
       break
     
+    if index is -1
+      return [NaN, NaN]
+    
     # Continue loop to find extent
     while index--
       value = arr[index]
@@ -25,7 +28,7 @@ ImageUtils =
       
       if value > max
         max = value
-    
+      
     return [min, max]
   
   getPixel: (arr, x, y) ->
