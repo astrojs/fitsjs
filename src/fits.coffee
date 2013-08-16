@@ -259,5 +259,5 @@ class FITS extends Base
   getDataUnit: (index) -> return @getHDU(index).data
 
 
-FITS.version = '0.5.1'
+FITS.version = '0.5.2'
 @astro.FITS = FITS
