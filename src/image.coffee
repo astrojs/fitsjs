@@ -129,6 +129,7 @@ class Image extends DataUnit
     blobGetFrame = new Blob([fn2], {type: mime})
     
     # Create URLs to onmessage and _getFrame scripts
+    URL = window.URL or window.webkitURL # to appease Safari
     urlOnMessage = URL.createObjectURL(blobOnMessage)
     urlGetFrame = URL.createObjectURL(blobGetFrame)
     
