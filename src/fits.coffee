@@ -1,3 +1,5 @@
+
+
 @astro = {} unless @astro?
 
 
@@ -23,6 +25,10 @@ class Base
 class Parser extends Base
   LINEWIDTH: 80
   BLOCKLENGTH: 2880
+  
+  # Prefix function for Safari :(
+  File.prototype.slice = File.prototype.slice or File.prototype.webkitSlice
+  Blob.prototype.slice = Blob.prototype.slice or Blob.prototype.webkitSlice
   
   # FITS objects are constructed using either
   # 1) Path to a remote FITS file
@@ -259,5 +265,5 @@ class FITS extends Base
   getDataUnit: (index) -> return @getHDU(index).data
 
 
-FITS.version = '0.5.3'
+FITS.version = '0.5.4'
 @astro.FITS = FITS

@@ -19,7 +19,6 @@ describe "FITS ASCII Table", ->
       names = ['XI', 'ETA', 'XI_CORR', 'ETA_CORR']
       for name, index in names
         expect(table.columns[index]).toEqual(name)
-      
       expect(table.rowsInMemory()).toBeTruthy()
 
 

@@ -120,6 +120,6 @@ describe "FITS Binary Table", ->
     runs ->
       table = fits.getDataUnit()
       table.getColumn('RACEN', (column) ->
-        console.log column
+        console.log "column", column
       )
   

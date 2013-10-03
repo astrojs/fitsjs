@@ -7,6 +7,17 @@ describe "FITS Image", ->
       toBeNaN: (expected) -> return isNaN(@actual) == isNaN(expected)
     }
   
+  it 'can read Orion2MASS_K', ->
+    path = "data/Orion2MASS_K.fits"
+    new astro.FITS(path, (f) ->
+      header = f.getHeader()
+      image = f.getDataUnit()
+      image.getFrame(0, (arr) ->
+        console.log arr
+      )
+      
+    )
+  
   it 'can read an 8 bit integer image', ->
     ready = false
     
