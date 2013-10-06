@@ -133,7 +133,7 @@ class BinaryTable extends Tabular
         @descriptors.push descriptor
         
         # Store the offset for each column
-        @offsets.push(@constructor.offsets[descriptor] * count)
+        @elementByteLengths.push(@constructor.offsets[descriptor] * count)
         
         if isArray
           

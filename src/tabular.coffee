@@ -4,7 +4,8 @@ class Tabular extends DataUnit
   
   # The maximum amount of memory to hold on object when
   # reading a local file. 8 MBs.
-  maxMemory: 8388608
+  # maxMemory: 8388608
+  maxMemory: 1048576
   
   
   constructor: (header, data) ->
@@ -41,7 +42,7 @@ class Tabular extends DataUnit
     # Storage for accessor functions, descriptors and offsets for each column
     @accessors    = []
     @descriptors  = []
-    @offsets      = []
+    @elementByteLengths = []
     
     @setAccessors(header)
     
@@ -66,89 +67,57 @@ class Tabular extends DataUnit
   # Get column of data specified by parameters.
   getColumn: (name, callback, opts) ->
     
-    # # Get index of column
-    # columnIndex = @columns.indexOf(name)
-    # 
-    # # Store row byte size locally
-    # rowByteSize = @rowByteSize
-    # 
-    # # Store byte length for single column value
-    # descriptor = @descriptors[columnIndex]
-    # length = @offsets[columnIndex]
-    # 
-    # # Get byte offset from starting row
-    # byteOffset = rowByteSize * row
-    # 
-    # # Get the offset from the start of the row
-    # for i in [0..columnIndex]
-    #   byteOffset += @offsets[i]
-    # byteOffset -= length
-    # 
-    # # Get the accessor function from the column name
-    # accessor = @accessors[columnIndex]
-    
-    # Storage for column using typed array when able
-    # column = if @typedArray.hasOwnProperty(descriptor) then new @typedArray[descriptor](number) else []
-    column = []
-    
     # Check for blob
     if @blob?
       
-      # TESTING: Faster method to get column from local file
+      # Storage for column using typed array when able
+      index = @columns.indexOf(name)
+      
+      descriptor = @descriptors[index]
+      accessor = @accessors[index]
+      elementByteLength = @elementByteLengths[index]
+      elementByteOffset = @elementByteLengths[0..index - 1].reduce( (a, b) -> a + b )
+      
+      column = if @typedArray[descriptor]? then new @typedArray[descriptor](@rows) else []
       
       # Read rows in ~8 MB chunks
-      rowsPerIteration = ~~(4 * @maxMemory / @rowByteSize)
+      rowsPerIteration = ~~(@maxMemory / @rowByteSize)
       rowsPerIteration = Math.min(rowsPerIteration, @rows)
       
       # Get number of iterations needed to read entire file
-      iterations = ~~(@rows / rowsPerIteration)
+      factor = @rows / rowsPerIteration
+      iterations = if Math.floor(factor) is factor then factor else Math.floor(factor) + 1
       i = 0
+      index = 0
       
       # Define callback to pass to getRows
-      cb = (rows, opts) =>
+      cb = (buffer, opts) =>
+        nRows = buffer.byteLength / @rowByteSize
         
-        # Get the values of specified column
-        c = rows.map( (d) -> return d[name] )
-        column = column.concat(c)
+        view = new DataView(buffer)
+        offset = elementByteOffset
+        
+        # Read only the column value from the buffer
+        while nRows--
+          column[i] = accessor(view, offset)[0]
+          i += 1
+          offset += @rowByteSize
         
         # Update counters
         iterations -= 1
+        index += 1
         
-        # Request another frame and execute callback
+        # Request another buffer of rows
         if iterations
-          startRow = i * rowsPerIteration
-          @getRows(startRow, startRow + rowsPerIteration, cb, opts)
+          startRow = index * rowsPerIteration
+          @getTableBuffer(startRow, rowsPerIteration, cb, opts)
         else
           @invoke(callback, opts, column)
           return
       
       # Start reading rows
-      @getRows(0, rowsPerIteration, cb, opts)
+      @getTableBuffer(0, rowsPerIteration, cb, opts)
       
-      # # Request bytes using File API
-      # reader = new FileReader()
-      # index = 0
-      # 
-      # reader.onloadend = (e) =>
-      #   
-      #   # Initialize DataView object
-      #   view = new DataView(e.target.result)
-      #   [value, offset] = accessor(view, 0)
-      #   column[index] = value
-      #   
-      #   if index is number
-      #     @invoke(callback, opts, column)
-      #     return column
-      #   
-      #   # Compute the next byte offsets
-      #   index += 1
-      #   byteOffset += rowByteSize
-      #   slice = @blob.slice(byteOffset, byteOffset + length)
-      #   reader.readAsArrayBuffer(slice)
-      #   
-      # # Get the bytes associated with the first requested element
-      # slice = @blob.slice(byteOffset, byteOffset + length)
-      # reader.readAsArrayBuffer(slice)
     else
       # Table already in memory.  Get column using getRows method
       cb = (rows, opts) =>
@@ -156,6 +125,31 @@ class Tabular extends DataUnit
         @invoke(callback, opts, column)
       
       @getRows(0, @rows, cb, opts)
+  
+  # Get buffer representing a number of rows. The resulting buffer
+  # should be passed to another function for either row or column access.
+  # NOTE: Using only for local files that are not in memory.
+  getTableBuffer: (row, number, callback, opts) ->
+    
+    # Get the number of remaining rows
+    number = Math.min(@rows - row, number)
+    
+    # Get the offsets to slice the blob. Note the API allows for more memory to be allocated
+    # by the developer if the number of rows is greater than the default heap size.
+    begin = row * @rowByteSize
+    end = begin + number * @rowByteSize
+    
+    # Slice blob for only relevant bytes
+    blobRows = @blob.slice(begin, end)
+    
+    # Create file reader and store row and number on object for later reference
+    reader = new FileReader()
+    reader.row = row
+    reader.number = number
+    reader.onloadend = (e) =>
+      # Pass arraybuffer to a parser function via callback
+      @invoke(callback, opts, e.target.result)
+    reader.readAsArrayBuffer(blobRows)
   
   # Get rows of data specified by parameters.  In the case where
   # the data is not yet in memory, a callback must be provided to
@@ -166,10 +160,13 @@ class Tabular extends DataUnit
     # Check if rows are in memory
     if @rowsInMemory(row, row + number)
       
-      # Slice the buffer
-      begin = row * @rowByteSize
-      end = begin + number * @rowByteSize
-      buffer = @buffer.slice(begin, end)
+      # Buffer needs slicing if entire file is in memory
+      if @blob?
+        buffer = @buffer
+      else
+        begin = row * @rowByteSize
+        end = begin + number * @rowByteSize
+        buffer = @buffer.slice(begin, end)
       
       # Derived classes must implement this function
       rows = @_getRows(buffer, number)
@@ -194,6 +191,7 @@ class Tabular extends DataUnit
         target = e.target
         
         # Store the array buffer on the object
+        # TODO: Double check this as it might result in failure to GC
         @buffer = target.result
         
         @firstRowInBuffer = @lastRowInBuffer = target.row
