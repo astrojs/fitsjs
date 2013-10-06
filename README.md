@@ -52,6 +52,7 @@ Checks if the header has an associated data unit.
 
 ## Examples
 
+```javascript
     <script src="fits.js" type="text/javascript" charset="utf-8"></script>
     
     <script type="text/javascript">
@@ -91,6 +92,7 @@ Checks if the header has an associated data unit.
       var fits = new FITS.File(fileObj, callback);
       
     </script>
+```
 
 ## TODOs
 
@@ -119,6 +121,7 @@ Checks if the header has an associated data unit.
 
 ### Algorithm
 
+```javascript
     iseed0 = Ntile + ZDITHER0 - 1
     iseed1 = (iseed0 - 1) % N_RANDOM
     /* set r_i to a random value between 0 - 499 */
@@ -146,7 +149,7 @@ Checks if the header has an associated data unit.
        r_i = (int) (Rand[iseed1] * 500.);
       }
     }
-
+```
 
 ## References
 
@@ -165,8 +168,12 @@ Many changes have been made to the library to support large FITS files.  Prior, 
 
 During the rewrite, API changes have been made.  There is no longer a File object.  Instances of FITS files are now initialized:
 
+```javascript
     var f = new astro.FITS(path/to/remote/file, callback);
+```
 
 or using a native HTML5 File instance pointing to a local file.
 
+```javascript
     var f = new astro.FITS(file-instance, callback);
+```
