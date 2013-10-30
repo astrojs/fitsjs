@@ -68,7 +68,7 @@ class Parser extends Base
     if typeof(@arg) is 'string'
       
       # Define function at runtime for getting next block
-      @readNextBlock = @_readBlockFromBuffer
+      @readNextBlock = @readBlock
       
       # Get the remote file as an arraybuffer
       xhr = new XMLHttpRequest()
@@ -99,9 +99,6 @@ class Parser extends Base
       # Store the file byte length
       @length = @arg.size
       
-      # Define function at runtime for getting next block
-      @readNextBlock = @_readBlockFromFile
-      
       # Get the local file as an arraybuffer
       @readFromFile()
   
@@ -122,6 +119,9 @@ class Parser extends Base
     
     # Initialize a new FileReader
     @reader = new FileReader()
+    
+    # Define function at runtime for getting next block
+    @readNextBlock = @reader.readAsArrayBuffer
     
     # Set reader handler
     @reader.onloadend = (e) =>
@@ -220,10 +220,6 @@ class Parser extends Base
     @readNextBlock(block)
     return
   
-  # Use one of these depending on the initialization parameter (File or ArrayBuffer)
-  _readBlockFromBuffer: (block) -> @readBlock(block)
-  _readBlockFromFile: (block) -> @reader.readAsArrayBuffer(block)
-  
   # Create the appropriate data unit based on info from header
   createDataUnit: (header, blob) ->
     type = header.getDataType()
@@ -265,5 +261,5 @@ class FITS extends Base
   getDataUnit: (index) -> return @getHDU(index).data
 
 
-FITS.version = '0.6.0'
+FITS.version = '0.6.1'
 @astro.FITS = FITS

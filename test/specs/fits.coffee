@@ -48,3 +48,17 @@ describe "FITS", ->
       expect(fits.getDataUnit(0).constructor.name).toBe("Image")
       expect(fits.getDataUnit(1).constructor.name).toBe("Table")
   
+  it 'can open a gzipped FITS file quickly', ->
+    ready = false
+    
+    path = "http://radio.galaxyzoo.org.s3.amazonaws.com/beta/subjects/raw/S1029.fits.gz"
+    new astro.FITS(path, (f) ->
+      ready = true
+    )
+    
+    waitsFor ->
+      return ready
+    
+    runs ->
+      console.log "READY"
+  
