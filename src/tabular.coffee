@@ -66,7 +66,6 @@ class Tabular extends DataUnit
   
   # Get column of data specified by parameters.
   getColumn: (name, callback, opts) ->
-    console.log 'getColumn'
     # Check for blob
     if @blob?
       
