@@ -61,10 +61,20 @@
         // });
         
         // specObj-dr10
-        table.getColumn("PLUG_RA", function(column) {
-          console.log("PLUG_RA", column.length);
+        // table.getColumn("PLUG_RA", function(column) {
+        //   console.log("PLUG_RA", column.length);
+        //   console.log(new Date() - start);
+        // });
+        
+        // spec-0406-51869-0012
+        table.getColumn("flux", function(column) {
+          console.log("flux", column.length, column);
           console.log(new Date() - start);
         });
+        // table.getRows(0, 10, function(rows) {
+        //   console.table(rows);
+        // });
+        
         
         // table.getRows(0, 10, function(rows) {
         //   console.log(rows);
@@ -195,6 +205,9 @@
               testBinaryTable(fits);
               break;
             case "specObj-dr10.fits":
+              testBinaryTable(fits);
+              break;
+            case "spec-0406-51869-0012":
               testBinaryTable(fits);
               break;
             default:

@@ -66,7 +66,7 @@ class Tabular extends DataUnit
   
   # Get column of data specified by parameters.
   getColumn: (name, callback, opts) ->
-    
+    console.log 'getColumn'
     # Check for blob
     if @blob?
       
@@ -76,7 +76,11 @@ class Tabular extends DataUnit
       descriptor = @descriptors[index]
       accessor = @accessors[index]
       elementByteLength = @elementByteLengths[index]
-      elementByteOffset = @elementByteLengths[0..index - 1].reduce( (a, b) -> a + b )
+      elementByteOffset = @elementByteLengths.slice(0, index)
+      if elementByteOffset.length is 0
+        elementByteOffset = 0
+      else
+        elementByteOffset = elementByteOffset.reduce( (a, b) -> a + b)
       
       column = if @typedArray[descriptor]? then new @typedArray[descriptor](@rows) else []
       
@@ -93,7 +97,6 @@ class Tabular extends DataUnit
       # Define callback to pass to getRows
       cb = (buffer, opts) =>
         nRows = buffer.byteLength / @rowByteSize
-        
         view = new DataView(buffer)
         offset = elementByteOffset
         
