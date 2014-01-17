@@ -15,6 +15,10 @@
     "science"
   ],
   "license": "MIT",
+  "devDependencies": {
+    "astrojs": "*",
+    "coffee-script": "1.6.3"
+  },
   "_dependencyOrder": [
     "fits",
     "dataunit",

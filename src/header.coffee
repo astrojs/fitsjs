@@ -26,6 +26,7 @@ class Header extends Base
     @cards["COMMENT"] = []
     @cards["HISTORY"] = []
     @cardIndex  = 0
+    @block = block
     
     @readBlock(block)
     
