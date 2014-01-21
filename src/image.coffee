@@ -60,24 +60,30 @@ class Image extends DataUnit
     if bitpix > 0
       switch bitpix
         when 8
-          arr = new Uint8Array(buffer)
-          arr = new Uint16Array(arr)
+          tmp = new Uint8Array(buffer)
+          tmp = new Uint16Array(tmp)
           swapEndian = (value) ->
             return value
         when 16
-          arr = new Uint16Array(buffer)
+          tmp = new Int16Array(buffer)
           swapEndian = (value) ->
-            return (value << 8) | (value >> 8)
+            return ((value & 0xFF) << 8) | ((value >> 8) & 0xFF)
         when 32
-          arr = new Int32Array(buffer)
+          tmp = new Int32Array(buffer)
           swapEndian = (value) ->
             return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF)
-            
+      
+      # Patch for data unit with BSCALE AND BZERO ...
+      unless (parseInt(bzero) is bzero and parseInt(bscale) is bscale)
+        arr = new Float32Array(tmp.length)
+      else
+        arr = tmp
       while nPixels--
-        value = arr[nPixels]
-        value = swapEndian(value)
-        arr[nPixels] = bzero + bscale * value + 0.5
         
+        # Swap endian and recast into typed array (needed to properly handle any overflow)
+        tmp[nPixels] = swapEndian( tmp[nPixels] )
+        arr[nPixels] = bzero + bscale * tmp[nPixels]
+      
     else
       arr = new Uint32Array(buffer)
       
