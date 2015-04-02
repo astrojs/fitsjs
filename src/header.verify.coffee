@@ -86,7 +86,7 @@ HeaderVerify =
       
     BLANK: (args...) ->
       value = arguments[0]
-      console.warn "BLANK is not to be used for BITPIX = #{@get('BITPIX')}" unless @get("BIXPIX") > 0
+      console.warn "BLANK is not to be used for BITPIX = #{@get('BITPIX')}" unless @get("BITPIX") > 0
       return parseInt(value)
     
     DATAMIN: (args...) ->
