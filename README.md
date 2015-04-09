@@ -1,5 +1,7 @@
 # fitsjs
 
+[![DOI](https://zenodo.org/badge/2289/astrojs/fitsjs.svg)](http://dx.doi.org/10.5281/zenodo.16707)
+
 A standalone JavaScript library for reading the astronomical file format – FITS.  This library is built for modern browsers supporting the DataView API.  These include at least Chrome 9, Firefox 15, and Safari 6.
 
 To use the library copy `lib/fits.js` to your project and include it with a script tag.  The FITS object is exposed under the `astro` namespace.
